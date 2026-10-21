@@ -1,0 +1,79 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  html,body{margin:0;padding:0;background:#fff;}
+  body{width:1712px;height:640px;position:relative;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:#18395b;overflow:hidden;}
+  .box{position:absolute;border-radius:12px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:10px 14px;}
+  .dark{background:#18395b;color:#fff;}
+  .light{background:#dbe8f2;color:#18395b;}
+  .t{font-weight:700;font-size:29px;line-height:1.15;}
+  .l{font-size:22px;line-height:1.3;margin-top:6px;}
+  .s{font-size:22px;line-height:1.3;color:#5e7182;margin-top:4px;}
+  .dark .s{color:#dbe8f2;}
+  .arrow{position:absolute;}
+  .train{position:absolute;left:0;top:222px;width:1360px;height:150px;background:#f4f8fb;border:2px solid #dbe8f2;border-radius:12px;box-sizing:border-box;padding:16px 24px;}
+  .train .h{font-weight:700;font-size:28px;letter-spacing:0.2px;}
+  .train .l{font-size:23px;color:#263746;margin-top:10px;}
+  .train .s{font-size:22px;margin-top:8px;}
+  .nested{position:absolute;left:0;top:405px;width:440px;height:225px;border:2px solid #9ccbec;border-radius:12px;box-sizing:border-box;padding:14px 18px;background:#fff;}
+  .nested .h{font-weight:700;font-size:24px;}
+  .nested .l{font-size:22px;color:#263746;margin-top:6px;line-height:1.3;}
+  .nested hr{border:none;border-top:1px solid #dbe8f2;margin:8px 0 6px 0;}
+  .test{position:absolute;left:465px;top:405px;width:895px;height:225px;background:#168be8;color:#fff;border-radius:12px;box-sizing:border-box;padding:14px 22px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;}
+  .test .h{font-weight:700;font-size:25px;line-height:1.25;}
+  .test .l{font-size:22px;line-height:1.3;margin-top:10px;}
+  .test .s{font-size:22px;line-height:1.3;margin-top:6px;color:#e6f2fc;}
+  .lockcap{position:absolute;left:1372px;top:576px;width:340px;text-align:center;font-size:22px;line-height:1.25;color:#5e7182;}
+</style></head>
+<body>
+  <div class="box dark" style="left:0;top:8px;width:250px;height:172px;">
+    <div class="t" style="font-size:28px;">29,965 clients</div><div class="l">23 raw + 6 engineered features</div></div>
+  <div class="box light" style="left:294px;top:8px;width:300px;height:172px;">
+    <div class="t">ONE stratified<br>70/30 split</div><div class="s">seed 2607526<br>saved to disk</div></div>
+  <div class="box light" style="left:638px;top:8px;width:330px;height:172px;">
+    <div class="t">Pipeline inside<br>5-fold CV</div><div class="l">scale · encode · resample · fit</div><div class="s">re-fitted in every fold</div></div>
+  <div class="box light" style="left:1012px;top:8px;width:330px;height:172px;padding:10px 6px;">
+    <div class="t">Out-of-fold<br>probabilities</div><div class="l" style="font-size:22px;white-space:nowrap;">rank by CV AUC (OOF for SVM)</div><div class="s">thresholds: F1 and 5:1 cost</div></div>
+  <div class="box dark" style="left:1382px;top:8px;width:330px;height:172px;padding:10px 8px;">
+    <div class="t" style="font-size:32px;">FREEZE</div><div class="l" style="font-size:22px;">manifest of 46 configurations</div><div class="s">guard refuses any change</div></div>
+
+  <svg width="1712" height="640" style="position:absolute;left:0;top:0;" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#18395b"/></marker>
+      <marker id="ah2" markerWidth="18" markerHeight="18" refX="14" refY="9" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L18,9 L0,18 z" fill="#18395b"/></marker></defs>
+    <line x1="254" y1="94" x2="290" y2="94" stroke="#18395b" stroke-width="4" marker-end="url(#ah2)"/>
+    <line x1="598" y1="94" x2="634" y2="94" stroke="#18395b" stroke-width="4" marker-end="url(#ah2)"/>
+    <line x1="972" y1="94" x2="1008" y2="94" stroke="#18395b" stroke-width="4" marker-end="url(#ah2)"/>
+    <line x1="1346" y1="94" x2="1378" y2="94" stroke="#18395b" stroke-width="4" marker-end="url(#ah2)"/>
+    <line x1="1547" y1="182" x2="1547" y2="418" stroke="#18395b" stroke-width="4" marker-end="url(#ah2)"/>
+    <!-- padlock -->
+    <g transform="translate(1487,428)">
+      <path d="M22,62 L22,40 A38,38 0 0 1 98,40 L98,62" fill="none" stroke="#18395b" stroke-width="15"/>
+      <rect x="0" y="58" width="120" height="88" rx="10" fill="#18395b"/>
+      <circle cx="60" cy="92" r="12" fill="#fff"/>
+      <rect x="54" y="96" width="12" height="26" rx="4" fill="#fff"/>
+    </g>
+  </svg>
+
+  <div class="train">
+    <div class="h">TRAINING ROWS DECIDE EVERYTHING (20,975)</div>
+    <div class="l">round 1 scored 16–18 Sep, registered 19 Oct · 2 re-fits 30 Sep · 9 Platt 19 Oct = 46 entries</div>
+    <div class="s">Anything chosen afterwards (recalibration maps, cut-offs, cluster labels) is chosen on training out-of-fold scores only.</div>
+  </div>
+
+  <div class="nested">
+    <div class="h">Nested CV (30 Sep, RUAN):</div>
+    <div class="l">almost the same AUC; its rule <span style="white-space:nowrap">re-selects</span> the frozen KNN and logit settings</div>
+    <hr>
+    <div class="l"><b style="color:#18395b">Post-freeze checks (21 Oct):</b> training CV only; select nothing</div>
+  </div>
+
+  <div class="test">
+    <div class="h">TEST SET 8,990 CLIENTS — EACH CONFIGURATION FROZEN AT FIRST SCORING · EVERY READ DATED</div>
+    <div class="l">test AUC · AP · Brier · cost at the training-chosen cut-off are reported,<br>never used to rank, tune or select</div>
+    <div class="s">bootstrap intervals and cost curves read test rows but select nothing</div>
+  </div>
+
+  <div class="lockcap">register since 19 Oct; earlier reads dated in TEST_SET_LOG.md</div>
+</body></html>

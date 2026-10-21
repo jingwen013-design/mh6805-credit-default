@@ -19,6 +19,8 @@ Writes figures/slides/:
   s_fairness.png         flag-rate ratio vs default-rate ratio by sex / marital status / age (XGBoost, logit, no-demo XGB)
   s_simple_rule.png      5:1 cost per 1,000 clients: one-line arrears rules vs logit vs XGBoost
   s_ratio_cutoff.png     cost-minimising cut-off and cheapest model at cost ratios 1:1-20:1
+  s_tree_top.png         top two levels of the pruned tree (S8), share of clients and default rate per node, parsed
+                         from results/tree_rules.txt (the training-set leaf counts written by model_tree.py)
   s_monotone.png         consistent PAY_1 sweep of 200 training clients (free XGBoost) | CV AUC price of two constraints (S12)
 
 22 Oct revision (fixer pass): history panel now plots the window-summary series (H1+W1, H3+W3, H6+W6) that the report
@@ -46,11 +48,14 @@ os.makedirs(OUT, exist_ok=True)
 ALLOWED = {"pay_code_default_rates.csv", "pay_coding_cv.csv", "fold_stability.csv", "ablation_depth.csv",
            "ablation_history.csv", "fairness_groups.csv", "simple_rule_benchmark.csv",
            "preferred_model_by_ratio_oof.csv", "preferred_model_by_ratio_oof_long.csv", "topk_capture_oof.csv",
-           "monotone_check_consistent.csv", "monotone_respec_cv.json"}
+           "monotone_check_consistent.csv", "monotone_respec_cv.json", "tree_rules.txt"}
 
 
 def rd(name):
     assert name in ALLOWED, f"{name} is not a training-side file on the allow-list"
+    if name.endswith(".txt"):
+        with open(os.path.join(RESULTS, name)) as fh:
+            return fh.read()
     if name.endswith(".json"):
         import json
         with open(os.path.join(RESULTS, name)) as fh:
@@ -512,4 +517,90 @@ ax2.set_xlabel("CV AUC vs free XGBoost\n(95% interval, training folds)", fontsiz
 ax2.set_title("Price of a constraint", loc="left", fontsize=18)
 left_title(fig, "Free XGBoost already respects lateness; forcing an order on \u22122/\u22121/0 costs AUC")
 save(fig, "s_monotone.png", rect=[0, 0, 1, 1])
+# ====================================================================================================================
+# 11. s_tree_top.png — top two levels of the pruned tree (S8), read from results/tree_rules.txt (training rows, no fit)
+# ====================================================================================================================
+import re
+from matplotlib.patches import FancyBboxPatch
+
+rules = rd("tree_rules.txt").splitlines()
+stack, leaves = [], []
+for line in rules:
+    m = re.match(r"^((?:\|   )*)\|--- (.*)$", line)
+    if not m:
+        continue
+    depth, body = len(m.group(1)) // 4, m.group(2).strip()
+    if body.startswith("weights:"):
+        w = [float(x) for x in re.findall(r"[\d.]+", body.split("class")[0])]
+        leaves.append((tuple(stack[:depth]), w))
+    else:
+        stack = stack[:depth] + [re.sub(r"\s+", " ", body)]
+assert len(leaves) == 17, len(leaves)
+n_all = sum(a + b for _, (a, b) in leaves)
+assert n_all == 20975, n_all
+
+
+def node(*path):
+    sel = [w for p, w in leaves if p[:len(path)] == path]
+    n = sum(a + b for a, b in sel)
+    return n / n_all, sum(b for _, b in sel) / n
+
+
+L, R = "MAX_DELAY <= 1.500", "MAX_DELAY > 1.500"
+BLUES = ["#eaf2fb", "#bcd6f1", "#7fb1e6", "#2a78d6", "#18395b"]     # sequential, one hue (light = low risk)
+
+
+def fill(rate):
+    return BLUES[min(int(rate / 0.15), 4)]
+
+
+PX = 150 / 72                                                      # points -> pixels at dpi 150
+FW, FH = 1170, 700
+fig = plt.figure(figsize=(FW / 150, FH / 150))
+ax = fig.add_axes([0, 0, 1, 1]); ax.set_xlim(0, FW); ax.set_ylim(FH, 0); ax.axis("off")
+# key: (centre x, top y, width, label, path)
+NODES = {
+    "root": (585, 58, 330, "All training clients", ()),
+    "L":    (292, 288, 400, "At most 1 month late\nin six months", (L,)),
+    "R":    (878, 288, 400, "2+ months late\nat least once", (R,)),
+    "LL":   (146, 528, 272, "Small May bill\n(≤ NT$790)", (L, "BILL_AMT5 <= 789.500")),
+    "LR":   (438, 528, 272, "Card in use\nin May", (L, "BILL_AMT5 > 789.500")),
+    "RL":   (732, 528, 272, "Not 2+ late\nin September", (R, "PAY_1 <= 1.500")),
+    "RR":   (1024, 528, 272, "Still 2+ late\nin September", (R, "PAY_1 > 1.500")),
+}
+QUESTIONS = {"root": "Worst delay in six months: 2 months or more?", "L": "May bill above NT$790?",
+             "R": "Still 2+ months late in September?"}
+LINE = 11 * PX * 1.18                                              # one 11-pt text line in px
+heights = {}
+for k, (cx, top, w, lab, path) in NODES.items():
+    share, rate = node(*path)
+    nlab = lab.count("\n") + 1
+    h = 14 + nlab * LINE + 8 + 15 * PX * 1.1 + 4 + LINE + 12
+    heights[k] = h
+    c = fill(rate); tc = "white" if c in BLUES[3:] else INK
+    ax.add_patch(FancyBboxPatch((cx - w / 2, top), w, h, boxstyle="round,pad=0,rounding_size=14", fc=c, ec="none", zorder=2))
+    y = top + 14
+    ax.text(cx, y, lab, ha="center", va="top", fontsize=11, color=tc, linespacing=1.18, zorder=3)
+    y += nlab * LINE + 8
+    ax.text(cx, y, f"{rate:.0%} default", ha="center", va="top", fontsize=15, fontweight="bold", color=tc, zorder=3)
+    y += 15 * PX * 1.1 + 4
+    ax.text(cx, y, f"{share:.0%} of clients", ha="center", va="top", fontsize=11, color=tc, zorder=3)
+for parent, kids in (("root", ("L", "R")), ("L", ("LL", "LR")), ("R", ("RL", "RR"))):
+    px_, ptop, _, _, _ = NODES[parent]
+    pb = ptop + heights[parent]
+    qy = pb + 12
+    ax.text(px_, qy, QUESTIONS[parent], ha="center", va="top", fontsize=11, fontweight="bold", color=NAVY, zorder=4)
+    ax.plot([px_, px_], [pb, qy - 2], color=INK3, lw=1.6, zorder=1)
+    fork = qy + LINE + 8
+    for k, word in zip(kids, ("no", "yes")):
+        cx, ctop = NODES[k][:2]
+        ax.plot([px_, cx], [fork, ctop], color=INK3, lw=1.6, zorder=1)
+        mx, my = px_ + 0.55 * (cx - px_), fork + 0.55 * (ctop - fork)
+        ax.text(mx + (-14 if cx < px_ else 14), my, word, ha="right" if cx < px_ else "left", va="center", fontsize=11,
+                color=INK2, style="italic", zorder=4)
+ax.text(12, 8, "One pruned tree reads like a credit policy (top 2 of 5 levels; 17 rules in all)", ha="left", va="top",
+        fontsize=13, color=INK)
+fig.savefig(os.path.join(OUT, "s_tree_top.png"), dpi=150, facecolor="white")
+plt.close(fig)
+print("wrote s_tree_top.png")
 print("done ->", OUT)
