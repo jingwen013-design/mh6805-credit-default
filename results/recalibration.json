@@ -1,0 +1,187 @@
+{
+ "generated_by": "code/recalibrate.py",
+ "seed": 2607526,
+ "method": "Platt scaling \u2014 a one-variable logistic regression of the label on logit(p) \u2014 fitted on each model's TRAINING\nout-of-fold probabilities (results/<slug>_p_oof.npy) and nothing else.  No model is refitted.\n  * training side: the calibration is cross-fitted on the project's five folds (fit on four folds' OOF scores, apply to\n    the fifth), and both decision thresholds (F1, 5:1 cost) are re-chosen on those cross-fitted calibrated scores with\n    common.tune_threshold \u2014 so every choice is made on training data;\n  * test side: the Platt map fitted on all training OOF scores is applied to results/<slug>_p_test.npy and the result\n    is scored ONCE.  Each calibrated version is a new configuration (slug <slug>_platt) and is registered in\n    results/frozen_manifest.json before any test label is read; a re-run must reproduce it.",
+ "variants": {
+  "logistic_balanced_platt": {
+   "name": "Logistic regression (plain, class_weight=balanced) + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "logistic_balanced",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 0.97049679,
+    "b": -1.2530649
+   },
+   "oof_auc": 0.7604995582545118,
+   "test_auc": 0.763006024636716,
+   "test_ap": 0.5172142896257701,
+   "test_brier": 0.1388590441211793,
+   "test_logloss": 0.4413975844824408,
+   "thresholds_chosen_on_training": {
+    "f1": 0.26,
+    "cost": 0.15
+   },
+   "freeze_status": "new"
+  },
+  "imb_logistic_balanced_platt": {
+   "name": "Logistic (C=1) - class_weight='balanced' + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "imb_logistic_balanced",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 0.97112242,
+    "b": -1.25291962
+   },
+   "oof_auc": 0.7604948488705935,
+   "test_auc": 0.7630093280504567,
+   "test_ap": 0.5171131242766653,
+   "test_brier": 0.1388562101614109,
+   "test_logloss": 0.44138267681549864,
+   "thresholds_chosen_on_training": {
+    "f1": 0.26,
+    "cost": 0.15
+   },
+   "freeze_status": "new"
+  },
+  "imb_logistic_smote_platt": {
+   "name": "Logistic (C=1) - SMOTE in folds + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "imb_logistic_smote",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 0.94740036,
+    "b": -1.24606449
+   },
+   "oof_auc": 0.7595189378838064,
+   "test_auc": 0.762447245021163,
+   "test_ap": 0.5162366317520392,
+   "test_brier": 0.13906316573908312,
+   "test_logloss": 0.44211371052321535,
+   "thresholds_chosen_on_training": {
+    "f1": 0.31,
+    "cost": 0.18
+   },
+   "freeze_status": "new"
+  },
+  "imb_logistic_under_platt": {
+   "name": "Logistic (C=1) - under-sampling in folds + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "imb_logistic_under",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 0.97214347,
+    "b": -1.25412949
+   },
+   "oof_auc": 0.7590690927829629,
+   "test_auc": 0.7627621465266508,
+   "test_ap": 0.5153390140743397,
+   "test_brier": 0.13902010990996685,
+   "test_logloss": 0.44169441379840974,
+   "thresholds_chosen_on_training": {
+    "f1": 0.32,
+    "cost": 0.15
+   },
+   "freeze_status": "new"
+  },
+  "imb_rf_balanced_platt": {
+   "name": "Random forest (500 trees) - class_weight='balanced' + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "imb_rf_balanced",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 0.96113118,
+    "b": -0.95931122
+   },
+   "oof_auc": 0.7803579617227079,
+   "test_auc": 0.781833256744404,
+   "test_ap": 0.5688473097294574,
+   "test_brier": 0.13345874651452508,
+   "test_logloss": 0.42647510473923445,
+   "thresholds_chosen_on_training": {
+    "f1": 0.28,
+    "cost": 0.18
+   },
+   "freeze_status": "new"
+  },
+  "imb_rf_smote_platt": {
+   "name": "Random forest (500 trees) - SMOTE in folds + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "imb_rf_smote",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 0.96658444,
+    "b": -0.75424305
+   },
+   "oof_auc": 0.7741887083642643,
+   "test_auc": 0.7743812580390548,
+   "test_ap": 0.5544197514167358,
+   "test_brier": 0.13586611337549734,
+   "test_logloss": 0.4326372267210927,
+   "thresholds_chosen_on_training": {
+    "f1": 0.29,
+    "cost": 0.18
+   },
+   "freeze_status": "new"
+  },
+  "imb_rf_under_platt": {
+   "name": "Random forest (500 trees) - under-sampling in folds + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "imb_rf_under",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 0.98904303,
+    "b": -1.25821216
+   },
+   "oof_auc": 0.7788346804941566,
+   "test_auc": 0.781377313834862,
+   "test_ap": 0.5579095705687219,
+   "test_brier": 0.13453324169597422,
+   "test_logloss": 0.42813562870125604,
+   "thresholds_chosen_on_training": {
+    "f1": 0.25,
+    "cost": 0.18
+   },
+   "freeze_status": "new"
+  },
+  "xgboost_weighted_platt": {
+   "name": "XGBoost (class-weighted) + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "xgboost_weighted",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 1.01460848,
+    "b": -1.22136046
+   },
+   "oof_auc": 0.7858237030389668,
+   "test_auc": 0.788726906714253,
+   "test_ap": 0.5788356766567686,
+   "test_brier": 0.13112206177203523,
+   "test_logloss": 0.420603566741945,
+   "thresholds_chosen_on_training": {
+    "f1": 0.28,
+    "cost": 0.14
+   },
+   "freeze_status": "new"
+  },
+  "mlp_weighted_platt": {
+   "name": "MLP (tuned, balanced sample weights) + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "mlp_weighted",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 0.84026358,
+    "b": -1.17086747
+   },
+   "oof_auc": 0.7729450880294663,
+   "test_auc": 0.771024846051943,
+   "test_ap": 0.5353913214986585,
+   "test_brier": 0.13766304601877452,
+   "test_logloss": 0.43844303667738205,
+   "thresholds_chosen_on_training": {
+    "f1": 0.29,
+    "cost": 0.19
+   },
+   "freeze_status": "new"
+  }
+ }
+}

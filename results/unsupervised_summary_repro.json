@@ -1,0 +1,149 @@
+{
+ "generated_by": "code/cluster_stability.py",
+ "method_owner": "RUAN Hangjing (v2, 30 Sep 2026)",
+ "assembled_by": "LI Jingwen, 2026-10-21",
+ "uses_test_set": false,
+ "configuration": {
+  "pca_input": "make_preprocessor() output (26 standardised numeric + 6 one-hot = 32 columns)",
+  "n_components": 10,
+  "K": 5,
+  "k_grid": [
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8
+  ]
+ },
+ "pca_cum_var": {
+  "2": 0.4806777765175031,
+  "5": 0.652069824375398,
+  "10": 0.81830676399691,
+  "15": 0.9215658731348595
+ },
+ "silhouette": 0.269448092592341,
+ "silhouette_by_k": {
+  "2": 0.2594813657077833,
+  "3": 0.2665113783524337,
+  "4": 0.25684940873882856,
+  "5": 0.269448092592341,
+  "6": 0.20942702206207936,
+  "7": 0.21500751916867966,
+  "8": 0.21820875586309343
+ },
+ "bootstrap_ari": {
+  "B": 100,
+  "mean": 0.9570615718766012,
+  "lo": 0.7449321101469565,
+  "hi": 0.9902271563121069
+ },
+ "seed_ari": {
+  "mean": 0.8137962060776571,
+  "min": 0.5770690659322517
+ },
+ "cluster_jaccard": [
+  0.9724007800492805,
+  0.9737049579219628,
+  0.7913946748914873,
+  0.9696994014472671,
+  0.9525511615735914
+ ],
+ "ward_vs_kmeans_ari": [
+  0.5632213314939734,
+  0.4524664654437755,
+  0.593264306615789,
+  0.4652326271958695,
+  0.5430743302861847
+ ],
+ "profiles": [
+  {
+   "cluster": 0,
+   "n_clients": 7977,
+   "default_rate": 0.168,
+   "avg_limit": 214213.363,
+   "avg_age": 35.994,
+   "avg_months_delayed": 0.296,
+   "avg_util": 0.042,
+   "share": 0.38,
+   "jaccard_stability": 0.972
+  },
+  {
+   "cluster": 1,
+   "n_clients": 2619,
+   "default_rate": 0.585,
+   "avg_limit": 79797.633,
+   "avg_age": 34.884,
+   "avg_months_delayed": 4.323,
+   "avg_util": 0.585,
+   "share": 0.125,
+   "jaccard_stability": 0.974
+  },
+  {
+   "cluster": 2,
+   "n_clients": 886,
+   "default_rate": 0.069,
+   "avg_limit": 324322.799,
+   "avg_age": 36.378,
+   "avg_months_delayed": 0.148,
+   "avg_util": 0.224,
+   "share": 0.042,
+   "jaccard_stability": 0.791
+  },
+  {
+   "cluster": 3,
+   "n_clients": 7560,
+   "default_rate": 0.179,
+   "avg_limit": 98695.238,
+   "avg_age": 34.601,
+   "avg_months_delayed": 0.355,
+   "avg_util": 0.567,
+   "share": 0.36,
+   "jaccard_stability": 0.97
+  },
+  {
+   "cluster": 4,
+   "n_clients": 1933,
+   "default_rate": 0.182,
+   "avg_limit": 285866.529,
+   "avg_age": 37.353,
+   "avg_months_delayed": 0.534,
+   "avg_util": 0.752,
+   "share": 0.092,
+   "jaccard_stability": 0.953
+  }
+ ],
+ "incremental": {
+  "auc: logistic + clusters - logistic": {
+   "mean": 0.00011859884481238314,
+   "lo": -0.00043285466354804137,
+   "hi": 0.0006700523531728077
+  },
+  "auc: logistic on 10 PCs - logistic": {
+   "mean": -0.03425625553537442,
+   "lo": -0.03968999901560086,
+   "hi": -0.02882251205514798
+  },
+  "ap: logistic + clusters - logistic": {
+   "mean": -0.00031349227624571485,
+   "lo": -0.0016090386736250617,
+   "hi": 0.0009820541211336318
+  },
+  "ap: logistic on 10 PCs - logistic": {
+   "mean": -0.015731284003719065,
+   "lo": -0.022219929957708082,
+   "hi": -0.009242638049730047
+  }
+ },
+ "mean_auc": {
+  "auc|logistic": 0.7601270235495654,
+  "auc|logistic + clusters": 0.7602456223943779,
+  "auc|logistic on 10 PCs": 0.725870768014191,
+  "auc|cluster label as score": 0.6477410872483688,
+  "auc|N_MONTHS_DELAYED alone": 0.7235089351869829
+ },
+ "adoption_rule": "adopt the one-hot cluster label as a predictor only if the Nadeau\u2013Bengio 95% CI lower bounds of \u0394AUC and \u0394AP are both > 0",
+ "adopted": false,
+ "seconds": 98.5
+}

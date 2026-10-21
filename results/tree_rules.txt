@@ -1,0 +1,53 @@
+Pruned decision tree rules (LU Xinyu) — criterion=entropy, ccp_alpha=6.631104e-04, max_depth=6, leaves=17, depth=5
+Trained on the 20,975-row training split only. weights: [no_default, default] counts in each leaf.
+Full unpruned tree for comparison: leaves=2,791, depth=55.
+====================================================================================================
+|--- MAX_DELAY <= 1.500
+|   |--- BILL_AMT5 <= 789.500
+|   |   |--- UTIL_MEAN <= 0.000
+|   |   |   |--- AGE <= 53.500
+|   |   |   |   |--- weights: [434.000, 221.000] class: no_default
+|   |   |   |--- AGE >  53.500
+|   |   |   |   |--- weights: [7.000, 24.000] class: default
+|   |   |--- UTIL_MEAN >  0.000
+|   |   |   |--- BILL_AMT1 <= 2990.000
+|   |   |   |   |--- weights: [1335.000, 347.000] class: no_default
+|   |   |   |--- BILL_AMT1 >  2990.000
+|   |   |   |   |--- LIMIT_BAL <= 65000.000
+|   |   |   |   |   |--- weights: [286.000, 75.000] class: no_default
+|   |   |   |   |--- LIMIT_BAL >  65000.000
+|   |   |   |   |   |--- weights: [830.000, 101.000] class: no_default
+|   |--- BILL_AMT5 >  789.500
+|   |   |--- LIMIT_BAL <= 75000.000
+|   |   |   |--- UTIL_MEAN <= 0.664
+|   |   |   |   |--- weights: [1332.000, 190.000] class: no_default
+|   |   |   |--- UTIL_MEAN >  0.664
+|   |   |   |   |--- weights: [1116.000, 257.000] class: no_default
+|   |   |--- LIMIT_BAL >  75000.000
+|   |   |   |--- BILL_AMT1 <= 2377.000
+|   |   |   |   |--- weights: [1131.000, 183.000] class: no_default
+|   |   |   |--- BILL_AMT1 >  2377.000
+|   |   |   |   |--- UTIL_1 <= 0.865
+|   |   |   |   |   |--- weights: [5327.000, 330.000] class: no_default
+|   |   |   |   |--- UTIL_1 >  0.865
+|   |   |   |   |   |--- weights: [1364.000, 205.000] class: no_default
+|--- MAX_DELAY >  1.500
+|   |--- PAY_1 <= 1.500
+|   |   |--- N_MONTHS_DELAYED <= 2.500
+|   |   |   |--- PAY_AMT1 <= 1054.000
+|   |   |   |   |--- PAY_AMT6 <= 7336.000
+|   |   |   |   |   |--- weights: [491.000, 275.000] class: no_default
+|   |   |   |   |--- PAY_AMT6 >  7336.000
+|   |   |   |   |   |--- weights: [63.000, 8.000] class: no_default
+|   |   |   |--- PAY_AMT1 >  1054.000
+|   |   |   |   |--- weights: [1245.000, 352.000] class: no_default
+|   |   |--- N_MONTHS_DELAYED >  2.500
+|   |   |   |--- weights: [675.000, 561.000] class: no_default
+|   |--- PAY_1 >  1.500
+|   |   |--- PAY_RATIO_MEAN <= 0.523
+|   |   |   |--- UTIL_1 <= 0.802
+|   |   |   |   |--- weights: [284.000, 829.000] class: default
+|   |   |   |--- UTIL_1 >  0.802
+|   |   |   |   |--- weights: [321.000, 606.000] class: default
+|   |   |--- PAY_RATIO_MEAN >  0.523
+|   |   |   |--- weights: [93.000, 77.000] class: no_default

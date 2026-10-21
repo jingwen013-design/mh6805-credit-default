@@ -1,0 +1,49 @@
+\section{Results}
+\label{sec:results}
+
+\paragraph{Reading the table.}
+Table~\ref{tab:headline} is ordered by training CV AUC, the selection score, and grouped against the two simple models this study set out to beat; test metrics stand beside it and rank nothing. The KNN benchmark reaches CV AUC 0.770 (test 0.771), the logistic baseline 0.760 (0.764), and the whole field spans 0.05 test AUC (0.740 to 0.789) because every family re-discovers the recent repayment-status codes (\texttt{PAY\_1} alone has univariate AUC 0.686); what separates them is what else they do with that signal.
+
+\paragraph{What the ensembles buy.}
+Measured against the best simple model rather than the weakest, the gain is smaller than it looks: XGBoost is 0.018 test AUC above KNN, not the 0.025 above the logit. A pruned tree with 17 leaves ties the benchmark on CV (0.769 against 0.770) and beats it on test (0.776 against 0.771): the repayment signal is a step function --- the root splits on the worst delay on file (\texttt{MAX\_DELAY} $\le 1.5$), the next level on the current status --- and smooth models pay for smoothing it. KNN smooths most, averaging a step over $K = 101$ neighbours in 32 standardised dimensions (without the scaler its CV AUC falls to 0.659); the logit cannot bend at all, pricing every missed payment alike and averaging the U in utilisation into one slope (odds ratio 1.33 per SD). The forest and the two boosted ensembles turn the step into a graded score, and their margin over the single tree is concentrated in average precision (+0.041 to +0.044 AP against +0.011 to +0.013 AUC). The network clears the benchmark on CV (0.776) but stops below the ensembles: step-like delay effects cost a tree one split and a network several units.
+
+\paragraph{What falls below the benchmark, and why.}
+Three mechanisms. The RBF SVM was tuned on a 6,000-row subsample (libsvm scales super-linearly) and there beat a logit fitted on the same rows (CV AUC 0.768 against 0.765), but refitted on all 20,975 rows its out-of-fold AUC is 0.761: the tuning set was not the fitting set, and hinge loss is not a proper scoring rule, so ordering away from the margin is not what it optimises. LDA shares the logit's linear form (cosine 0.93 between the coefficient vectors) but estimates it from a pooled Gaussian covariance on amount columns with skewness 2.7--32.6, so tail noise enters the discriminant; QDA, with a covariance per class, lets it in twice. Naive Bayes is last because independence fails where the data are richest: the six bill columns correlate at 0.80--0.95 (mean 0.887), so one balance is counted six times, and 35.8\% of its test probabilities land below 0.01 or above 0.99.
+
+\paragraph{Which differences are real.}
+In a paired bootstrap over the 8,990 test rows ($B = 500$), XGBoost's margin over the KNN benchmark, +0.0181 [+0.0125, +0.0237] AUC, excludes zero, as do its margins over the logit (+0.0249 [+0.0183, +0.0314]), the network and the pruned tree. Inside the ensemble group it does not: the random forest sits 0.0020 [$-$0.0010, +0.0051] behind, so the two are indistinguishable and we claim no winner between them; gradient boosting is borderline (+0.0015 [+0.0001, +0.0030] on AUC, nothing on AP); XGBoost's own interval is wider than every gap within that group. Usable as default probabilities? For the ensembles and the logit, yes: Brier 0.1311 (XGBoost), 0.1314 (gradient boosting), 0.1321 (forest) and 0.1383 (logit), with XGBoost's mean predicted probability 0.2196 against a test prevalence of 0.2212, so the outputs can be read as PDs; naive Bayes (0.2034) and QDA (0.1661) cannot, their assumption failures pushing probability mass to the extremes (Figure~\ref{fig:calibration}).
+
+\paragraph{Imbalance moves the threshold, not the ranking.}
+With the samplers inside the folds [2], class weighting, SMOTE and 1:1 under-sampling move test AUC by at most 0.0012 for the logit (0.7624--0.7637) and 0.0076 for the forest (0.7744--0.7820), never upwards by more than noise (on CV the weighted logit is +0.0007 above the plain one). What moves is the intercept ($+1.24$ log-odds for the weighted logit): balanced-at-0.5 agrees with plain-at-0.22 on 99.4\% of test rows, so the apparent recall gain, 0.32 to 0.63, is a relabelled threshold bought with calibration (Brier 0.138 to 0.190), which Platt scaling on training scores buys back (0.139, 5:1 cut-off 0.15; Table~\ref{tab:a-recal}). As a negative control we ran SMOTE on all 29,965 rows \emph{before} the split: the forest's ``test'' AUC reaches 0.914, +0.140 over the honest 0.774, because 72.6\% of the leaky test defaulters are synthetic points interpolated from training neighbours, while the logit moves only to 0.770 --- a leak inflates \emph{and} re-orders, and cross-validation cannot catch it once it precedes the split.
+
+\paragraph{Segmentation, kept secondary.}
+RUAN Hangjing's 30 September configuration (reproduced 21 October; Tables~\ref{tab:a-kselect}--\ref{tab:a-kprofiles}, Figure~\ref{fig:kmeans-selection-repro}) runs PCA on the 32 preprocessed columns (10 components carry 81.8\% of the variance) and K-means on them. $K = 5$ has the highest silhouette, 0.27 (weak to moderate; $K = 2$--$8$: 0.26/0.27/0.26/0.27/0.21/0.22/0.22), is stable over 100 bootstrap refits (ARI 0.96 [0.75, 0.99]; per-cluster Jaccard 0.97/0.97/0.79/0.97/0.95), and Ward linkage agrees with it only moderately (ARI 0.45--0.59). As an extra predictor the one-hot label changes the logit's AUC by $+0.0001$ [$-0.0004$, $+0.0007$] and AP by $-0.0003$ [$-0.0016$, $+0.0010$] in $5 \times 5$ repeated CV on the training set with the Nadeau--Bengio interval [8], so by the rule fixed in advance it is not used and the test set is not consulted for it. Cluster default rates range from 6.9\% to 58.5\% only because the inputs contain the delay and limit variables --- the label as a score has AUC 0.648 against 0.724 for months in arrears alone --- so the segments are descriptive, not economically distinct.
+
+\begin{table}[t]
+  \caption{Headline model per family, ordered and grouped by training CV AUC (5-fold, 20{,}975 training rows; the selection score). Every other column is on the fixed test set ($n = 8{,}990$, prevalence 0.2212) and ranks nothing; brackets are 95\% paired-bootstrap intervals ($B = 500$). $t$ minimises 5:1 expected cost on training out-of-fold probabilities; test costs compare with 7{,}001 for flagging everybody and 9{,}945 for nobody. Ridge and lasso logits reproduce the plain logit to four decimals; all 34 round-1 variants: Table~\ref{tab:a-allmodels}; operating points: Table~\ref{tab:a-operating}. $^\dagger$Tuned on a 6{,}000-row subsample (subsample CV AUC 0.768); shown is its full-training out-of-fold AUC.}
+  \label{tab:headline}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}lcccccrr@{}}
+    \toprule
+    Model & CV AUC & Test AUC [95\% CI] & Test AP & Brier & $t$ & Cost at 0.5 & Cost at $t$ \\
+    \midrule
+    \multicolumn{8}{@{}l}{\emph{Reference models}}\\
+    KNN ($K = 101$)            & 0.770 & 0.771 [0.758, 0.782] & 0.542 & 0.136 & 0.16 & 6{,}854 & 5{,}219 \\
+    Logistic regression        & 0.760 & 0.764 [0.751, 0.776] & 0.523 & 0.138 & 0.15 & 7{,}063 & 5{,}126 \\
+    \midrule
+    \multicolumn{8}{@{}l}{\emph{Above the benchmark on CV}}\\
+    XGBoost                    & 0.786 & 0.789 [0.776, 0.800] & 0.578 & 0.131 & 0.15 & 6{,}642 & \textbf{4{,}981} \\
+    Gradient boosting          & 0.785 & 0.787 [0.775, 0.798] & 0.576 & 0.131 & 0.14 & 6{,}630 & 5{,}060 \\
+    Random forest (500 trees)  & 0.785 & 0.787 [0.774, 0.798] & 0.576 & 0.132 & 0.17 & 6{,}598 & 4{,}998 \\
+    MLP (64--32)               & 0.776 & 0.773 [0.760, 0.785] & 0.551 & 0.135 & 0.19 & 6{,}625 & 5{,}136 \\
+    \midrule
+    \multicolumn{8}{@{}l}{\emph{Not above the benchmark on CV (the tree ties it)}}\\
+    Pruned tree (17 leaves)    & 0.769 & 0.776 [0.763, 0.787] & 0.535 & 0.133 & 0.16 & 6{,}933 & 5{,}085 \\
+    SVM (RBF, balanced)        & 0.761$^\dagger$ & 0.762 [0.749, 0.774] & 0.494 & 0.145 & 0.12 & 9{,}316 & 5{,}155 \\
+    LDA                        & 0.757 & 0.759 [0.746, 0.772] & 0.525 & 0.139 & 0.12 & 6{,}618 & 5{,}181 \\
+    Gaussian naive Bayes       & 0.736 & 0.740 [0.726, 0.753] & 0.504 & 0.203 & 0.25 & 5{,}422 & 5{,}337 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

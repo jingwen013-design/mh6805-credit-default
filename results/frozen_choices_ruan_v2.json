@@ -1,0 +1,65 @@
+{
+ "knn_v2": {
+  "config": {
+   "cost_ratios": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    7,
+    10,
+    15,
+    20
+   ],
+   "k_grid": [
+    5,
+    11,
+    21,
+    31,
+    51,
+    75,
+    101,
+    151
+   ],
+   "n_neighbors": 101,
+   "threshold_rule": "tuned on training OOF",
+   "w_grid": [
+    "uniform",
+    "distance"
+   ],
+   "weights": "uniform"
+  },
+  "frozen_at": "2026-09-30 21:39:46"
+ },
+ "logistic_plain_v2": {
+  "config": {
+   "C": "inf",
+   "variant": "plain"
+  },
+  "frozen_at": "2026-09-30 21:40:13"
+ },
+ "logistic_selected_v2": {
+  "config": {
+   "c_grid": [
+    0.001,
+    0.00316,
+    0.01,
+    0.03162,
+    0.1,
+    0.31623,
+    1.0,
+    3.16228,
+    10.0,
+    31.62278,
+    100.0
+   ],
+   "params": {
+    "C": "inf (no penalty)"
+   },
+   "rule": "1-SE on nested AUC (plain>ridge>lasso), weighting only if cross-fitted 5:1 cost -1%",
+   "variant": "plain"
+  },
+  "frozen_at": "2026-09-30 21:40:13"
+ }
+}

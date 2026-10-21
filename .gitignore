@@ -1,0 +1,37 @@
+# local backups and run logs of the 19–21 Oct code changes (kept on LI's machine only)
+_audit/
+
+# OS / editor / cloud-sync litter
+.DS_Store
+.*.baiduyun.uploading.cfg
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# LaTeX build intermediates (the PDFs are committed)
+report/*.aux
+report/*.log
+report/*.out
+report/*.toc
+report/*.bbl
+report/*.blg
+report/*.synctex.gz
+report/*.fls
+report/*.fdb_latexmk
+proposal/*.aux
+proposal/*.log
+proposal/*.out
+proposal/*.toc
+proposal/*.synctex.gz
+
+# internal working notes in Chinese (team-internal, not part of the submission)
+教授视角改进意见.md
+教授评语后-项目问题分析.md
+给RUAN的反馈-2026-10-21.md
+proposal/提案三人检查分工.md
+proposal/提案中英对照阅读稿.md
+
+# editor / R litter
+proposal/.vscode/
+proposal/.Rhistory
+.Rhistory

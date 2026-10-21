@@ -1,0 +1,112 @@
+{
+ "generated_by": "code/nested_cv_check.py",
+ "method_owner": "RUAN Hangjing (v2, 30 Sep 2026)",
+ "assembled_by": "LI Jingwen, 2026-10-21",
+ "uses_test_set": false,
+ "knn": {
+  "nested_cv_auc": 0.7684364738716817,
+  "nested_cv_auc_std": 0.0073352449893825744,
+  "full_training_choice": {
+   "n_neighbors": 101,
+   "weights": "uniform",
+   "cv_auc": 0.7700333660038201,
+   "cv_auc_std": 0.008717447421272694
+  },
+  "frozen_choice": {
+   "n_neighbors": 101,
+   "weights": "uniform",
+   "cv_auc": 0.7700333660038201,
+   "test_auc": 0.7705565871542163,
+   "first_scored": "2026-09-16"
+  },
+  "agrees_with_frozen": true
+ },
+ "logistic": {
+  "rule": "1-SE on nested AUC among plain > ridge > lasso; adopt Platt-calibrated class weighting only if its cross-fitted 5:1 cost is > 1% lower",
+  "step1": "plain",
+  "weighted_cal_cost_change": -0.0042640426404263465,
+  "selected": "plain",
+  "agrees_with_frozen": true,
+  "frozen_baseline": {
+   "cv_auc": 0.7602364115504157,
+   "oof_auc": 0.7600749090172092,
+   "test_auc": 0.76363446319419,
+   "cost_threshold": 0.15,
+   "first_scored": "2026-09-16"
+  },
+  "nested": {
+   "plain": {
+    "nested_auc": 0.76022,
+    "nested_auc_se": 0.00503,
+    "nested_ap": 0.50494,
+    "brier": 0.14097,
+    "mean_pred": 0.22116,
+    "obs_rate": 0.22126,
+    "cal_slope": 0.98169,
+    "cal_intercept": -0.01927,
+    "t_cost5_oof": 0.17,
+    "t_theory5": 0.167,
+    "crossfit_cost5": 12195.0,
+    "seconds": 0.3
+   },
+   "ridge": {
+    "nested_auc": 0.76012,
+    "nested_auc_se": 0.00508,
+    "nested_ap": 0.50485,
+    "brier": 0.14097,
+    "mean_pred": 0.22122,
+    "obs_rate": 0.22126,
+    "cal_slope": 0.98465,
+    "cal_intercept": -0.01639,
+    "t_cost5_oof": 0.17,
+    "t_theory5": 0.167,
+    "crossfit_cost5": 12205.0,
+    "seconds": 13.7
+   },
+   "lasso": {
+    "nested_auc": 0.76022,
+    "nested_auc_se": 0.00501,
+    "nested_ap": 0.50493,
+    "brier": 0.14097,
+    "mean_pred": 0.22119,
+    "obs_rate": 0.22126,
+    "cal_slope": 0.98244,
+    "cal_intercept": -0.0186,
+    "t_cost5_oof": 0.15,
+    "t_theory5": 0.167,
+    "crossfit_cost5": 12187.0,
+    "seconds": 56.0
+   },
+   "weighted": {
+    "nested_auc": 0.76077,
+    "nested_auc_se": 0.00548,
+    "nested_ap": 0.50202,
+    "brier": 0.19199,
+    "mean_pred": 0.4405,
+    "obs_rate": 0.22126,
+    "cal_slope": 0.97363,
+    "cal_intercept": -1.25291,
+    "t_cost5_oof": 0.39,
+    "t_theory5": 0.167,
+    "crossfit_cost5": 12263.0,
+    "seconds": 11.5
+   },
+   "weighted_cal": {
+    "nested_auc": 0.76082,
+    "nested_auc_se": 0.00548,
+    "nested_ap": 0.50221,
+    "brier": 0.14121,
+    "mean_pred": 0.22124,
+    "obs_rate": 0.22126,
+    "cal_slope": 1.00392,
+    "cal_intercept": 0.00453,
+    "t_cost5_oof": 0.15,
+    "t_theory5": 0.167,
+    "crossfit_cost5": 12247.0,
+    "seconds": 70.5
+   }
+  }
+ },
+ "reading": "Nested CV reproduces the plain 5-fold figures to within one standard error and the pre-registered rules pick the configurations frozen on 16 September, so the first-round tuning did not flatter the reported CV AUCs; the frozen test metrics stand and nothing was re-scored.",
+ "seconds": 242.7
+}

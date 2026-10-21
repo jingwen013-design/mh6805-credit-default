@@ -1,0 +1,26 @@
+\begin{table}[htbp]
+  \caption{Model families, the lecture that introduces each one, and what each is in the study to test. The last three rows are beyond the syllabus.}
+  \label{tab:a-methods}
+  \centering
+  \small
+  \begin{tabular}{@{}p{0.30\linewidth}p{0.62\linewidth}@{}}
+    \toprule
+    Family (lecture) & What it is there to test \\
+    \midrule
+    PCA, K-means, hierarchical clustering (B2--B3) & Whether default risk lies along the directions of largest variance, and whether a segment label carries anything a supervised model has not already found. \\
+    K-nearest neighbours (B4) & Benchmark: how much of the signal a scaled distance and a local default rate recover with no model of the risk at all. \\
+    Class weights, SMOTE, under-sampling (B4) & Whether re-balancing changes the ordering of clients or only the prior behind it; and what resampling before the split fabricates. \\
+    Logistic regression: plain, ridge, lasso (B5--B6) & Whether the ceiling on this data is variance, which shrinkage can cut, or the bias of a model linear in the features, which it cannot. \\
+    LDA, QDA, naive Bayes (B6) & The price of distributional assumptions: a shared covariance, class-specific covariances on skewed amounts, and independence among near-collinear balances. \\
+    Decision tree, cost-complexity pruning (B7) & The bias--variance trade-off made readable: delay thresholds and their interactions, bought at the cost of very few distinct scores. \\
+    Random forest and bagging (B7) & Whether de-correlating trees, not merely averaging them, is what removes variance; out-of-bag error and permutation importance come free. \\
+    Gradient boosting and XGBoost (B7) & Whether sequential bias reduction beats variance reduction on a noisy target, and how much of that depends on shrinkage. \\
+    Support-vector machines, linear and RBF (B8) & Whether a margin loss that ignores ordering beyond the margin can rank risk as well as a proper scoring rule. \\
+    Feed-forward neural network (B9) & Whether learned interactions help when the strongest predictors are ordinal delay codes with step-like effects. \\
+    \midrule
+    TreeSHAP (beyond the syllabus) & Direction and size of each variable's push on each individual client, rather than one global ranking; additive by construction, so it can be checked. \\
+    Monotonically constrained XGBoost (beyond the syllabus) & The cost, in ranking quality, of the scorecard requirement that more arrears may never lower predicted risk. \\
+    Partial dependence and ICE (beyond the syllabus) & Whether the fitted surface carries the U-shaped utilisation effect a linear term cannot express, and whether effects add or interact. \\
+    \bottomrule
+  \end{tabular}
+\end{table}

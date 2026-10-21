@@ -1,0 +1,313 @@
+% MH6805 Machine Learning in Finance --- Group Project Proposal, Group B19
+% Typeset with the NeurIPS 2021 style file supplied by the instructor
+% (Latex Template/neurips_2021.sty).  Build:  ./build_proposal_tex.sh
+\documentclass{article}
+
+% [preprint] is the option the template prescribes for a non-anonymous paper
+% that is not a NeurIPS acceptance: it typesets the real \author block (the
+% contribution statement is mandatory for this course) and does not load the
+% anonymous-submission line numbers.  [final] is deliberately NOT used --- the
+% template reserves it for accepted papers.  No formatting parameter of the
+% style file is modified.
+\usepackage[preprint]{neurips_2021}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\renewcommand{\ttdefault}{lmtt}   % Type 1 T1 typewriter (no bitmap fonts in the PDF)
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{array}
+
+% [preprint] prints "Preprint. Under review." at the foot of page 1.  This is
+% coursework, so the slot carries the course identification instead.
+\makeatletter
+\renewcommand{\@noticestring}{%
+  MH6805 Machine Learning in Finance, Nanyang Technological University.
+  Group project proposal, Group B19.}
+\makeatother
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\title{Predicting Credit-Card Default:\\ A Comparative Study of\\ Machine-Learning Classifiers}
+
+\author{%
+  RUAN Hangjing\\
+  G2607546F\\
+  \texttt{hangjing001@e.ntu.edu.sg}
+  \And
+  LU Xinyu\\
+  G2603537D\\
+  \texttt{xinyu057@e.ntu.edu.sg}
+  \And
+  LI Jingwen\\
+  G2607526K\\
+  \texttt{jingwen013@e.ntu.edu.sg}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  A missed defaulter costs an issuer far more than a false alarm, so a default
+  model must be judged at an operating point, not by ranking alone. We predict
+  next-month default on the UCI \emph{default of credit card clients} data:
+  30,000 Taiwanese card holders, 29,965 after cleaning, 22.1\% defaulters. The
+  study compares KNN, regularised logistic regression, discriminant and naive
+  Bayes classifiers, pruned trees, random forests, boosted ensembles,
+  support-vector machines and a neural network on one fixed 70/30 stratified
+  split, with preprocessing and resampling inside cross-validated pipelines.
+  Preliminary runs price the threshold above the model: moving the logistic
+  cut-off from 0.5 to the 0.15 implied by an assumed 5:1 cost cuts expected cost
+  from 7{,}063 to 5{,}126, while the best model (XGBoost, test AUC 0.789 against
+  0.764) saves a further 145.
+\end{abstract}
+
+\paragraph{Contribution statement.}
+Group B19. Sections~1--4 and~6, the exploratory analysis, the shared split-and-evaluation
+contract (\texttt{code/common.py}), the aggregation and the threshold-and-cost
+analysis were done jointly, one third each. Each member owns three to four model
+families in Section~\ref{sec:prelim} and runs each one end to end --- data,
+tuning, interpretation, presentation: RUAN Hangjing the KNN benchmark, the
+logistic family and the PCA/K-means segmentation; LU Xinyu the pruned tree,
+random forest and bagging, gradient boosting and XGBoost; LI Jingwen the
+support-vector machines, the neural network, LDA/QDA/naive Bayes and the
+class-imbalance study with its leakage demonstration. The owner of every result
+file is recorded in \texttt{results/}. Not shared with any other module.
+
+\section{Introduction and problem statement}
+
+Unsecured consumer credit is one of the largest sources of credit losses for
+retail banks: when a card holder misses the minimum payment, the issuer loses the
+outstanding balance and incurs collection costs and a higher regulatory-capital
+charge. Predicting \emph{which} customers will default next month lets a bank act
+early --- tighten limits, reprice, prioritise collections or decline an
+application --- while leaving reliable customers untouched. The task is binary
+classification with two very different error costs: a missed defaulter (false
+negative) costs several times more than a false alarm (false positive), so the
+operating threshold, and not only the ranking quality, matters.
+
+This project builds and compares classifiers that predict next-month default from
+a customer's credit limit, demographics and six months of billing and repayment
+history. Rather than searching for ``the best'' model, the objective is a
+\textbf{comparative study}: how much a simple, interpretable model already
+captures, how much non-linear and ensemble methods add, how class imbalance
+should be handled, and what the results mean for a risk manager.
+
+\section{Dataset}
+
+\paragraph{Source and target.}
+\emph{Default of credit card clients}~[1], UCI Machine Learning Repository,
+dataset 350 (\url{https://archive.ics.uci.edu/dataset/350/default+of+credit+card+clients}):
+real records of 30,000 card holders of a Taiwanese bank, April to September 2005,
+in 25 columns (an ID, 23 features, the target). The raw file is public, so it is
+not attached; the cleaning and feature-engineering code that reproduces the
+processed data ships with the final report. The target \texttt{DEFAULT} is 1 if
+the client defaulted on the October 2005 payment:
+\textbf{6,636 defaulters (22.1\%) against 23,364 non-defaulters (77.9\%)} --- a
+moderately imbalanced problem in which a trivial ``never default'' rule is
+already 77.9\% accurate.
+
+\paragraph{Variables.}
+The 23 raw predictors are the credit limit \texttt{LIMIT\_BAL} (NT\$); the
+demographics \texttt{SEX}, \texttt{EDUCATION}, \texttt{MARRIAGE}, \texttt{AGE};
+six repayment-status codes \texttt{PAY\_1}--\texttt{PAY\_6} (September back to
+April; $-1$ paid duly, $k \ge 1$ a delay of $k$ months, observed range $-2 \dots
+8$); and the monthly bill and payment amounts
+\texttt{BILL\_AMT1}--\texttt{BILL\_AMT6}, \texttt{PAY\_AMT1}--\texttt{PAY\_AMT6}.
+From these we engineer six features encoding credit-risk domain knowledge, giving
+29 predictors in all: utilisation (\texttt{UTIL\_1}, \texttt{UTIL\_MEAN}), the
+average payment-to-bill ratio (\texttt{PAY\_RATIO\_MEAN}), months in arrears
+(\texttt{N\_MONTHS\_DELAYED}), the longest delay (\texttt{MAX\_DELAY}) and the
+six-month balance trend relative to the limit (\texttt{BILL\_TREND}).
+
+\paragraph{Data quality.}
+There are no missing values. We dropped 35 exact duplicate rows (29,965 clients
+remain), recoded the undocumented category codes (\texttt{EDUCATION} $\in
+\{0,5,6\}$, \texttt{MARRIAGE} $=0$) to ``others'', and kept the undocumented
+repayment codes $-2$ and $0$: they mean ``no consumption'' and ``revolving
+credit'' and carry information, their default rates being 13.7\% and 12.9\%. Bill
+amounts can be negative (6.4\% of clients) and 17.2\% paid nothing in the latest
+month; both are genuine and retained. The six bill amounts are collinear ($r
+\approx 0.8$--$0.95$), so the linear models are regularised and their coefficients
+read with care.
+
+\paragraph{Why no external data.}
+Enriching the panel with an exogenous series was considered and rejected on
+mechanical grounds: a join needs a key and this file has none --- no geography, no
+industry, no client-level date --- and all 30,000 clients share one
+April--September 2005 window, so any macroeconomic series would enter as a single
+constant column and add nothing. The room for enrichment is therefore feature
+engineering on the existing panel, which is what the six derived features do.
+
+\paragraph{Exploratory findings.}
+All statistics below use the training partition only ($n = 20{,}975$); the full
+set of exploratory plots is in the code repository. The most recent repayment status is by far the
+strongest single signal: the default rate rises from 12.9\% for clients on
+revolving credit in September to 33.9\% after one month of delay and 67.6\% after
+two. It falls monotonically with the credit limit (32.1\% in the lowest quintile
+against 13.7\% in the highest), is mildly higher for men and for lower education,
+and is U-shaped in age. The months in arrears and the longest
+delay are the most informative engineered features (univariate AUC 0.72 and 0.71);
+utilisation and the payment-to-bill ratio carry only weak signal (0.55--0.59),
+and linear correlations with the target are weak ($|r| \le 0.40$) --- which
+suggests non-linear methods may add value.
+
+\section{Objectives}
+
+\begin{enumerate}
+\item \textbf{Quantify the value of model complexity.} Against a KNN benchmark
+  and a logistic baseline, measure how much each family in Table~\ref{tab:methods}
+  improves threshold-free ranking quality (test ROC-AUC, average precision), and
+  whether the gaps are statistically meaningful (bootstrap confidence intervals
+  for AUC differences).
+\item \textbf{Choose the operating point for the business, not the default 0.5.}
+  Report each model's confusion matrix at 0.5 and at thresholds tuned on the
+  training data to maximise F1 and to minimise an assumed 5:1 cost of false
+  negatives to false positives.
+\item \textbf{Handle class imbalance correctly and price its effect.} Compare no
+  resampling, class weighting, SMOTE and under-sampling applied \emph{inside} the
+  folds, and demonstrate the inflated results obtained when resampling wrongly
+  precedes the split.
+\item \textbf{Interpret, not only predict.} Identify the strongest predictors
+  (odds ratios, permutation and impurity importance), check them against
+  credit-risk intuition, and profile customer segments with PCA and K-means.
+\end{enumerate}
+
+\section{Proposed methods}
+
+\paragraph{Protocol.}
+The cleaned data are split once, stratified by the target, into a 70\% training
+set (20,975 clients) and a 30\% test set (8,990 clients) under seed 2607526; the
+test set is touched exactly once per model, for the final evaluation. All
+preprocessing --- standardisation, one-hot encoding of
+\texttt{SEX}/\texttt{EDUCATION}/\texttt{MARRIAGE}, any resampling, the PCA and
+K-means features --- sits inside
+a scikit-learn \texttt{Pipeline}, so it is re-fitted within each fold of the
+5-fold stratified cross-validation that selects hyperparameters and no
+information from validation or test rows leaks into training. The tuning
+criterion is cross-validated ROC-AUC; average precision, Brier score and
+per-class precision/recall/F1 are reported alongside, with all models' ROC and
+precision--recall curves overlaid on one figure, bootstrap intervals for the AUC
+differences and calibration plots. Method definitions follow the course
+text~[2].
+
+\paragraph{Why a 5:1 cost ratio.}
+The ratio is an assumption, anchored three ways. It is the cost matrix of the UCI
+Statlog German Credit benchmark~[3] (a bad customer accepted costs 5, the reverse
+1). A back-of-the-envelope on our training data implies more: a defaulter's median
+outstanding bill is NT\$19,868, so a missed default at a 50--70\%
+loss-given-default costs NT\$10--14k, against roughly NT\$340 of forgone monthly
+margin on a good customer --- 10:1 or more, making 5:1 conservative. A sensitivity
+analysis from 1:1 to 20:1 is also reported: the same three ensembles lead from 3:1
+to 20:1, though their order swaps, while the optimal threshold moves from 0.27 to
+0.05. The lecture's closed form for the cut-off implied by a
+cost matrix, $t = C_{FP}/(C_{FN}+C_{FP})$, gives $1/6 \approx 0.167$ at 5:1, and
+our empirical search on training out-of-fold probabilities returns 0.15 ---
+reproducing the theoretical value. That formula holds only for calibrated
+probabilities, which is why calibration is reported too.
+
+\begin{table}[t]
+  \caption{Proposed methods, rationale and tuning grids.}
+  \label{tab:methods}
+  \centering
+  \small
+  \begin{tabular}{@{}L{0.235\linewidth}L{0.375\linewidth}L{0.325\linewidth}@{}}
+    \toprule
+    Method (lecture) & Why it is included & Tuning \\
+    \midrule
+    K-nearest neighbours (B4) & Course benchmark; non-parametric, scale-sensitive & $K \in \{5,\dots,151\}$, uniform vs distance weights \\
+    Logistic regression: plain, ridge, lasso (B5, B6) & Interpretable baseline; coefficients as odds ratios, lasso selects & penalty strength $C$ on a log grid \\
+    LDA, QDA, naive Bayes (B6) & Generative rivals; price their distributional assumptions & QDA regularisation, NB smoothing \\
+    Decision tree, cost-complexity pruning (B7) & Transparent rules; exhibits over-fitting & \texttt{ccp\_alpha} path, max depth \\
+    Random forest and bagging; gradient boosting and XGBoost (B7) & Variance reduction and de-correlation, then bias reduction; permutation importance; usually the strongest tabular learners & \texttt{max\_features}, \texttt{min\_samples\_leaf}, 500 trees; depth, learning rate, trees, subsampling \\
+    Support-vector classifier, RBF-kernel SVM (B8) & Margin-based boundary; hinge against logistic loss & $C$, $\gamma$ on a stratified subsample, refitted on all training rows \\
+    Feed-forward neural network (B9) & Tests whether depth helps on tabular data & layers, L2 penalty, learning rate, early stopping \\
+    Class-imbalance handling (B4) & Weights, SMOTE, under-sampling inside the folds; leakage demo & sampling ratio, SMOTE $k$ \\
+    PCA, K-means, hierarchical clustering (B2, B3) & Segmentation; components and labels as extra features & components, $K$ by elbow and silhouette \\
+    TreeSHAP (beyond the syllabus) & Importance says which variable matters; Shapley values say in which direction it pushes each prediction & \texttt{shap} TreeExplainer on the tuned XGBoost; beeswarm and dependence plots \\
+    Monotonically constrained XGBoost (beyond the syllabus) & More delay can never lower predicted risk, so the model reads like a scorecard; prices that constraint in AUC & \texttt{monotone\_constraints} $\pm 1$ on delay, utilisation, limit, payment ratio \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{Preliminary results}
+\label{sec:prelim}
+
+The pipeline, the shared evaluation function and a first round of every model
+family have been implemented and run on the fixed split; Table~\ref{tab:results}
+reports the seven main models. A plain logistic regression on all 29 features
+reaches a \textbf{test AUC of 0.764} (average precision 0.523 against a
+prevalence of 0.221). At threshold 0.5 it is 81.5\%
+accurate (majority-class accuracy 77.9\%) but recovers only \textbf{32\% of the
+defaulters} and costs 7{,}063 --- more than the 7{,}001 of flagging every
+customer; the cost-minimising threshold 0.15 recovers 74\% at a 36\%
+false-positive rate, for 5{,}126. Tree
+ensembles lift the ranking to AUC 0.787--0.789 and average precision 0.58. Against
+the KNN benchmark (0.771) only the tree-based models and, marginally, the neural
+network are better; the linear models and the RBF-kernel SVM fall below it, and
+explaining those shortfalls (limited non-linearity; an SVM tuned on a 6,000-row
+subsample, Platt-scaled) is part of the planned interpretation.
+Three working hypotheses follow: the linear model already captures most of the
+signal, non-linearity adding only 0.025 AUC (paired bootstrap 95\% CI
+[0.018, 0.031]); the threshold dominates the choice of model; and the ranking
+should be explainable by the interaction of
+repayment delays with limit and utilisation, which feature-importance and
+partial-dependence analysis will test.
+
+\begin{table}[t]
+  \caption{First-round results. CV AUC is the mean 5-fold out-of-fold AUC on the
+    training set; all other columns are on the held-out test set (8,990 clients).
+    Thresholds are tuned on training out-of-fold probabilities; cost is the test
+    expected cost at a 5:1 false-negative\,:\,false-positive ratio, against 7,001
+    for flagging everybody and 9,945 for flagging nobody.}
+  \label{tab:results}
+  \centering
+  \small
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular}{@{}lccccccc@{}}
+    \toprule
+    & CV & Test & Test & F1 & Recall / FPR & Cost & Cost at \\
+    Model & AUC & AUC & AP & thresh. & at cost thresh. & at 0.5 & cost thresh. \\
+    \midrule
+    Logistic regression (baseline) & 0.760 & 0.764 & 0.523 & 0.30 & 0.74 / 0.36 & 7,063 & 5,126 \\
+    K-nearest neighbours ($K = 101$) & 0.770 & 0.771 & 0.542 & 0.25 & 0.75 / 0.39 & 6,854 & 5,219 \\
+    Pruned decision tree & 0.769 & 0.776 & 0.535 & 0.28 & 0.76 / 0.38 & 6,933 & 5,085 \\
+    Random forest (500 trees) & 0.785 & 0.787 & 0.576 & 0.31 & 0.76 / 0.37 & 6,598 & 4,998 \\
+    XGBoost & 0.786 & 0.789 & 0.578 & 0.27 & 0.78 / 0.40 & 6,642 & \textbf{4,981} \\
+    Feed-forward neural network & 0.776 & 0.773 & 0.551 & 0.27 & 0.71 / 0.32 & 6,625 & 5,136 \\
+    SVM, RBF kernel & 0.761 & 0.762 & 0.494 & 0.42 & 0.69 / 0.29 & 9,316 & 5,155 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{Work plan and division of labour}
+
+\textbf{14--18 Sep:} cleaning, feature engineering, EDA, the shared evaluation
+code and this proposal. \textbf{19 Sep -- 10 Oct:} the model families, each owner
+end to end --- KNN, the logistic family, PCA and clustering (RUAN Hangjing);
+tree, random forest and bagging, gradient boosting, XGBoost (LU Xinyu); SVM,
+neural network, LDA/QDA/naive Bayes, class-imbalance study (LI Jingwen).
+\textbf{11--20 Oct:} aggregation --- comparison table, overlaid ROC/PR curves,
+bootstrap confidence intervals, threshold and cost analysis, calibration.
+\textbf{21--26 Oct:} drafting the final report in this template ($\le 7$ pages
+including references) and the slides, which are due noon on the day before the
+presentation. \textbf{Presentation week (27 Oct, to be confirmed):} each member
+presents the models they own and all answer questions; the report, code and data
+follow two days later. Every stage but the second is joint.
+
+\section*{References}
+
+\small
+[1] Yeh, I.-C.\ \& Lien, C.-H.\ (2009) The comparisons of data mining techniques
+for the predictive accuracy of probability of default of credit card clients.
+{\it Expert Systems with Applications} {\bf 36}(2):2473--2480.
+
+[2] James, G., Witten, D., Hastie, T.\ \& Tibshirani, R.\ (2021) {\it An
+Introduction to Statistical Learning}, 2nd ed. New York: Springer.
+
+[3] Hofmann, H.\ (1994) {\it Statlog (German Credit Data)}. UCI Machine Learning
+Repository, dataset 144.
+
+\end{document}

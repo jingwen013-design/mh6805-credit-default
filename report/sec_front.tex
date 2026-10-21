@@ -1,0 +1,55 @@
+\begin{abstract}
+  Because a missed defaulter costs several times a false alarm, a default model
+  must be judged at an operating point, not by ranking alone. We compare ten
+  classifiers on the UCI credit-card default data (29,965 Taiwanese card holders,
+  22.1\% defaulters) against a $K$-nearest-neighbour benchmark and a logistic
+  baseline, every choice made on training rows and each configuration scored
+  once on a frozen 30\% test set. Tree ensembles rank best (XGBoost: test
+  AUC 0.789, average precision 0.578) but gain only 0.025 AUC over the logit, the
+  random forest is indistinguishable from XGBoost, and six months of repayment
+  status carry nearly all the signal, additively. Class weights, SMOTE and
+  under-sampling inside the folds move the intercept, not the ranking. At a 5:1
+  cost ratio, moving the logit's cut-off from 0.5 to 0.15 saves 1,937 [1,604,
+  2,218] of its 7,063 test cost units; switching to XGBoost saves a further 145
+  [$-$18, 299].
+\end{abstract}
+
+\paragraph{Contribution statement.}
+Group B19. Model families are owned end to end (code, tuning, interpretation,
+presentation): RUAN Hangjing the KNN benchmark, the logistic family, nested
+cross-validation and PCA/K-means; LU Xinyu the pruned tree, random forest and
+bagging, gradient boosting and XGBoost, TreeSHAP, monotone constraints and
+partial dependence; LI Jingwen the support-vector machines, the neural network,
+LDA/QDA/naive Bayes, the class-imbalance study and leakage demonstration, Platt
+recalibration, and the freeze and aggregation code. Shares per section (RUAN/LU/LI, \%):
+\S1~\textcolor{red}{30/20/50}; \S2~\textcolor{red}{25/15/60};
+\S3~\textcolor{red}{30/25/45}; \S4~\textcolor{red}{30/35/35};
+\S5~\textcolor{red}{15/60/25}; \S6~\textcolor{red}{40/15/45};
+\S7~\textcolor{red}{34/33/33}; code and reproducibility
+\textcolor{red}{20/25/55}; presentation \textcolor{red}{33/33/34}
+(Table~\ref{tab:a-workload}; red = draft awaiting the group's confirmation). Not shared with any other module.
+
+\section{Introduction}
+
+Unsecured revolving credit is one of the largest sources of loss for a retail
+bank: a defaulter's balance is written off, while the upside on a good customer
+is a thin monthly margin. The two errors are not symmetric, so a model that merely ranks clients
+well is not yet a decision; the question is which model, at which cut-off.
+
+The study is comparative in the sense of the course [6] rather than a hunt for
+a winner. Two models are the reference points --- a $K$-nearest-neighbour
+classifier, the non-parametric benchmark, and a logistic regression, the
+scorecard a credit department could defend to a regulator --- and every other
+family is read against them, each gap explained by a mechanism rather than a
+rank. Ranking is judged by ROC-AUC and average precision, calibration by the
+Brier score and the decision by expected cost; accuracy is context only. Three
+methods beyond the syllabus --- TreeSHAP [7], a monotonically constrained
+XGBoost and partial dependence [4] --- carry the inference. Four questions
+organise what follows. (1)~\emph{Value of complexity}: how much ranking quality do
+non-linear and ensemble methods add over the two reference models, beyond
+test-set noise? (2)~\emph{Operating point}: cut at 0.5, at maximum $F_1$, or at
+the threshold implied by an asymmetric cost --- and does that choice outweigh the
+model's? (3)~\emph{Class imbalance}: do class weights, SMOTE and under-sampling
+inside the folds help, and what does resampling before the split fabricate?
+(4)~\emph{Inference}: which characteristics drive default, in which direction, and
+do the coefficient, impurity, permutation and Shapley accounts agree?

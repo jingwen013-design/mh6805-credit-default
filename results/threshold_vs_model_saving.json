@@ -1,0 +1,51 @@
+{
+ "generated_by": "code/threshold_vs_model_saving.py",
+ "B": 1000,
+ "seed": 2607526,
+ "ratios": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  7,
+  10,
+  15,
+  20
+ ],
+ "models": {
+  "baseline": "logistic (16 Sep frozen)",
+  "challenger": "xgboost (16 Sep frozen)"
+ },
+ "at_5_to_1": {
+  "t_logistic": 0.15,
+  "t_xgb": 0.15,
+  "threshold_saving": [
+   1937,
+   1604,
+   2218
+  ],
+  "model_saving": [
+   145,
+   -18,
+   299
+  ]
+ },
+ "ratios_where_model_saving_ci_includes_zero": [
+  5,
+  20
+ ],
+ "degenerate_ratios": [
+  20
+ ],
+ "proposal_stage_table": {
+  "t_logistic": 0.17,
+  "threshold_saving": 1924.0,
+  "threshold_saving_lo": 1634.0,
+  "threshold_saving_hi": 2193.0,
+  "model_saving": 160.0,
+  "model_saving_lo": -8.0,
+  "model_saving_hi": 331.0
+ },
+ "reading": "Moving the cut-off saves far more than changing the model at every ratio above 1:1, and the model saving's interval includes zero at some ratios; at 20:1 the optimal cut-off is \u22480.01, i.e. flag almost everyone, so the threshold 'saving' there is the trivial rule, not a model result."
+}

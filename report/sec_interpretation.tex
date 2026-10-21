@@ -1,0 +1,37 @@
+\section{Interpretation}
+
+\paragraph{Why these data suit tree-based methods.}
+Three properties of a credit file, not a taste for complexity, explain the ensembles' edge: arrears are ordinal with a threshold, not a slope, so a tree splits where collections changes treatment while one coefficient must price every missed payment alike; exposure is U-shaped --- the dormant client and the client at the limit both default more than one drawing 4--13\% of the line --- and the partial-dependence curve keeps that shape (interior minimum 0.204 at 0.084 utilisation, 0.024 below the left end and 0.040 below the right; Figure~\ref{fig:pdp-main}); and the columns mix NT\$ amounts, ordinal codes and demographics, which a scale-free splitter takes untransformed. Yet the mechanism buys little --- the best booster beats the KNN benchmark by 0.0181 test AUC and the ten models of Table~\ref{tab:headline} span 0.049 (0.7398--0.7887) --- because thresholds and a shallow U are small departures from additivity. The proposal expected arrears to interact with limit and utilisation; they do not: Friedman's $H$ for the September status against the credit limit is 0.061 on the probability scale, and the largest departure from the sum of the one-way curves is 0.011 against a surface range of 0.254 (Figure~\ref{fig:pdp-interaction}). The effects add, and the trees win at the margins.
+
+\paragraph{Four ways to rank a variable, and what they disagree about.}
+All four measures in Table~\ref{tab:importance} put the September status first; agreement stops there. Across the 29 predictors, Spearman between impurity importance (MDI) and Breiman's out-of-bag permutation [1] is 0.310 ($n = 29$); the two permutation measures agree at 0.719, and mean $|$SHAP$|$ agrees with them at 0.756 and 0.772 but with MDI only at 0.433. MDI fails in the textbook direction, rewarding columns with many split points: the August and July codes rank 4th and 5th on MDI but 22nd and 24th out of bag. Permutation says how much \emph{this fitted model} leans on a column, not what would be lost without it; refitting answers the second: dropping mean utilisation costs the forest nothing ($-0.00004$ out-of-bag AUC), dropping the September status 0.0058 (Table~\ref{tab:a-refit}). Only the current arrears state is irreplaceable.
+
+\begin{table}[t]
+  \caption{Four ways to rank the same predictor (ranks over all 29). MDI, in-sample permutation and out-of-bag permutation come from the tuned random forest, mean $|$SHAP$|$ from the tuned XGBoost; ``OOB AUC drop'' is the out-of-bag AUC lost when the column is permuted in the \emph{fitted} forest. Full table, rank correlations and refit losses: Tables~\ref{tab:a-importance}--\ref{tab:a-refit}.}
+  \label{tab:importance}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}lcccrc@{}}
+    \toprule
+     & \multicolumn{3}{c}{Random forest, rank} & OOB AUC & XGBoost \\
+    \cmidrule(lr){2-4}
+    Credit-risk reading (variable) & MDI & Train & OOB & drop & $|$SHAP$|$ \\
+    \midrule
+    Arrears in September (PAY\_1)          & 1  & 1  & 1  & 0.0114    & 1  \\
+    Worst delay, six months (MAX\_DELAY)   & 2  & 7  & 7  & 0.0009    & 2  \\
+    Months in arrears (N\_MONTHS\_DELAYED) & 3  & 17 & 19 & 0.0000    & 3  \\
+    Average utilisation (UTIL\_MEAN)       & 6  & 2  & 2  & 0.0021    & 5  \\
+    Latest balance (BILL\_AMT1)            & 12 & 5  & 3  & 0.0018    & 4  \\
+    Credit limit (LIMIT\_BAL)              & 13 & 4  & 4  & 0.0017    & 6  \\
+    Arrears in August (PAY\_2)             & 4  & 22 & 22 & 0.0000    & 21 \\
+    Arrears in July (PAY\_3)               & 5  & 23 & 24 & $-0.0001$ & 24 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Direction, not just magnitude.}
+A Shapley value [7] is a feature's average marginal contribution over all orders in which features could enter, so contributions sum exactly to the gap between a client's log-odds and the average client's (the base value, $-1.263$ log-odds, is 0.2205, the portfolio default rate). Importance cannot say which way a variable pushes; a signed attribution can: arrears push towards default (correlation between a client's value and its own contribution $+0.69$ for the September code, $+0.92$ for the longest delay, $+0.96$ for the delay count), a larger limit away ($-0.81$; Figure~\ref{fig:shap-beeswarm}) --- the signs a credit officer would state before seeing the model. With bills correlated at 0.80--0.95, a variable can still be credited for a neighbour's information.
+
+\paragraph{A model that reads like a scorecard.}
+Right signs on average are weaker than a lender needs. On the median profile the unconstrained booster moves against the required direction on 24 grid steps across the 13 constrained features (3 on the September status), and swept on 200 random profiles the September status lowers its risk on all 200 (576 of 2,000 steps): a client told another missed payment improved their score. Constraining XGBoost ($+1$ on the repayment codes, delay counters, utilisation and balance trend; $-1$ on limit and payment ratio; Table~\ref{tab:a-monotone}) removes every violation (Figure~\ref{fig:monotone-pay1}), for test AUC 0.7887 to 0.7870 ($-0.0016$; paired bootstrap $[-0.0030, -0.0002]$) and AP 0.5784 to 0.5725. A bank would pay: the loss is a seventh of the sampling noise on one test AUC ($\pm 0.012$), and a score that falls as arrears rise is indefensible to a regulator.

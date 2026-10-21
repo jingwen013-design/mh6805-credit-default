@@ -1,0 +1,186 @@
+{
+ "name": "TreeSHAP attribution for the tuned XGBoost",
+ "analysis": "shap",
+ "member": "LU Xinyu",
+ "seed": 2607526,
+ "model": {
+  "source": "results/xgboost.json",
+  "hyper_parameters": {
+   "learning_rate": 0.03,
+   "max_depth": 3,
+   "min_child_weight": 5,
+   "n_estimators": 300,
+   "subsample": 0.8,
+   "colsample_bytree": 0.8,
+   "objective": "binary:logistic",
+   "tree_method": "hist",
+   "scale_pos_weight": 1.0,
+   "random_state": 2607526,
+   "eval_metric": "auc",
+   "n_jobs": 2
+  },
+  "refit_seconds": 0.44,
+  "reproduction_check": {
+   "train_auc_refit": 0.8081612277767536,
+   "train_auc_stored": 0.8081612277767536,
+   "abs_diff": 0.0,
+   "passed": true
+  }
+ },
+ "explained": {
+  "rows": "all 20,975 training clients (the test set is not read)",
+  "n_transformed_columns": 32,
+  "scale": "margin (log-odds); the probability scale is not additive",
+  "beeswarm_subsample": 2000,
+  "seconds": 1.0
+ },
+ "local_accuracy": {
+  "check": "base_value + sum(shap values) == raw margin for every row",
+  "max_abs_error": 3.0994415283203125e-06,
+  "passed": true,
+  "base_value": -1.262877345085144,
+  "base_value_as_probability": 0.22047897097836072
+ },
+ "top_features_by_mean_abs_shap": [
+  {
+   "feature": "PAY_1",
+   "mean_abs_shap": 0.2979816794395447,
+   "corr_value_vs_shap": 0.6946004536747125,
+   "shap_rank": 1
+  },
+  {
+   "feature": "MAX_DELAY",
+   "mean_abs_shap": 0.2814875543117523,
+   "corr_value_vs_shap": 0.9168956629820135,
+   "shap_rank": 2
+  },
+  {
+   "feature": "N_MONTHS_DELAYED",
+   "mean_abs_shap": 0.23031307756900787,
+   "corr_value_vs_shap": 0.9582399455224903,
+   "shap_rank": 3
+  },
+  {
+   "feature": "BILL_AMT1",
+   "mean_abs_shap": 0.11277835071086884,
+   "corr_value_vs_shap": -0.3294414919319443,
+   "shap_rank": 4
+  },
+  {
+   "feature": "UTIL_MEAN",
+   "mean_abs_shap": 0.11001814901828766,
+   "corr_value_vs_shap": 0.7236736236338756,
+   "shap_rank": 5
+  },
+  {
+   "feature": "LIMIT_BAL",
+   "mean_abs_shap": 0.1024092584848404,
+   "corr_value_vs_shap": -0.8064825204379573,
+   "shap_rank": 6
+  },
+  {
+   "feature": "PAY_AMT1",
+   "mean_abs_shap": 0.08578174561262131,
+   "corr_value_vs_shap": -0.36364405088597357,
+   "shap_rank": 7
+  },
+  {
+   "feature": "UTIL_1",
+   "mean_abs_shap": 0.07092031091451645,
+   "corr_value_vs_shap": 0.7479487783594697,
+   "shap_rank": 8
+  },
+  {
+   "feature": "BILL_TREND",
+   "mean_abs_shap": 0.07087314128875732,
+   "corr_value_vs_shap": -0.39999744391601355,
+   "shap_rank": 9
+  },
+  {
+   "feature": "PAY_AMT3",
+   "mean_abs_shap": 0.06674396991729736,
+   "corr_value_vs_shap": -0.2263787158848868,
+   "shap_rank": 10
+  }
+ ],
+ "direction": {
+  "definition": "Pearson correlation between a feature's value and its own SHAP value over the training rows; positive means larger values push the prediction towards default.",
+  "PAY_1": 0.6946004536747125,
+  "UTIL_MEAN": 0.7236736236338756,
+  "LIMIT_BAL": -0.8064825204379573,
+  "N_MONTHS_DELAYED": 0.9582399455224903
+ },
+ "spearman_vs_other_measures": {
+  "mdi": 0.4330049261083743,
+  "perm_train": 0.7561576354679801,
+  "perm_oob": 0.7719211822660096
+ },
+ "worked_example": {
+  "client_row_in_train": 10000,
+  "predicted_probability": 0.8614470958709717,
+  "margin": 1.8273611068725586,
+  "base_value": -1.262877345085144,
+  "top_contributions": [
+   {
+    "feature": "PAY_1",
+    "value": 2.0,
+    "shap_margin": 0.8649744987487793
+   },
+   {
+    "feature": "N_MONTHS_DELAYED",
+    "value": 6.0,
+    "shap_margin": 0.5605509281158447
+   },
+   {
+    "feature": "MAX_DELAY",
+    "value": 7.0,
+    "shap_margin": 0.5482695698738098
+   },
+   {
+    "feature": "LIMIT_BAL",
+    "value": 10000.0,
+    "shap_margin": 0.21710194647312164
+   },
+   {
+    "feature": "BILL_AMT1",
+    "value": 2400.0,
+    "shap_margin": 0.1581122875213623
+   },
+   {
+    "feature": "PAY_AMT3",
+    "value": 0.0,
+    "shap_margin": 0.13068437576293945
+   },
+   {
+    "feature": "BILL_TREND",
+    "value": 0.0,
+    "shap_margin": 0.0656488835811615
+   },
+   {
+    "feature": "PAY_AMT1",
+    "value": 0.0,
+    "shap_margin": 0.06325968354940414
+   }
+  ],
+  "reading": "base value + every feature's contribution reproduces this client's log-odds exactly; that additivity is what an importance ranking cannot give."
+ },
+ "one_sentence_definition": "A feature's Shapley value is its average marginal contribution to the prediction over all orders in which the features could be added to the model, so the contributions of all features sum exactly to the difference between this prediction and the average prediction.",
+ "limitations": [
+  "TreeSHAP is exact for this model, but the attribution is to the FITTED model, not to the world: a variable can receive a large contribution because it proxies for another.",
+  "Contributions live on the log-odds scale, where they are additive; they are not additive after the logistic transform, so they must not be read as probability shares.",
+  "The interventional/tree-path convention TreeExplainer uses splits credit between correlated features in a way that depends on the trees actually grown, which matters here because the six bill amounts correlate at r = 0.80-0.95."
+ ],
+ "files": {
+  "results": [
+   "shap_summary.json",
+   "shap_importance.csv"
+  ],
+  "figures": [
+   "shap_beeswarm.png",
+   "shap_dependence_pay1.png",
+   "shap_dependence_util_mean.png",
+   "shap_waterfall.png"
+  ]
+ },
+ "seconds": 3.8
+}

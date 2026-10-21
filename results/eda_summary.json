@@ -1,0 +1,962 @@
+{
+ "component": "eda",
+ "member": "shared",
+ "seed": 2607526,
+ "analysis_partition": "Data quality and target distribution: raw/cleaned full data. All group default rates, distributions, correlations and univariate AUCs: TRAINING partition only (test set never inspected).",
+ "dataset": {
+  "source": "UCI Default of Credit Card Clients (Yeh & Lien 2009), Taiwan, Apr–Sep 2005",
+  "n_raw_rows": 30000,
+  "n_raw_cols_excl_id": 24,
+  "n_raw_features": 23,
+  "n_duplicates_dropped": 35,
+  "n_after_dedup": 29965,
+  "n_features_final": 29,
+  "n_engineered": 6,
+  "n_numeric_features": 26,
+  "n_categorical_features": 3,
+  "missing_cells": 0
+ },
+ "class_balance": {
+  "raw": {
+   "n": 30000,
+   "n_default": 6636,
+   "rate": 0.2212
+  },
+  "cleaned": {
+   "n": 29965,
+   "n_default": 6630,
+   "n_no_default": 23335,
+   "rate": 0.2213
+  },
+  "train": {
+   "n": 20975,
+   "n_default": 4641,
+   "rate": 0.2213
+  },
+  "test": {
+   "n": 8990,
+   "n_default": 1989,
+   "rate": 0.2212
+  },
+  "majority_class_accuracy": 0.7787,
+  "imbalance_ratio_neg_per_pos": 3.5196
+ },
+ "split": {
+  "test_size": 0.3,
+  "stratified": true,
+  "seed": 2607526,
+  "n_train": 20975,
+  "n_test": 8990
+ },
+ "data_quality": {
+  "missing_cells": 0,
+  "duplicates_dropped": 35,
+  "education_raw_codes": {
+   "0": 14,
+   "1": 10585,
+   "2": 14030,
+   "3": 4917,
+   "4": 123,
+   "5": 280,
+   "6": 51
+  },
+  "education_recoded_rows": 345,
+  "marriage_raw_codes": {
+   "0": 54,
+   "1": 13659,
+   "2": 15964,
+   "3": 323
+  },
+  "marriage_recoded_rows": 54,
+  "pay_status_undocumented_codes": {
+   "PAY_1": {
+    "-2": 2759,
+    "0": 14737
+   },
+   "PAY_2": {
+    "-2": 3782,
+    "0": 15730
+   },
+   "PAY_3": {
+    "-2": 4085,
+    "0": 15764
+   },
+   "PAY_4": {
+    "-2": 4348,
+    "0": 16455
+   },
+   "PAY_5": {
+    "-2": 4546,
+    "0": 16947
+   },
+   "PAY_6": {
+    "-2": 4895,
+    "0": 16286
+   }
+  },
+  "pay1_value_counts_raw": {
+   "-2": 2759,
+   "-1": 5686,
+   "0": 14737,
+   "1": 3688,
+   "2": 2667,
+   "3": 322,
+   "4": 76,
+   "5": 26,
+   "6": 11,
+   "7": 9,
+   "8": 19
+  },
+  "negative_bill_rows": 1930,
+  "negative_bill_cells": 3932,
+  "min_bill_amt": -339603,
+  "zero_payment_rows_any_month": 14542,
+  "zero_payment_rows_all_months": 1432,
+  "zero_bill_rows_all_months": 866,
+  "util_1_over_1_rows": 2115,
+  "util_1_negative_rows": 590,
+  "limit_bal": {
+   "min": 10000,
+   "median": 140000,
+   "mean": 167484.3227,
+   "max": 1000000
+  },
+  "age": {
+   "min": 21,
+   "median": 34,
+   "mean": 35.4855,
+   "max": 79
+  },
+  "sex_counts_raw": {
+   "1": 11888,
+   "2": 18112
+  }
+ },
+ "default_rate_by": {
+  "overall_train": 0.2213,
+  "PAY_1": {
+   "-2": {
+    "n": 1904,
+    "rate": 0.1366
+   },
+   "-1": {
+    "n": 3941,
+    "rate": 0.169
+   },
+   "0": {
+    "n": 10380,
+    "rate": 0.1292
+   },
+   "1": {
+    "n": 2540,
+    "rate": 0.3394
+   },
+   "2": {
+    "n": 1871,
+    "rate": 0.6761
+   },
+   "3": {
+    "n": 234,
+    "rate": 0.7735
+   },
+   "4": {
+    "n": 57,
+    "rate": 0.6667
+   },
+   "5": {
+    "n": 16,
+    "rate": 0.5625
+   },
+   "6": {
+    "n": 6,
+    "rate": 0.3333
+   },
+   "7": {
+    "n": 9,
+    "rate": 0.7778
+   },
+   "8": {
+    "n": 17,
+    "rate": 0.5882
+   }
+  },
+  "LIMIT_BAL_quintile": {
+   "10k–50k": {
+    "n": 5429,
+    "rate": 0.3205
+   },
+   "50k–100k": {
+    "n": 3370,
+    "rate": 0.2549
+   },
+   "100k–180k": {
+    "n": 4224,
+    "rate": 0.1948
+   },
+   "180k–270k": {
+    "n": 3810,
+    "rate": 0.1709
+   },
+   "270k–1000k": {
+    "n": 4142,
+    "rate": 0.1371
+   }
+  },
+  "AGE_band": {
+   "21–24": {
+    "n": 1862,
+    "rate": 0.2707
+   },
+   "25–29": {
+    "n": 4814,
+    "rate": 0.2111
+   },
+   "30–34": {
+    "n": 4278,
+    "rate": 0.1926
+   },
+   "35–39": {
+    "n": 3648,
+    "rate": 0.2193
+   },
+   "40–49": {
+    "n": 4490,
+    "rate": 0.2287
+   },
+   "50–59": {
+    "n": 1633,
+    "rate": 0.2474
+   },
+   "60+": {
+    "n": 250,
+    "rate": 0.264
+   }
+  },
+  "EDUCATION": {
+   "grad school": {
+    "n": 7321,
+    "rate": 0.19
+   },
+   "university": {
+    "n": 9831,
+    "rate": 0.2391
+   },
+   "high school": {
+    "n": 3480,
+    "rate": 0.2517
+   },
+   "others": {
+    "n": 343,
+    "rate": 0.0671
+   }
+  },
+  "MARRIAGE": {
+   "married": {
+    "n": 9536,
+    "rate": 0.2366
+   },
+   "single": {
+    "n": 11173,
+    "rate": 0.2079
+   },
+   "others": {
+    "n": 266,
+    "rate": 0.2331
+   }
+  },
+  "SEX": {
+   "male": {
+    "n": 8342,
+    "rate": 0.2445
+   },
+   "female": {
+    "n": 12633,
+    "rate": 0.2059
+   }
+  },
+  "PAY_AMT1_band": {
+   "0": {
+    "n": 3613,
+    "rate": 0.3593
+   },
+   "1–1k": {
+    "n": 1818,
+    "rate": 0.2316
+   },
+   "1k–2k": {
+    "n": 4690,
+    "rate": 0.2299
+   },
+   "2k–5k": {
+    "n": 5606,
+    "rate": 0.2009
+   },
+   "5k–10k": {
+    "n": 2987,
+    "rate": 0.143
+   },
+   ">10k": {
+    "n": 2261,
+    "rate": 0.1287
+   }
+  },
+  "UTIL_1_decile": {
+   "-0.62–0.00": {
+    "n": 2101,
+    "rate": 0.2423
+   },
+   "0.00–0.01": {
+    "n": 2094,
+    "rate": 0.2015
+   },
+   "0.01–0.04": {
+    "n": 2098,
+    "rate": 0.1516
+   },
+   "0.04–0.13": {
+    "n": 2097,
+    "rate": 0.144
+   },
+   "0.13–0.31": {
+    "n": 2098,
+    "rate": 0.1816
+   },
+   "0.31–0.53": {
+    "n": 2097,
+    "rate": 0.2241
+   },
+   "0.53–0.74": {
+    "n": 2097,
+    "rate": 0.268
+   },
+   "0.74–0.90": {
+    "n": 2098,
+    "rate": 0.2736
+   },
+   "0.90–0.98": {
+    "n": 2097,
+    "rate": 0.2451
+   },
+   "0.98–5.31": {
+    "n": 2098,
+    "rate": 0.2807
+   }
+  },
+  "N_MONTHS_DELAYED": {
+   "0": {
+    "n": 13933,
+    "rate": 0.1182
+   },
+   "1": {
+    "n": 3081,
+    "rate": 0.2973
+   },
+   "2": {
+    "n": 1341,
+    "rate": 0.3908
+   },
+   "3": {
+    "n": 808,
+    "rate": 0.5062
+   },
+   "4": {
+    "n": 663,
+    "rate": 0.5671
+   },
+   "5": {
+    "n": 203,
+    "rate": 0.5567
+   },
+   "6": {
+    "n": 946,
+    "rate": 0.6934
+   }
+  },
+  "MAX_DELAY": {
+   "0": {
+    "n": 13933,
+    "rate": 0.1182
+   },
+   "1": {
+    "n": 1162,
+    "rate": 0.2461
+   },
+   "2": {
+    "n": 5046,
+    "rate": 0.432
+   },
+   "3": {
+    "n": 551,
+    "rate": 0.6243
+   },
+   "4": {
+    "n": 147,
+    "rate": 0.6667
+   },
+   "5": {
+    "n": 46,
+    "rate": 0.4783
+   },
+   "6": {
+    "n": 16,
+    "rate": 0.4375
+   },
+   "7": {
+    "n": 54,
+    "rate": 0.8519
+   },
+   "8": {
+    "n": 20,
+    "rate": 0.55
+   }
+  }
+ },
+ "pay1_headline": {
+  "rate_pay1_le_0": 0.1397,
+  "n_pay1_le_0": 16225,
+  "rate_pay1_ge_2": 0.6842,
+  "n_pay1_ge_2": 2210,
+  "rate_pay1_eq_1": 0.3394,
+  "n_pay1_eq_1": 2540,
+  "share_of_defaults_with_pay1_ge_1": 0.5115,
+  "share_of_clients_with_pay1_ge_1": 0.2265
+ },
+ "correlations": {
+  "pearson_with_target": {
+   "N_MONTHS_DELAYED": 0.3924,
+   "MAX_DELAY": 0.3673,
+   "PAY_1": 0.319,
+   "PAY_2": 0.2611,
+   "PAY_3": 0.2337,
+   "PAY_4": 0.2147,
+   "PAY_5": 0.199,
+   "PAY_6": 0.1839,
+   "UTIL_MEAN": 0.118,
+   "UTIL_1": 0.0847,
+   "AGE": 0.012,
+   "BILL_AMT6": -0.007,
+   "BILL_AMT5": -0.0078,
+   "BILL_AMT4": -0.01,
+   "BILL_AMT3": -0.0147,
+   "BILL_AMT2": -0.0175,
+   "BILL_AMT1": -0.0233,
+   "BILL_TREND": -0.0276,
+   "PAY_AMT5": -0.052,
+   "PAY_AMT6": -0.0525,
+   "PAY_AMT2": -0.0565,
+   "PAY_AMT3": -0.0586,
+   "PAY_AMT4": -0.0623,
+   "PAY_AMT1": -0.0714,
+   "PAY_RATIO_MEAN": -0.0964,
+   "LIMIT_BAL": -0.1556
+  },
+  "spearman_with_target": {
+   "N_MONTHS_DELAYED": 0.3833,
+   "MAX_DELAY": 0.3696,
+   "PAY_1": 0.2868,
+   "PAY_2": 0.2147,
+   "PAY_3": 0.1938,
+   "PAY_4": 0.1719,
+   "PAY_5": 0.1553,
+   "PAY_6": 0.1407,
+   "UTIL_MEAN": 0.093,
+   "UTIL_1": 0.0713,
+   "AGE": 0.0049,
+   "BILL_AMT6": 0.0001,
+   "BILL_AMT5": -0.0084,
+   "BILL_AMT4": -0.0087,
+   "BILL_AMT3": -0.0118,
+   "BILL_AMT2": -0.0173,
+   "BILL_AMT1": -0.029,
+   "BILL_TREND": -0.0832,
+   "PAY_AMT5": -0.1155,
+   "PAY_AMT6": -0.1158,
+   "PAY_AMT4": -0.1286,
+   "PAY_RATIO_MEAN": -0.1312,
+   "PAY_AMT3": -0.14,
+   "PAY_AMT2": -0.1491,
+   "PAY_AMT1": -0.161,
+   "LIMIT_BAL": -0.1716
+  },
+  "top_feature_pairs_abs": [
+   {
+    "a": "BILL_AMT1",
+    "b": "BILL_AMT2",
+    "r": 0.9508
+   },
+   {
+    "a": "BILL_AMT5",
+    "b": "BILL_AMT6",
+    "r": 0.9436
+   },
+   {
+    "a": "BILL_AMT4",
+    "b": "BILL_AMT5",
+    "r": 0.9433
+   },
+   {
+    "a": "BILL_AMT2",
+    "b": "BILL_AMT3",
+    "r": 0.9295
+   },
+   {
+    "a": "BILL_AMT3",
+    "b": "BILL_AMT4",
+    "r": 0.9276
+   },
+   {
+    "a": "UTIL_1",
+    "b": "UTIL_MEAN",
+    "r": 0.9091
+   },
+   {
+    "a": "BILL_AMT4",
+    "b": "BILL_AMT6",
+    "r": 0.9035
+   },
+   {
+    "a": "BILL_AMT2",
+    "b": "BILL_AMT4",
+    "r": 0.8968
+   },
+   {
+    "a": "BILL_AMT1",
+    "b": "BILL_AMT3",
+    "r": 0.8895
+   },
+   {
+    "a": "BILL_AMT3",
+    "b": "BILL_AMT5",
+    "r": 0.8846
+   },
+   {
+    "a": "BILL_AMT1",
+    "b": "BILL_AMT4",
+    "r": 0.8633
+   },
+   {
+    "a": "BILL_AMT2",
+    "b": "BILL_AMT5",
+    "r": 0.8609
+   },
+   {
+    "a": "BILL_AMT3",
+    "b": "BILL_AMT6",
+    "r": 0.8551
+   },
+   {
+    "a": "BILL_AMT2",
+    "b": "BILL_AMT6",
+    "r": 0.8306
+   },
+   {
+    "a": "BILL_AMT1",
+    "b": "BILL_AMT5",
+    "r": 0.8291
+   }
+  ],
+  "n_feature_pairs_abs_r_over_0_8": 19,
+  "bill_amt_block": {
+   "min_r": 0.8006,
+   "mean_r": 0.8873,
+   "max_r": 0.9508
+  },
+  "pay_status_block": {
+   "min_r": 0.48,
+   "mean_r": 0.6556,
+   "max_r": 0.8208
+  },
+  "pay_amt_block": {
+   "min_r": 0.1243,
+   "mean_r": 0.1665,
+   "max_r": 0.2366
+  },
+  "strongest_positive_with_target": {
+   "feature": "N_MONTHS_DELAYED",
+   "r": 0.3924
+  },
+  "strongest_negative_with_target": {
+   "feature": "LIMIT_BAL",
+   "r": -0.1556
+  }
+ },
+ "univariate_auc": [
+  {
+   "feature": "N_MONTHS_DELAYED",
+   "auc_raw": 0.7235,
+   "auc_oriented": 0.7235,
+   "direction": "higher → more default",
+   "engineered": true
+  },
+  {
+   "feature": "MAX_DELAY",
+   "auc_raw": 0.7139,
+   "auc_oriented": 0.7139,
+   "direction": "higher → more default",
+   "engineered": true
+  },
+  {
+   "feature": "PAY_1",
+   "auc_raw": 0.6859,
+   "auc_oriented": 0.6859,
+   "direction": "higher → more default",
+   "engineered": false
+  },
+  {
+   "feature": "PAY_2",
+   "auc_raw": 0.637,
+   "auc_oriented": 0.637,
+   "direction": "higher → more default",
+   "engineered": false
+  },
+  {
+   "feature": "PAY_3",
+   "auc_raw": 0.6237,
+   "auc_oriented": 0.6237,
+   "direction": "higher → more default",
+   "engineered": false
+  },
+  {
+   "feature": "LIMIT_BAL",
+   "auc_raw": 0.3808,
+   "auc_oriented": 0.6192,
+   "direction": "higher → less default",
+   "engineered": false
+  },
+  {
+   "feature": "PAY_AMT1",
+   "auc_raw": 0.3883,
+   "auc_oriented": 0.6117,
+   "direction": "higher → less default",
+   "engineered": false
+  },
+  {
+   "feature": "PAY_4",
+   "auc_raw": 0.6085,
+   "auc_oriented": 0.6085,
+   "direction": "higher → more default",
+   "engineered": false
+  },
+  {
+   "feature": "PAY_AMT2",
+   "auc_raw": 0.3966,
+   "auc_oriented": 0.6034,
+   "direction": "higher → less default",
+   "engineered": false
+  },
+  {
+   "feature": "PAY_5",
+   "auc_raw": 0.5971,
+   "auc_oriented": 0.5971,
+   "direction": "higher → more default",
+   "engineered": false
+  },
+  {
+   "feature": "PAY_AMT3",
+   "auc_raw": 0.403,
+   "auc_oriented": 0.597,
+   "direction": "higher → less default",
+   "engineered": false
+  },
+  {
+   "feature": "PAY_RATIO_MEAN",
+   "auc_raw": 0.4088,
+   "auc_oriented": 0.5912,
+   "direction": "higher → less default",
+   "engineered": true
+  },
+  {
+   "feature": "PAY_6",
+   "auc_raw": 0.589,
+   "auc_oriented": 0.589,
+   "direction": "higher → more default",
+   "engineered": false
+  },
+  {
+   "feature": "PAY_AMT4",
+   "auc_raw": 0.411,
+   "auc_oriented": 0.589,
+   "direction": "higher → less default",
+   "engineered": false
+  },
+  {
+   "feature": "PAY_AMT6",
+   "auc_raw": 0.4201,
+   "auc_oriented": 0.5799,
+   "direction": "higher → less default",
+   "engineered": false
+  },
+  {
+   "feature": "PAY_AMT5",
+   "auc_raw": 0.4202,
+   "auc_oriented": 0.5798,
+   "direction": "higher → less default",
+   "engineered": false
+  },
+  {
+   "feature": "UTIL_MEAN",
+   "auc_raw": 0.5647,
+   "auc_oriented": 0.5647,
+   "direction": "higher → more default",
+   "engineered": true
+  },
+  {
+   "feature": "BILL_TREND",
+   "auc_raw": 0.4421,
+   "auc_oriented": 0.5579,
+   "direction": "higher → less default",
+   "engineered": true
+  },
+  {
+   "feature": "UTIL_1",
+   "auc_raw": 0.5496,
+   "auc_oriented": 0.5496,
+   "direction": "higher → more default",
+   "engineered": true
+  },
+  {
+   "feature": "BILL_AMT1",
+   "auc_raw": 0.4798,
+   "auc_oriented": 0.5202,
+   "direction": "higher → less default",
+   "engineered": false
+  },
+  {
+   "feature": "BILL_AMT2",
+   "auc_raw": 0.488,
+   "auc_oriented": 0.512,
+   "direction": "higher → less default",
+   "engineered": false
+  },
+  {
+   "feature": "BILL_AMT3",
+   "auc_raw": 0.4918,
+   "auc_oriented": 0.5082,
+   "direction": "higher → less default",
+   "engineered": false
+  },
+  {
+   "feature": "BILL_AMT4",
+   "auc_raw": 0.4939,
+   "auc_oriented": 0.5061,
+   "direction": "higher → less default",
+   "engineered": false
+  },
+  {
+   "feature": "BILL_AMT5",
+   "auc_raw": 0.4941,
+   "auc_oriented": 0.5059,
+   "direction": "higher → less default",
+   "engineered": false
+  },
+  {
+   "feature": "AGE",
+   "auc_raw": 0.5034,
+   "auc_oriented": 0.5034,
+   "direction": "higher → more default",
+   "engineered": false
+  },
+  {
+   "feature": "BILL_AMT6",
+   "auc_raw": 0.5,
+   "auc_oriented": 0.5,
+   "direction": "higher → more default",
+   "engineered": false
+  }
+ ],
+ "engineered_features": {
+  "UTIL_1": {
+   "count": 20975.0,
+   "mean": 0.4244,
+   "std": 0.4104,
+   "min": -0.6199,
+   "25%": 0.0225,
+   "50%": 0.3142,
+   "75%": 0.8327,
+   "max": 5.3095,
+   "pearson_with_target": 0.0847,
+   "spearman_with_target": 0.0713,
+   "univariate_auc": 0.5496
+  },
+  "UTIL_MEAN": {
+   "count": 20975.0,
+   "mean": 0.3721,
+   "std": 0.3499,
+   "min": -0.2326,
+   "25%": 0.0307,
+   "50%": 0.2826,
+   "75%": 0.6888,
+   "max": 2.7263,
+   "pearson_with_target": 0.118,
+   "spearman_with_target": 0.093,
+   "univariate_auc": 0.5647
+  },
+  "PAY_RATIO_MEAN": {
+   "count": 20975.0,
+   "mean": 0.6942,
+   "std": 1.2509,
+   "min": 0.0,
+   "25%": 0.04,
+   "50%": 0.0783,
+   "75%": 0.8333,
+   "max": 5.0,
+   "pearson_with_target": -0.0964,
+   "spearman_with_target": -0.1312,
+   "univariate_auc": 0.5912
+  },
+  "N_MONTHS_DELAYED": {
+   "count": 20975.0,
+   "mean": 0.8358,
+   "std": 1.5564,
+   "min": 0.0,
+   "25%": 0.0,
+   "50%": 0.0,
+   "75%": 1.0,
+   "max": 6.0,
+   "pearson_with_target": 0.3924,
+   "spearman_with_target": 0.3833,
+   "univariate_auc": 0.7235
+  },
+  "MAX_DELAY": {
+   "count": 20975.0,
+   "mean": 0.6846,
+   "std": 1.0803,
+   "min": 0.0,
+   "25%": 0.0,
+   "50%": 0.0,
+   "75%": 2.0,
+   "max": 8.0,
+   "pearson_with_target": 0.3673,
+   "spearman_with_target": 0.3696,
+   "univariate_auc": 0.7139
+  },
+  "BILL_TREND": {
+   "count": 20975.0,
+   "mean": 0.1079,
+   "std": 0.3043,
+   "min": -1.8273,
+   "25%": -0.0298,
+   "50%": 0.0069,
+   "75%": 0.184,
+   "max": 5.3095,
+   "pearson_with_target": -0.0276,
+   "spearman_with_target": -0.0832,
+   "univariate_auc": 0.5579
+  }
+ },
+ "by_class_summary": {
+  "LIMIT_BAL": {
+   "mean_0": 177845.3533,
+   "mean_1": 129047.619,
+   "median_0": 150000.0,
+   "median_1": 90000.0,
+   "min": 10000.0,
+   "max": 1000000.0,
+   "std": 130202.5764
+  },
+  "AGE": {
+   "mean_0": 35.4357,
+   "mean_1": 35.7016,
+   "median_0": 34.0,
+   "median_1": 34.0,
+   "min": 21.0,
+   "max": 79.0,
+   "std": 9.2189
+  },
+  "BILL_AMT1": {
+   "mean_0": 51914.8103,
+   "mean_1": 47784.4286,
+   "median_0": 22914.5,
+   "median_1": 19868.0,
+   "min": -165580.0,
+   "max": 964511.0,
+   "std": 73437.2453
+  },
+  "PAY_AMT1": {
+   "mean_0": 6223.3117,
+   "mean_1": 3507.9696,
+   "median_0": 2441.0,
+   "median_1": 1604.0,
+   "min": 0.0,
+   "max": 505000.0,
+   "std": 15789.7918
+  },
+  "PAY_1": {
+   "mean_0": -0.2026,
+   "mean_1": 0.6652,
+   "median_0": 0.0,
+   "median_1": 1.0,
+   "min": -2.0,
+   "max": 8.0,
+   "std": 1.1292
+  },
+  "UTIL_1": {
+   "mean_0": 0.4058,
+   "mean_1": 0.4896,
+   "median_0": 0.2689,
+   "median_1": 0.4936,
+   "min": -0.6199,
+   "max": 5.3095,
+   "std": 0.4104
+  },
+  "UTIL_MEAN": {
+   "mean_0": 0.35,
+   "mean_1": 0.4495,
+   "median_0": 0.2394,
+   "median_1": 0.4631,
+   "min": -0.2326,
+   "max": 2.7263,
+   "std": 0.3499
+  },
+  "PAY_RATIO_MEAN": {
+   "mean_0": 0.7585,
+   "mean_1": 0.4681,
+   "median_0": 0.0928,
+   "median_1": 0.0552,
+   "min": 0.0,
+   "max": 5.0,
+   "std": 1.2509
+  },
+  "N_MONTHS_DELAYED": {
+   "mean_0": 0.5102,
+   "mean_1": 1.9815,
+   "median_0": 0.0,
+   "median_1": 1.0,
+   "min": 0.0,
+   "max": 6.0,
+   "std": 1.5564
+  },
+  "MAX_DELAY": {
+   "mean_0": 0.4731,
+   "mean_1": 1.429,
+   "median_0": 0.0,
+   "median_1": 2.0,
+   "min": 0.0,
+   "max": 8.0,
+   "std": 1.0803
+  },
+  "BILL_TREND": {
+   "mean_0": 0.1124,
+   "mean_1": 0.0922,
+   "median_0": 0.0118,
+   "median_1": 0.0,
+   "min": -1.8273,
+   "max": 5.3095,
+   "std": 0.3043
+  }
+ },
+ "figures": [
+  "eda_target_distribution.png",
+  "eda_default_rate_by_pay1.png",
+  "eda_default_rate_by_groups.png",
+  "eda_distributions_by_default.png",
+  "eda_correlation_heatmap.png",
+  "eda_default_rate_util_delay.png",
+  "eda_univariate_strength.png"
+ ],
+ "tables": [
+  "eda_data_quality.csv",
+  "eda_variables.csv"
+ ],
+ "runtime_seconds": 3.2
+}

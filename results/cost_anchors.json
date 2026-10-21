@@ -1,0 +1,14 @@
+{
+ "median_bill_defaulter": 19868.0,
+ "mean_bill_defaulter": 47784.42857142857,
+ "median_bill_good": 22914.5,
+ "mean_bill_good": 51914.81027305008,
+ "median_limit_defaulter": 90000.0,
+ "median_limit_good": 150000.0,
+ "assumptions": "loss given default 50\u201370% of the outstanding bill; a false alarm costs the monthly interest margin (about 1.5% of the bill per month, i.e. an annual rate near 18%) plus customer friction for 1\u20133 months",
+ "implied_ratio_range": [
+  9.633880536584066,
+  40.462298253653074
+ ],
+ "german_credit_reference": "UCI Statlog German Credit cost matrix: misclassifying a bad customer as good costs 5, the reverse costs 1"
+}

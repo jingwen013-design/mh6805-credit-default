@@ -1,0 +1,1280 @@
+{
+ "created": "2026-10-19 16:07",
+ "created_by": "code/freeze.py",
+ "seed": 2607526,
+ "rule": "The test set only reports frozen models. A configuration is frozen when it is first scored on the test set; common.evaluate() refuses to score a different configuration under a frozen slug.",
+ "summary": {
+  "n_frozen": 35,
+  "n_models": 34,
+  "first_scored_range": [
+   "2026-09-16 18:54",
+   "2026-09-18 18:54"
+  ],
+  "all_round_1": true
+ },
+ "selection_uses_training_data_only": [
+  "every hyper-parameter (GridSearchCV on 5 stratified folds of the training set)",
+  "both decision thresholds (training out-of-fold probabilities, common.tune_threshold)",
+  "the reference / best model and the top-4 in aggregate.py (CV AUC; OOF AUC for the subsample-tuned RBF SVM)",
+  "the imbalance strategy (CV AUC)",
+  "the drop-column refits (out-of-bag AUC) and TreeSHAP (training rows) \u2014 moved off the test set on 2026-10-19",
+  "partial dependence / ICE (training rows)"
+ ],
+ "test_set_read_for_reporting_only": [
+  "aggregate.py \u2014 paired bootstrap of test-set AUC / AP differences, ROC / PR curves, threshold / cost / calibration curves on the test rows (the reference model and the top-4 are chosen on CV AUC, not on these)",
+  "cost_sensitivity.py \u2014 test cost of every model at its own training-OOF threshold for each cost ratio",
+  "model_monotone.py \u2014 test AUC and paired bootstrap of the constrained vs unconstrained XGBoost",
+  "model_rf.py \u2014 test AUC against the number of trees, descriptive only (N_TREES = 500 fixed in advance)"
+ ],
+ "models": {
+  "bagging": {
+   "name": "Bagging (RF, max_features=None)",
+   "member": "LU Xinyu",
+   "best_params": {
+    "max_features": null,
+    "min_samples_leaf": 20,
+    "n_estimators": 500,
+    "criterion": "gini",
+    "bootstrap": true,
+    "max_depth": null
+   },
+   "config_sha256": "87693109bb491937ab6cedd5e091ff261e39c16603db613ee4c55d663976658d",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.27,
+    "cost": 0.16
+   },
+   "cv_auc": 0.7813234388104655,
+   "oof_auc": 0.7812060729576702,
+   "test_auc": 0.7832565253731978,
+   "test_ap": 0.5712325146995232,
+   "first_scored": "2026-09-18 18:48",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "bagging.json",
+   "frozen_p_test": "frozen/bagging_p_test.npy",
+   "p_test_sha256": "5b25250d5bc42c452b09adce7fa74a4bad6356ff26dc3a0f60963ab81a39bfe3",
+   "role": "model"
+  },
+  "gradient_boosting": {
+   "name": "Gradient boosting (sklearn)",
+   "member": "LU Xinyu",
+   "best_params": {
+    "n_estimators": 200,
+    "learning_rate": 0.03,
+    "max_depth": 3,
+    "subsample": 0.8,
+    "loss": "log_loss",
+    "criterion": "friedman_mse",
+    "min_samples_leaf": 1,
+    "random_state": 2607526
+   },
+   "config_sha256": "51ca9eedaf7fcc5d1cde085587dbec8d059943a7e8555fa19610fd64875ff78c",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.26,
+    "cost": 0.14
+   },
+   "cv_auc": 0.7849715351823022,
+   "oof_auc": 0.784643019596815,
+   "test_auc": 0.7871567438940167,
+   "test_ap": 0.575941947232254,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "gradient_boosting.json",
+   "frozen_p_test": "frozen/gradient_boosting_p_test.npy",
+   "p_test_sha256": "7db05591f22c162fe7ff0405387c4970553d24f0d163a9a1692837ba1d02d8b1",
+   "role": "model"
+  },
+  "imb_leaky_smote_demo": {
+   "name": "LEAKAGE DEMO - SMOTE before split (RF) - NOT a valid result",
+   "member": "LI Jingwen",
+   "best_params": {
+    "learner": "rf",
+    "strategy": "smote applied to ALL 29,965 rows BEFORE the split",
+    "n_estimators": 500,
+    "max_features": "sqrt",
+    "min_samples_leaf": 5
+   },
+   "config_sha256": "addeb190b3ebb135e85fe8574b859c95069ce0fb870dfb15ef1191bea09bbd86",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.42,
+    "cost": 0.29
+   },
+   "cv_auc": 0.9006140591816065,
+   "oof_auc": 0.9005738507552905,
+   "test_auc": 0.914167353643357,
+   "test_ap": 0.9119270156816546,
+   "first_scored": "2026-09-17 16:02",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "NEGATIVE CONTROL \u2014 the deliberate leakage demonstration (SMOTE before the split); its 'test' rows are not the real test set and it is not a model result",
+   "source_json": "leakage_demo/imb_leaky_smote_demo.json",
+   "frozen_p_test": "frozen/imb_leaky_smote_demo_p_test.npy",
+   "p_test_sha256": "d0d4dc028fa211aa62cf9d449d2719ba40982ecd9691e21ed858ce5b5ff5112c",
+   "role": "negative_control"
+  },
+  "imb_logistic_balanced": {
+   "name": "Logistic (C=1) - class_weight='balanced'",
+   "member": "LI Jingwen",
+   "best_params": {
+    "learner": "logistic",
+    "strategy": "balanced",
+    "C": 1.0
+   },
+   "config_sha256": "a20fc4795ae9a30a2023f716481ffd9a7cd22bdd149ac05cfaa29b50d6d2514d",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.56,
+    "cost": 0.41
+   },
+   "cv_auc": 0.760909564567797,
+   "oof_auc": 0.7606847676388655,
+   "test_auc": 0.7630093280504567,
+   "test_ap": 0.5171131242766653,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "imb_logistic_balanced.json",
+   "frozen_p_test": "frozen/imb_logistic_balanced_p_test.npy",
+   "p_test_sha256": "e853e1a81f8afdb520db498c6a9f54c261f3a3216aa91e329fcf1cd7a6ef25e0",
+   "role": "model"
+  },
+  "imb_logistic_none": {
+   "name": "Logistic (C=1) - none",
+   "member": "LI Jingwen",
+   "best_params": {
+    "learner": "logistic",
+    "strategy": "none",
+    "C": 1.0
+   },
+   "config_sha256": "9f5382fc4f255a7ddabb851151bbe36deb32b9ebeded428ab17434e6f29e029a",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.3,
+    "cost": 0.17
+   },
+   "cv_auc": 0.7602247238394578,
+   "oof_auc": 0.7600579051072068,
+   "test_auc": 0.76367223701218,
+   "test_ap": 0.5234673077317846,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "imb_logistic_none.json",
+   "frozen_p_test": "frozen/imb_logistic_none_p_test.npy",
+   "p_test_sha256": "da4bcc87e5b5519c6fd516a90466f0fcbe8f6238a627e012cc6a31dd7c097b19",
+   "role": "model"
+  },
+  "imb_logistic_smote": {
+   "name": "Logistic (C=1) - SMOTE in folds",
+   "member": "LI Jingwen",
+   "best_params": {
+    "learner": "logistic",
+    "strategy": "smote",
+    "C": 1.0
+   },
+   "config_sha256": "ab5f984dea71d1cee9080f8fda0ef5360bc61345c6f6dfaecd827c7898e1d258",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.6,
+    "cost": 0.41
+   },
+   "cv_auc": 0.7600470493948915,
+   "oof_auc": 0.7596870378257452,
+   "test_auc": 0.762447245021163,
+   "test_ap": 0.5162366317520392,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "imb_logistic_smote.json",
+   "frozen_p_test": "frozen/imb_logistic_smote_p_test.npy",
+   "p_test_sha256": "37f59710cb35c01168b1a425f38877e14c006684926f6dd558bb419443e7e2e3",
+   "role": "model"
+  },
+  "imb_logistic_under": {
+   "name": "Logistic (C=1) - under-sampling in folds",
+   "member": "LI Jingwen",
+   "best_params": {
+    "learner": "logistic",
+    "strategy": "under",
+    "C": 1.0
+   },
+   "config_sha256": "fac2653a581fb148ff5d1fc7e7c1bb34971e950744284fc94f09557a25b8ccfd",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.62,
+    "cost": 0.41
+   },
+   "cv_auc": 0.7596828407611086,
+   "oof_auc": 0.7593353906349535,
+   "test_auc": 0.7627621465266508,
+   "test_ap": 0.5153390140743397,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "imb_logistic_under.json",
+   "frozen_p_test": "frozen/imb_logistic_under_p_test.npy",
+   "p_test_sha256": "22bf4340ccc6ceb0fb2f480065ba4dc1594934539ff3684979f6086d6c1665c0",
+   "role": "model"
+  },
+  "imb_rf_balanced": {
+   "name": "Random forest (500 trees) - class_weight='balanced'",
+   "member": "LI Jingwen",
+   "best_params": {
+    "learner": "rf",
+    "strategy": "balanced",
+    "n_estimators": 500,
+    "max_features": "sqrt",
+    "min_samples_leaf": 5
+   },
+   "config_sha256": "3917fd496c126c1feeffc3be060a6f554d011eff81bda6f0611b6d44fd90af00",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.52,
+    "cost": 0.36
+   },
+   "cv_auc": 0.7805020076064253,
+   "oof_auc": 0.7803958346673291,
+   "test_auc": 0.781833256744404,
+   "test_ap": 0.5688473097294574,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "imb_rf_balanced.json",
+   "frozen_p_test": "frozen/imb_rf_balanced_p_test.npy",
+   "p_test_sha256": "d373228f7c56aade66a4d72b3d5621314a413340ad47d1b25dadde345b58a90c",
+   "role": "model"
+  },
+  "imb_rf_none": {
+   "name": "Random forest (500 trees) - none",
+   "member": "LI Jingwen",
+   "best_params": {
+    "learner": "rf",
+    "strategy": "none",
+    "n_estimators": 500,
+    "max_features": "sqrt",
+    "min_samples_leaf": 5
+   },
+   "config_sha256": "1fb7dad4dcf2c6ef78ea48dd495e6307e96f081bd5f3c8800effcdc55ebbaca4",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.31,
+    "cost": 0.18
+   },
+   "cv_auc": 0.7799668684652612,
+   "oof_auc": 0.7798505223076129,
+   "test_auc": 0.7819944776976127,
+   "test_ap": 0.5693512364220017,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "imb_rf_none.json",
+   "frozen_p_test": "frozen/imb_rf_none_p_test.npy",
+   "p_test_sha256": "55835b8e624a839cc799f33505dba3f3ec6a918a5aa948d73b3a304a5757e85f",
+   "role": "model"
+  },
+  "imb_rf_smote": {
+   "name": "Random forest (500 trees) - SMOTE in folds",
+   "member": "LI Jingwen",
+   "best_params": {
+    "learner": "rf",
+    "strategy": "smote",
+    "n_estimators": 500,
+    "max_features": "sqrt",
+    "min_samples_leaf": 5
+   },
+   "config_sha256": "c6821d53a8e59a15ecc2fbb29addada16f95a406a45a76fa5e87d7fe95fa0174",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.47,
+    "cost": 0.32
+   },
+   "cv_auc": 0.7744644033940533,
+   "oof_auc": 0.7742442316049155,
+   "test_auc": 0.7743812580390548,
+   "test_ap": 0.5544197514167358,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "imb_rf_smote.json",
+   "frozen_p_test": "frozen/imb_rf_smote_p_test.npy",
+   "p_test_sha256": "1884ce79cbc96ba6ac6783c164604892804769ad4e0d6e343d73dab4e8aff111",
+   "role": "model"
+  },
+  "imb_rf_under": {
+   "name": "Random forest (500 trees) - under-sampling in folds",
+   "member": "LI Jingwen",
+   "best_params": {
+    "learner": "rf",
+    "strategy": "under",
+    "n_estimators": 500,
+    "max_features": "sqrt",
+    "min_samples_leaf": 5
+   },
+   "config_sha256": "766f17d3043117320ff48e716e5a06ab53b2d856ca3568d8396d463d746190aa",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.55,
+    "cost": 0.44
+   },
+   "cv_auc": 0.7790206747048579,
+   "oof_auc": 0.7789268234820277,
+   "test_auc": 0.781377313834862,
+   "test_ap": 0.5579095705687219,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "imb_rf_under.json",
+   "frozen_p_test": "frozen/imb_rf_under_p_test.npy",
+   "p_test_sha256": "dc2e72974638bf0b8c2c6d3859d975eb5b859cfa5cf5769f408750f465772d09",
+   "role": "model"
+  },
+  "knn": {
+   "name": "KNN",
+   "member": "RUAN Hangjing",
+   "best_params": {
+    "n_neighbors": 101,
+    "weights": "uniform",
+    "algorithm": "brute",
+    "metric": "minkowski (p=2, euclidean)"
+   },
+   "config_sha256": "da7736a679b1cff57f928b019e6a9dc7d5d7ab17d3166ca1f1e59d0d4254a9fb",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.25,
+    "cost": 0.16
+   },
+   "cv_auc": 0.7700333660038201,
+   "oof_auc": 0.7698128200616695,
+   "test_auc": 0.7705565871542163,
+   "test_ap": 0.5422556460429352,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "knn.json",
+   "frozen_p_test": "frozen/knn_p_test.npy",
+   "p_test_sha256": "ddf686ac442c980e9b28e9ef07f8ea505871d9075c595cdbdb272d75fd77b137",
+   "role": "model"
+  },
+  "knn_k5": {
+   "name": "KNN (K=5)",
+   "member": "RUAN Hangjing",
+   "best_params": {
+    "n_neighbors": 5,
+    "weights": "uniform",
+    "algorithm": "brute",
+    "metric": "minkowski (p=2, euclidean)"
+   },
+   "config_sha256": "080ce183073ba4647432842debd026cca2eee3423b79c1d1a3d4e6ab36b26e67",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.21,
+    "cost": 0.05
+   },
+   "cv_auc": 0.7061183035714675,
+   "oof_auc": 0.7060282119271308,
+   "test_auc": 0.7087438991872812,
+   "test_ap": 0.42147765820476407,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "knn_k5.json",
+   "frozen_p_test": "frozen/knn_k5_p_test.npy",
+   "p_test_sha256": "587ea5aecd8389e3c3f164de1d0ea49d3983b600b0ff3f50217e1bce2ebfa0a0",
+   "role": "model"
+  },
+  "lda": {
+   "name": "LDA (linear discriminant analysis)",
+   "member": "LI Jingwen",
+   "best_params": {
+    "solver": "lsqr",
+    "shrinkage": null
+   },
+   "config_sha256": "aa40910d3578fa168211266e2bf52325bf43bd39f1a5bf8add6f62f2a247675f",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.27,
+    "cost": 0.12
+   },
+   "cv_auc": 0.7572065962116409,
+   "oof_auc": 0.7570240593058389,
+   "test_auc": 0.7592397020924038,
+   "test_ap": 0.5250766073973805,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "lda.json",
+   "frozen_p_test": "frozen/lda_p_test.npy",
+   "p_test_sha256": "f57052d76eed9117e1b56db50a3134827132d1a67945d192c3a83196c0cbf85c",
+   "role": "model"
+  },
+  "logistic": {
+   "name": "Logistic regression (plain)",
+   "member": "RUAN Hangjing",
+   "best_params": {
+    "C": "inf (unpenalised)",
+    "solver": "lbfgs",
+    "max_iter": 5000
+   },
+   "config_sha256": "05eafd540be2f9b9861024fe178fea0784ed9c68d07de2e4faed7bd7b929d34a",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.3,
+    "cost": 0.15
+   },
+   "cv_auc": 0.7602364115504157,
+   "oof_auc": 0.7600749090172092,
+   "test_auc": 0.76363446319419,
+   "test_ap": 0.5234060026560351,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "logistic.json",
+   "frozen_p_test": "frozen/logistic_p_test.npy",
+   "p_test_sha256": "b8ba711deb9ebdc373563b137040ebf82cdeb24ca00d018190f62a17e80cd743",
+   "role": "model"
+  },
+  "logistic_balanced": {
+   "name": "Logistic regression (plain, class_weight=balanced)",
+   "member": "RUAN Hangjing",
+   "best_params": {
+    "C": "inf (unpenalised)",
+    "class_weight": "balanced",
+    "solver": "lbfgs"
+   },
+   "config_sha256": "2a024a9790291dbace8492519681454d7c48794f8e6acff9113c9c2fe6200082",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.56,
+    "cost": 0.39
+   },
+   "cv_auc": 0.7609124955725376,
+   "oof_auc": 0.7606887910621011,
+   "test_auc": 0.763006024636716,
+   "test_ap": 0.5172142896257701,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "logistic_balanced.json",
+   "frozen_p_test": "frozen/logistic_balanced_p_test.npy",
+   "p_test_sha256": "77c3c9957d1fa726a579b49ce58e22132d8201ee85c915f584e92eb967dffd17",
+   "role": "model"
+  },
+  "logistic_l1": {
+   "name": "Logistic regression (L1 lasso, C tuned)",
+   "member": "RUAN Hangjing",
+   "best_params": {
+    "C": 100.0,
+    "penalty": "l1 (l1_ratio=1)",
+    "solver": "saga",
+    "max_iter": 5000
+   },
+   "config_sha256": "90f0342bde878233d3132530519751faa7702e20cfb30f623e39ca05f18b5256",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.3,
+    "cost": 0.15
+   },
+   "cv_auc": 0.7602358797403035,
+   "oof_auc": 0.760070806444664,
+   "test_auc": 0.7636341759408212,
+   "test_ap": 0.5234173935327616,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "logistic_l1.json",
+   "frozen_p_test": "frozen/logistic_l1_p_test.npy",
+   "p_test_sha256": "923a4da826edf39dcb5ffea2125aca8557eb9c6ef49e3fa0469f2983ae3831f9",
+   "role": "model"
+  },
+  "logistic_l2": {
+   "name": "Logistic regression (L2 ridge, C tuned)",
+   "member": "RUAN Hangjing",
+   "best_params": {
+    "C": 31.622776601683793,
+    "penalty": "l2 (l1_ratio=0)",
+    "solver": "lbfgs"
+   },
+   "config_sha256": "0706188a45d451fb9fb76facc9b96c6c116ead4ed12640de527145d198b24479",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.3,
+    "cost": 0.15
+   },
+   "cv_auc": 0.7602372025047986,
+   "oof_auc": 0.7600749617834155,
+   "test_auc": 0.7636348940742431,
+   "test_ap": 0.5234090516792573,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "logistic_l2.json",
+   "frozen_p_test": "frozen/logistic_l2_p_test.npy",
+   "p_test_sha256": "22ee7c3f40c2751b6b3f3264bec84a50cb934b1e548b4ea197bb5586a5b8f547",
+   "role": "model"
+  },
+  "logistic_on_pcs": {
+   "name": "Logistic regression on principal components only",
+   "member": "RUAN Hangjing",
+   "best_params": {
+    "n_components": 15,
+    "grid": [
+     5,
+     10,
+     15
+    ],
+    "C": "inf (unpenalised)",
+    "solver": "lbfgs",
+    "inputs": "26 standardised numeric features -> PCA scores (no categoricals)"
+   },
+   "config_sha256": "5d5f636db40bcb483413653f282e97863a11687559a310cf7497b99955b1bd8a",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.33,
+    "cost": 0.25
+   },
+   "cv_auc": 0.7546932615281225,
+   "oof_auc": 0.7544968020644884,
+   "test_auc": 0.7617006376091213,
+   "test_ap": 0.5183044077295871,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "logistic_on_pcs.json",
+   "frozen_p_test": "frozen/logistic_on_pcs_p_test.npy",
+   "p_test_sha256": "d65c16b36106ea43772a0bc96690f5a1855ff8a6ffdac9da2bf5c80134900f1b",
+   "role": "model"
+  },
+  "logistic_plus_clusters": {
+   "name": "Logistic regression + K-means segment dummies",
+   "member": "RUAN Hangjing",
+   "best_params": {
+    "C": "inf (unpenalised)",
+    "solver": "lbfgs",
+    "n_clusters": 4,
+    "cluster_features": "3 one-hot dummies (reference = segment 4)",
+    "kmeans_n_init": 10
+   },
+   "config_sha256": "f259c330e3f7661ce13caf73031cc75d1adbf661aa4102797bb00adcd9c0e1b0",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.3,
+    "cost": 0.17
+   },
+   "cv_auc": 0.7597645687151631,
+   "oof_auc": 0.7595820066919685,
+   "test_auc": 0.7632422187191674,
+   "test_ap": 0.5218750443480643,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "logistic_plus_clusters.json",
+   "frozen_p_test": "frozen/logistic_plus_clusters_p_test.npy",
+   "p_test_sha256": "38da860b499febac09cc2063df20a5f3cf2fc1ef8f9fc7a55fe86b7cd02d44a4",
+   "role": "model"
+  },
+  "mlp": {
+   "name": "MLP (feed-forward NN)",
+   "member": "LI Jingwen",
+   "best_params": {
+    "hidden_layer_sizes": [
+     64,
+     32
+    ],
+    "alpha": 0.001,
+    "learning_rate_init": 0.001,
+    "activation": "relu",
+    "solver": "adam",
+    "batch_size": 200,
+    "early_stopping": true,
+    "validation_fraction": 0.15,
+    "n_iter_no_change": 15,
+    "max_iter": 300
+   },
+   "config_sha256": "44a88ee650fab8c11a800055a638d6cca97e4d5c619fda0f83ba93022b5eb787",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.27,
+    "cost": 0.19
+   },
+   "cv_auc": 0.7762095038407356,
+   "oof_auc": 0.7757722486004885,
+   "test_auc": 0.7731183486033634,
+   "test_ap": 0.5512785268613349,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "mlp.json",
+   "frozen_p_test": "frozen/mlp_p_test.npy",
+   "p_test_sha256": "55b1c07ebd026902110a2917c5fb36e34ae7039475829e4112f31c1fb8e6595b",
+   "role": "model"
+  },
+  "mlp_overfit": {
+   "name": "MLP over-parameterised (256,256)",
+   "member": "LI Jingwen",
+   "best_params": {
+    "hidden_layer_sizes": [
+     256,
+     256
+    ],
+    "alpha": 0.0001,
+    "learning_rate_init": 0.001,
+    "activation": "relu",
+    "solver": "adam",
+    "batch_size": 200,
+    "early_stopping": false,
+    "max_iter": 200
+   },
+   "config_sha256": "21944a89a47f5feb152f6a489371d92137fb0c1e56f708ff916024605a562e5a",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.05,
+    "cost": 0.05
+   },
+   "cv_auc": 0.6920838742469654,
+   "oof_auc": 0.6915752511928658,
+   "test_auc": 0.6775954724273032,
+   "test_ap": 0.39965283327278933,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "mlp_overfit.json",
+   "frozen_p_test": "frozen/mlp_overfit_p_test.npy",
+   "p_test_sha256": "afd86fc05cf3fdf64ec35758643ea1427b971db876f0007560cfe5de30efc5e6",
+   "role": "model"
+  },
+  "mlp_weighted": {
+   "name": "MLP (tuned, balanced sample weights)",
+   "member": "LI Jingwen",
+   "best_params": {
+    "hidden_layer_sizes": [
+     64,
+     32
+    ],
+    "alpha": 0.001,
+    "learning_rate_init": 0.001,
+    "activation": "relu",
+    "solver": "adam",
+    "batch_size": 200,
+    "early_stopping": true,
+    "validation_fraction": 0.15,
+    "n_iter_no_change": 15,
+    "max_iter": 300,
+    "sample_weight": "balanced"
+   },
+   "config_sha256": "a082046a4ec3f2add984290e01fcb64efe94632976ac5f66d5311040a4c51b01",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.57,
+    "cost": 0.42
+   },
+   "cv_auc": 0.7739125984338127,
+   "oof_auc": 0.7733643155390647,
+   "test_auc": 0.771024846051943,
+   "test_ap": 0.5353913214986585,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "mlp_weighted.json",
+   "frozen_p_test": "frozen/mlp_weighted_p_test.npy",
+   "p_test_sha256": "e23bf4cfa6097736dfb9cb6a461c89e2cc246a80df1d6be5dc6d3490021b80f4",
+   "role": "model"
+  },
+  "naive_bayes": {
+   "name": "Gaussian naive Bayes",
+   "member": "LI Jingwen",
+   "best_params": {
+    "var_smoothing": 0.01
+   },
+   "config_sha256": "00bfba9b9c741bb6956a453ebdb579c111f5974cf34e94144553f9090ab11136",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.41,
+    "cost": 0.25
+   },
+   "cv_auc": 0.7356319710185613,
+   "oof_auc": 0.7351109859320809,
+   "test_auc": 0.7398354138735765,
+   "test_ap": 0.5040054674528138,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "naive_bayes.json",
+   "frozen_p_test": "frozen/naive_bayes_p_test.npy",
+   "p_test_sha256": "23b791a0588a2d56c0741efe07b3748e276e8413c7b9f0688d7f23d1598172c2",
+   "role": "model"
+  },
+  "naive_bayes_log": {
+   "name": "Gaussian naive Bayes (log1p amounts)",
+   "member": "LI Jingwen",
+   "best_params": {
+    "var_smoothing": 0.01,
+    "amount_transform": "sign(x)*log1p(|x|)"
+   },
+   "config_sha256": "0157856d1a2b6ba862c5593a8458f7ecca8f0a92670548dde1b4fc47d4265d8e",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.28,
+    "cost": 0.05
+   },
+   "cv_auc": 0.7539826065170192,
+   "oof_auc": 0.7539030635188775,
+   "test_auc": 0.7563362886678043,
+   "test_ap": 0.5084194133533799,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "naive_bayes_log.json",
+   "frozen_p_test": "frozen/naive_bayes_log_p_test.npy",
+   "p_test_sha256": "c99b91b807dbb70927ba5721d645609bbb747ecd1f3780870cbbf512d6931cf5",
+   "role": "model"
+  },
+  "qda": {
+   "name": "QDA (quadratic discriminant analysis)",
+   "member": "LI Jingwen",
+   "best_params": {
+    "reg_param": 0.5
+   },
+   "config_sha256": "dd0e60b0bd5ef91345cb3c27a4dbd77cf20619dfa3006d6506c3da3fe218251a",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.46,
+    "cost": 0.18
+   },
+   "cv_auc": 0.7511460174196409,
+   "oof_auc": 0.7506213286757657,
+   "test_auc": 0.7550315120536182,
+   "test_ap": 0.5162529043474586,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "qda.json",
+   "frozen_p_test": "frozen/qda_p_test.npy",
+   "p_test_sha256": "88503d53939b7ab9df299a26f25c2d6484a84518950de1b34d38b48504559127",
+   "role": "model"
+  },
+  "random_forest": {
+   "name": "Random forest",
+   "member": "LU Xinyu",
+   "best_params": {
+    "max_features": "sqrt",
+    "min_samples_leaf": 20,
+    "n_estimators": 500,
+    "criterion": "gini",
+    "bootstrap": true,
+    "max_depth": null
+   },
+   "config_sha256": "54875251313e8b2fdb85b1a7b586aa7acab7aefe8b6d6dd2c30562c0e998744e",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.31,
+    "cost": 0.17
+   },
+   "cv_auc": 0.7848992714376763,
+   "oof_auc": 0.784739759840416,
+   "test_auc": 0.7865878026905443,
+   "test_ap": 0.5756368124225119,
+   "first_scored": "2026-09-18 18:48",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "random_forest.json",
+   "frozen_p_test": "frozen/random_forest_p_test.npy",
+   "p_test_sha256": "95ab3b7d5bc4ef3398153b36d394fff7c52bd64b1df7d13292d0e0e7f6a83e9b",
+   "role": "model"
+  },
+  "svm_linear": {
+   "name": "SVM (linear kernel)",
+   "member": "LI Jingwen",
+   "best_params": {
+    "kernel": "linear",
+    "C": 0.01,
+    "class_weight": "balanced",
+    "probability": "Platt scaling via CalibratedClassifierCV(method='sigmoid', ensemble=False, cv=CV) \u2014 the scikit-learn 1.9 recommended replacement for the deprecated SVC(probability=True); same internal 5-fold Platt procedure."
+   },
+   "config_sha256": "3f87da1e6723fde77ac55bdf3aa612886f2d436d265b7b2915aab3697aeee92a",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.24,
+    "cost": 0.13
+   },
+   "cv_auc": 0.7628560650838005,
+   "oof_auc": 0.7167476667509078,
+   "test_auc": 0.7506008442807388,
+   "test_ap": 0.5062812309396549,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "svm_linear.json",
+   "frozen_p_test": "frozen/svm_linear_p_test.npy",
+   "p_test_sha256": "903eb1d9b0782c9f4679ea3f50d14b01b6a9f7079194e76d7889097da72dd1cd",
+   "role": "model"
+  },
+  "svm_linear_calibrated": {
+   "name": "LinearSVC + Platt calibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "estimator": "LinearSVC",
+    "loss": "squared_hinge (sklearn default)",
+    "C": 0.01,
+    "class_weight": "balanced",
+    "calibration": "sigmoid (Platt), CalibratedClassifierCV ensemble=False, cv=CV"
+   },
+   "config_sha256": "99bcdaf060308cccd7e39997a4e7bb3b9912d9fd516cfc6d541f54abd848e77f",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.3,
+    "cost": 0.15
+   },
+   "cv_auc": 0.7610572983775548,
+   "oof_auc": 0.7608610463427914,
+   "test_auc": 0.7627051267329547,
+   "test_ap": 0.5150470902845663,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "svm_linear_calibrated.json",
+   "frozen_p_test": "frozen/svm_linear_calibrated_p_test.npy",
+   "p_test_sha256": "679d9b3321ad24d5505f15d7a2ed7f97c18cb0d9b3df7ac2e6a4afafc4542a9f",
+   "role": "model"
+  },
+  "svm_rbf": {
+   "name": "SVM (RBF kernel)",
+   "member": "LI Jingwen",
+   "best_params": {
+    "kernel": "rbf",
+    "C": 1.0,
+    "gamma": "0.01",
+    "gamma_value": 0.01,
+    "class_weight": "balanced",
+    "probability": "Platt scaling via CalibratedClassifierCV(method='sigmoid', ensemble=False, cv=CV) \u2014 the scikit-learn 1.9 recommended replacement for the deprecated SVC(probability=True); same internal 5-fold Platt procedure."
+   },
+   "config_sha256": "db7e042ccb17bd9d522f1493852a7999a6ae00adb75b425604a9a2dd4edc0a84",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.42,
+    "cost": 0.12
+   },
+   "cv_auc": 0.7680709094668459,
+   "oof_auc": 0.7606068187605077,
+   "test_auc": 0.7615933843825657,
+   "test_ap": 0.4944357707122404,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "svm_rbf.json",
+   "frozen_p_test": "frozen/svm_rbf_p_test.npy",
+   "p_test_sha256": "7d3cd52793a8ae8c82e58be4748f01ee3ad245e91699aae71aa27092f16e65a2",
+   "role": "model"
+  },
+  "tree_full": {
+   "name": "Decision tree (unpruned full tree)",
+   "member": "LU Xinyu",
+   "best_params": {
+    "criterion": "entropy",
+    "ccp_alpha": 0.0,
+    "max_depth": null
+   },
+   "config_sha256": "df6db07fea5c8ca06a42285a4aa2035cd139db5567d386c25a42af2d0ea55313",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.51,
+    "cost": 0.05
+   },
+   "cv_auc": 0.6154263786140258,
+   "oof_auc": 0.6154268811159166,
+   "test_auc": 0.6125123330438537,
+   "test_ap": 0.28971400962852867,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "tree_full.json",
+   "frozen_p_test": "frozen/tree_full_p_test.npy",
+   "p_test_sha256": "2dbaf4144b5c2e52cd3d2cd7695f8e87b52859f281e18b829a7f31ce12a0dd88",
+   "role": "model"
+  },
+  "tree_pruned": {
+   "name": "Decision tree (pruned)",
+   "member": "LU Xinyu",
+   "best_params": {
+    "criterion": "entropy",
+    "ccp_alpha": 0.0006631104249345821,
+    "max_depth": 6
+   },
+   "config_sha256": "f82fddcfa1fa5293d1e1ddeff4da731d0463d523a945065c135e4868cabb3c9e",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.28,
+    "cost": 0.16
+   },
+   "cv_auc": 0.7689376564761475,
+   "oof_auc": 0.7689070683420253,
+   "test_auc": 0.7755328208876862,
+   "test_ap": 0.5346281495841433,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "tree_pruned.json",
+   "frozen_p_test": "frozen/tree_pruned_p_test.npy",
+   "p_test_sha256": "9b74b49e32cb45e0afcec722fcc95423e9920754dc1ba962b35c1404ecbb8b77",
+   "role": "model"
+  },
+  "xgboost": {
+   "name": "XGBoost",
+   "member": "LU Xinyu",
+   "best_params": {
+    "learning_rate": 0.03,
+    "max_depth": 3,
+    "min_child_weight": 5,
+    "n_estimators": 300,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "objective": "binary:logistic",
+    "tree_method": "hist",
+    "scale_pos_weight": 1.0,
+    "random_state": 2607526
+   },
+   "config_sha256": "53d62089af46587273729f3111bb2ffafbf3e7e5defd6506f5bb55e08e999526",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.27,
+    "cost": 0.15
+   },
+   "cv_auc": 0.7862905873025212,
+   "oof_auc": 0.7860586841474777,
+   "test_auc": 0.7886523644650636,
+   "test_ap": 0.5783567346946304,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "xgboost.json",
+   "frozen_p_test": "frozen/xgboost_p_test.npy",
+   "p_test_sha256": "3e5df641701c3e0afdb49d55a172502aa1b59bb7c12b2c2be508919d52832866",
+   "role": "model"
+  },
+  "xgboost_monotone": {
+   "name": "XGBoost (monotone constraints)",
+   "member": "LU Xinyu",
+   "best_params": {
+    "learning_rate": 0.03,
+    "max_depth": 3,
+    "min_child_weight": 5,
+    "n_estimators": 300,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "objective": "binary:logistic",
+    "tree_method": "hist",
+    "scale_pos_weight": 1.0,
+    "random_state": 2607526,
+    "monotone_constraints": "(-1,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,-1,1,1,1,0,0,0,0,0,0)"
+   },
+   "config_sha256": "8add356b32f02b853f7bc7012cfd793723c5386dc25c7315aa4eb73756e76719",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.28,
+    "cost": 0.14
+   },
+   "cv_auc": 0.7843689648245447,
+   "oof_auc": 0.7841839404098567,
+   "test_auc": 0.7870035301284619,
+   "test_ap": 0.5725205566451784,
+   "first_scored": "2026-09-18 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "last configuration of round 1 (18 Sep): constraint signs fixed a priori from credit logic, hyper-parameters inherited unchanged from xgboost.json; scored once",
+   "source_json": "xgboost_monotone.json",
+   "frozen_p_test": "frozen/xgboost_monotone_p_test.npy",
+   "p_test_sha256": "5939bee7baa891db3441973130e068abe2c1dc8431dfdf4ceb7aa3e084cdc8dc",
+   "role": "model"
+  },
+  "xgboost_weighted": {
+   "name": "XGBoost (class-weighted)",
+   "member": "LU Xinyu",
+   "best_params": {
+    "learning_rate": 0.03,
+    "max_depth": 3,
+    "min_child_weight": 5,
+    "n_estimators": 300,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "objective": "binary:logistic",
+    "tree_method": "hist",
+    "scale_pos_weight": 3.5195,
+    "random_state": 2607526
+   },
+   "config_sha256": "d92b790bf9565ca1e4449a31fccdb0aa22dbe68f7ae9ce0f783a2d6d275b14d5",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.55,
+    "cost": 0.37
+   },
+   "cv_auc": 0.7860897824951636,
+   "oof_auc": 0.7859060512997806,
+   "test_auc": 0.788726906714253,
+   "test_ap": 0.5788356766567686,
+   "first_scored": "2026-09-16 18:54",
+   "round": "round 1 \u2014 tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated 16\u201318 September), before the professor's 30 September feedback; not re-scored since",
+   "note": "",
+   "source_json": "xgboost_weighted.json",
+   "frozen_p_test": "frozen/xgboost_weighted_p_test.npy",
+   "p_test_sha256": "4d532e5ed2e68eb13dd2a54884cc533c79d38e92cb2ba3ce3c29b135798f8ae3",
+   "role": "model"
+  },
+  "logistic_balanced_platt": {
+   "name": "Logistic regression (plain, class_weight=balanced) + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "logistic_balanced",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 0.97049679,
+    "b": -1.2530649
+   },
+   "config_sha256": "4f594a0aad1bf950967eaa46c72680fb1ba249e179bdb9c1ff55879ebdd734ac",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.26,
+    "cost": 0.15
+   },
+   "cv_auc": null,
+   "oof_auc": 0.7604995582545118,
+   "test_auc": 0.763006024636716,
+   "test_ap": 0.5172142896257701,
+   "first_scored": "2026-10-19 16:24",
+   "round": "19 October 2026 \u2014 Platt map fitted on training out-of-fold scores, thresholds re-chosen on cross-fitted training scores, then scored on the test set once (added after the professor's feedback, which asked for it)",
+   "source_json": "recalibration.json",
+   "frozen_p_test": "frozen/logistic_balanced_platt_p_test.npy",
+   "p_test_sha256": "067f72c765bb9159745d0bb8065b3bf0084f4c1114be77d6f0dec434d6a88a8a",
+   "role": "recalibrated_variant",
+   "current_p_test": "recalibrated/logistic_balanced_platt_p_test.npy"
+  },
+  "imb_logistic_balanced_platt": {
+   "name": "Logistic (C=1) - class_weight='balanced' + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "imb_logistic_balanced",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 0.97112242,
+    "b": -1.25291962
+   },
+   "config_sha256": "0c698db4dbca0cfce4a47918056738e73bd7201ce998556f14e9c0ec89473d3d",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.26,
+    "cost": 0.15
+   },
+   "cv_auc": null,
+   "oof_auc": 0.7604948488705935,
+   "test_auc": 0.7630093280504567,
+   "test_ap": 0.5171131242766653,
+   "first_scored": "2026-10-19 16:24",
+   "round": "19 October 2026 \u2014 Platt map fitted on training out-of-fold scores, thresholds re-chosen on cross-fitted training scores, then scored on the test set once (added after the professor's feedback, which asked for it)",
+   "source_json": "recalibration.json",
+   "frozen_p_test": "frozen/imb_logistic_balanced_platt_p_test.npy",
+   "p_test_sha256": "c8ac35fb1e48f39990f3ff1c6255e01a27fb362bc61376f26067846c96e26e86",
+   "role": "recalibrated_variant",
+   "current_p_test": "recalibrated/imb_logistic_balanced_platt_p_test.npy"
+  },
+  "imb_logistic_smote_platt": {
+   "name": "Logistic (C=1) - SMOTE in folds + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "imb_logistic_smote",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 0.94740036,
+    "b": -1.24606449
+   },
+   "config_sha256": "73f5981ddcd1628659fc265a814212d98de9c10375ea8626d859daf070ef0847",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.31,
+    "cost": 0.18
+   },
+   "cv_auc": null,
+   "oof_auc": 0.7595189378838064,
+   "test_auc": 0.762447245021163,
+   "test_ap": 0.5162366317520392,
+   "first_scored": "2026-10-19 16:24",
+   "round": "19 October 2026 \u2014 Platt map fitted on training out-of-fold scores, thresholds re-chosen on cross-fitted training scores, then scored on the test set once (added after the professor's feedback, which asked for it)",
+   "source_json": "recalibration.json",
+   "frozen_p_test": "frozen/imb_logistic_smote_platt_p_test.npy",
+   "p_test_sha256": "00b6fc58218905179ab971c157beb20941fe17f4339d6263da49533a6fcae3e2",
+   "role": "recalibrated_variant",
+   "current_p_test": "recalibrated/imb_logistic_smote_platt_p_test.npy"
+  },
+  "imb_logistic_under_platt": {
+   "name": "Logistic (C=1) - under-sampling in folds + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "imb_logistic_under",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 0.97214347,
+    "b": -1.25412949
+   },
+   "config_sha256": "67ea186af352766ed92bf2e40bddde737200240be9773a49bef28757b4cab1e5",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.32,
+    "cost": 0.15
+   },
+   "cv_auc": null,
+   "oof_auc": 0.7590690927829629,
+   "test_auc": 0.7627621465266508,
+   "test_ap": 0.5153390140743397,
+   "first_scored": "2026-10-19 16:24",
+   "round": "19 October 2026 \u2014 Platt map fitted on training out-of-fold scores, thresholds re-chosen on cross-fitted training scores, then scored on the test set once (added after the professor's feedback, which asked for it)",
+   "source_json": "recalibration.json",
+   "frozen_p_test": "frozen/imb_logistic_under_platt_p_test.npy",
+   "p_test_sha256": "bd03dc099027b40620149c8542154a8d9e171aeafc46e941ed0ea048265f9ccf",
+   "role": "recalibrated_variant",
+   "current_p_test": "recalibrated/imb_logistic_under_platt_p_test.npy"
+  },
+  "imb_rf_balanced_platt": {
+   "name": "Random forest (500 trees) - class_weight='balanced' + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "imb_rf_balanced",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 0.96113118,
+    "b": -0.95931122
+   },
+   "config_sha256": "68409e6896c86195ad7c51898cf1e1b48854347a12e665713c60f49336d80e4e",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.28,
+    "cost": 0.18
+   },
+   "cv_auc": null,
+   "oof_auc": 0.7803579617227079,
+   "test_auc": 0.781833256744404,
+   "test_ap": 0.5688473097294574,
+   "first_scored": "2026-10-19 16:24",
+   "round": "19 October 2026 \u2014 Platt map fitted on training out-of-fold scores, thresholds re-chosen on cross-fitted training scores, then scored on the test set once (added after the professor's feedback, which asked for it)",
+   "source_json": "recalibration.json",
+   "frozen_p_test": "frozen/imb_rf_balanced_platt_p_test.npy",
+   "p_test_sha256": "6e78a30b72d3b707abd227a6d3526afcbc12cef1b6d1c5707c49392ade08cbf7",
+   "role": "recalibrated_variant",
+   "current_p_test": "recalibrated/imb_rf_balanced_platt_p_test.npy"
+  },
+  "imb_rf_smote_platt": {
+   "name": "Random forest (500 trees) - SMOTE in folds + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "imb_rf_smote",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 0.96658444,
+    "b": -0.75424305
+   },
+   "config_sha256": "6bbf7889ac3ced3ebb4d16e3476d7cb05587ce9bc922b3165a94ebe0472d4e4a",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.29,
+    "cost": 0.18
+   },
+   "cv_auc": null,
+   "oof_auc": 0.7741887083642643,
+   "test_auc": 0.7743812580390548,
+   "test_ap": 0.5544197514167358,
+   "first_scored": "2026-10-19 16:24",
+   "round": "19 October 2026 \u2014 Platt map fitted on training out-of-fold scores, thresholds re-chosen on cross-fitted training scores, then scored on the test set once (added after the professor's feedback, which asked for it)",
+   "source_json": "recalibration.json",
+   "frozen_p_test": "frozen/imb_rf_smote_platt_p_test.npy",
+   "p_test_sha256": "02233c696c5e7bf7e1e0cd8dad200a439e167197723aabb1a46002419a9888d5",
+   "role": "recalibrated_variant",
+   "current_p_test": "recalibrated/imb_rf_smote_platt_p_test.npy"
+  },
+  "imb_rf_under_platt": {
+   "name": "Random forest (500 trees) - under-sampling in folds + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "imb_rf_under",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 0.98904303,
+    "b": -1.25821216
+   },
+   "config_sha256": "5f91ec0e0fcf83f246dd6656ddca53ed03f1c59a2dbedace7428bddc10133179",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.25,
+    "cost": 0.18
+   },
+   "cv_auc": null,
+   "oof_auc": 0.7788346804941566,
+   "test_auc": 0.781377313834862,
+   "test_ap": 0.5579095705687219,
+   "first_scored": "2026-10-19 16:24",
+   "round": "19 October 2026 \u2014 Platt map fitted on training out-of-fold scores, thresholds re-chosen on cross-fitted training scores, then scored on the test set once (added after the professor's feedback, which asked for it)",
+   "source_json": "recalibration.json",
+   "frozen_p_test": "frozen/imb_rf_under_platt_p_test.npy",
+   "p_test_sha256": "182f0b068ab231bc23cf7819887f02f99478c48f222eca39814e49962b4357be",
+   "role": "recalibrated_variant",
+   "current_p_test": "recalibrated/imb_rf_under_platt_p_test.npy"
+  },
+  "xgboost_weighted_platt": {
+   "name": "XGBoost (class-weighted) + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "xgboost_weighted",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 1.01460848,
+    "b": -1.22136046
+   },
+   "config_sha256": "79877dbe604d45df80da33242b3cb3b6db15956333bc58cae48465af305fa5d9",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.28,
+    "cost": 0.14
+   },
+   "cv_auc": null,
+   "oof_auc": 0.7858237030389668,
+   "test_auc": 0.788726906714253,
+   "test_ap": 0.5788356766567686,
+   "first_scored": "2026-10-19 16:24",
+   "round": "19 October 2026 \u2014 Platt map fitted on training out-of-fold scores, thresholds re-chosen on cross-fitted training scores, then scored on the test set once (added after the professor's feedback, which asked for it)",
+   "source_json": "recalibration.json",
+   "frozen_p_test": "frozen/xgboost_weighted_platt_p_test.npy",
+   "p_test_sha256": "a6f74297f1da95bb3ede3087de5723e2e41b950cfc9435e2fcf17449aa3b3529",
+   "role": "recalibrated_variant",
+   "current_p_test": "recalibrated/xgboost_weighted_platt_p_test.npy"
+  },
+  "mlp_weighted_platt": {
+   "name": "MLP (tuned, balanced sample weights) + Platt recalibration",
+   "member": "LI Jingwen",
+   "best_params": {
+    "base_model": "mlp_weighted",
+    "method": "Platt scaling fitted on training out-of-fold scores",
+    "a": 0.84026358,
+    "b": -1.17086747
+   },
+   "config_sha256": "b4087cd09c078cbc7a57d5fd1caef2563b593755a34705552db3ea20d4546800",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.29,
+    "cost": 0.19
+   },
+   "cv_auc": null,
+   "oof_auc": 0.7729450880294663,
+   "test_auc": 0.771024846051943,
+   "test_ap": 0.5353913214986585,
+   "first_scored": "2026-10-19 16:25",
+   "round": "19 October 2026 \u2014 Platt map fitted on training out-of-fold scores, thresholds re-chosen on cross-fitted training scores, then scored on the test set once (added after the professor's feedback, which asked for it)",
+   "source_json": "recalibration.json",
+   "frozen_p_test": "frozen/mlp_weighted_platt_p_test.npy",
+   "p_test_sha256": "14e9316fb3fd2f6b2ed65a960afbeb64d94421ed38f1226e34a2caecf3f3144d",
+   "role": "recalibrated_variant",
+   "current_p_test": "recalibrated/mlp_weighted_platt_p_test.npy"
+  },
+  "knn_v2": {
+   "name": "KNN (benchmark, v2)",
+   "member": "RUAN Hangjing",
+   "best_params": {
+    "n_neighbors": 101,
+    "weights": "uniform"
+   },
+   "config_sha256": "045e490bd9aee88095d4144c7ec6a0b0517d793732cbfaa8a9b9c14bd6a0ecde",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.25,
+    "cost": 0.16
+   },
+   "cv_auc": 0.770028225944072,
+   "oof_auc": 0.7698062176900976,
+   "test_auc": 0.770555330420728,
+   "test_ap": 0.5422565468273985,
+   "first_scored": "2026-09-30 21:39",
+   "round": "adopted 2026-10-21: RUAN's 30 Sep run (time from her frozen_choices file; zip mtimes are the packing time)",
+   "note": "RUAN Hangjing's second pass of 30 Sep 2026 (frozen_choices_ruan_v2.json: frozen_at 2026-09-30 21:39/21:40), run on her machine after the professor's comment under her freeze-before-test protocol; result files received by zip on 21 Oct 2026 and adopted unchanged. Same configuration as the 16 Sep model (K=101 uniform / plain unpenalised logistic) refitted separately: predictions differ by at most 1e-2 (solver tolerance / library version), test AUC by 5e-5. The headline tables use the 16 Sep scoring; these files document the nested-CV second pass and the proposal-stage numbers.",
+   "source_json": "knn_v2.json",
+   "frozen_p_test": "frozen/knn_v2_p_test.npy",
+   "p_test_sha256": "205e6a5445c4040766a14824777983090f756588ba24d267dd279790c25f5a9c",
+   "role": "model"
+  },
+  "logistic_plain_v2": {
+   "name": "Logistic regression (plain baseline, v2)",
+   "member": "RUAN Hangjing",
+   "best_params": {
+    "C": "inf"
+   },
+   "config_sha256": "476f8477750e0ea7ac1bdc635b00cdf8cda78eadfc2dd66952895bb05f672b09",
+   "thresholds_chosen_on_training_oof": {
+    "f1": 0.3,
+    "cost": 0.17
+   },
+   "cv_auc": 0.760215171553057,
+   "oof_auc": 0.7600397139575612,
+   "test_auc": 0.7636789156530034,
+   "test_ap": 0.5233873186572915,
+   "first_scored": "2026-09-30 21:40",
+   "round": "adopted 2026-10-21: RUAN's 30 Sep run (time from her frozen_choices file; zip mtimes are the packing time)",
+   "note": "RUAN Hangjing's second pass of 30 Sep 2026 (frozen_choices_ruan_v2.json: frozen_at 2026-09-30 21:39/21:40), run on her machine after the professor's comment under her freeze-before-test protocol; result files received by zip on 21 Oct 2026 and adopted unchanged. Same configuration as the 16 Sep model (K=101 uniform / plain unpenalised logistic) refitted separately: predictions differ by at most 1e-2 (solver tolerance / library version), test AUC by 5e-5. The headline tables use the 16 Sep scoring; these files document the nested-CV second pass and the proposal-stage numbers.",
+   "source_json": "logistic_plain_v2.json",
+   "frozen_p_test": "frozen/logistic_plain_v2_p_test.npy",
+   "p_test_sha256": "d43e7b57af9bf308015954cdef6a1d33e9e2f922822fa9fd56b321471f7085d5",
+   "role": "model"
+  }
+ },
+ "history": [
+  {
+   "event": "adopt",
+   "slugs": [
+    "knn_v2",
+    "logistic_plain_v2"
+   ],
+   "at": "2026-10-21 14:59:58"
+  }
+ ]
+}

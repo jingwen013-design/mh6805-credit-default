@@ -1,0 +1,930 @@
+{
+ "name": "Partial dependence and ICE for the tuned XGBoost",
+ "analysis": "pdp",
+ "member": "LU Xinyu",
+ "seed": 2607526,
+ "versions": {
+  "python": "3.13.5",
+  "sklearn": "1.9.0",
+  "xgboost": "3.4.1",
+  "numpy": "2.5.1",
+  "pandas": "3.0.5",
+  "scipy": "1.18.0"
+ },
+ "partition": {
+  "computed_on": "TRAINING partition",
+  "n_train": 20975,
+  "n_test_untouched": 8990,
+  "why": "Partial dependence is a property of the FITTED MODEL, not of a data set: it is an average of the model's own predictions, and no label is used anywhere in it. Using the training rows therefore costs nothing and keeps the held-out test set untouched. Nothing here is tuned, selected or thresholded; the model was tuned and evaluated in results/xgboost.json."
+ },
+ "model": {
+  "source": "results/xgboost.json",
+  "name": "XGBoost",
+  "hyper_parameters": {
+   "objective": "binary:logistic",
+   "eval_metric": "auc",
+   "tree_method": "hist",
+   "n_jobs": 2,
+   "random_state": 2607526,
+   "learning_rate": 0.03,
+   "max_depth": 3,
+   "min_child_weight": 5,
+   "n_estimators": 300,
+   "subsample": 0.8,
+   "colsample_bytree": 0.8,
+   "scale_pos_weight": 1.0
+  },
+  "refit_seconds": 0.4,
+  "reproduces_baseline_p_test_max_abs_diff": 0.0,
+  "baseline_test_auc": 0.7886523644650636,
+  "baseline_test_ap": 0.5783567346946304,
+  "baseline_cv_auc": 0.7862905873025212,
+  "evaluate_not_called": "this is the same model as results/xgboost.json, so a second comparison-table row would be a duplicate; identity is proved by the p_test reproduction above"
+ },
+ "method": {
+  "kind": "brute force",
+  "rows_used": 20975,
+  "definition": "PD(x) = mean over all training clients of the model's predicted probability when the swept feature is set to x and every other feature keeps that client's own value; the individual curves before averaging are the ICE curves.",
+  "grids": {
+   "PAY_1": "all 11 distinct training values",
+   "N_MONTHS_DELAYED": "all 7 distinct training values",
+   "UTIL_MEAN": "21 quantiles of the training values between the 1% and 99% percentile (0 to 1.043); the tails are excluded so no grid point sits where the model saw ~no data",
+   "LIMIT_BAL": "19 quantiles of the training values between the 1% and 99% percentile (1e+04 to 5e+05); the tails are excluded so no grid point sits where the model saw ~no data"
+  },
+  "grid_values": {
+   "PAY_1": [
+    -2.0,
+    -1.0,
+    0.0,
+    1.0,
+    2.0,
+    3.0,
+    4.0,
+    5.0,
+    6.0,
+    7.0,
+    8.0
+   ],
+   "N_MONTHS_DELAYED": [
+    0.0,
+    1.0,
+    2.0,
+    3.0,
+    4.0,
+    5.0,
+    6.0
+   ],
+   "UTIL_MEAN": [
+    0.0,
+    0.00138,
+    0.00476759074074071,
+    0.010327708333333293,
+    0.018866336996336976,
+    0.03158067667958653,
+    0.05198218137254898,
+    0.08376665000000001,
+    0.1331232592592592,
+    0.1976687500000001,
+    0.2782954861111111,
+    0.3591639194577352,
+    0.44200116666666706,
+    0.5229892329661362,
+    0.6035306666666668,
+    0.6790822916666668,
+    0.7496890316205533,
+    0.8147688541666667,
+    0.8789971212121213,
+    0.9475908333333333,
+    1.04295
+   ],
+   "LIMIT_BAL": [
+    10000.0,
+    20000.0,
+    30000.0,
+    50000.0,
+    70000.0,
+    80000.0,
+    100000.0,
+    120000.0,
+    140000.0,
+    150000.0,
+    180000.0,
+    200000.0,
+    210000.0,
+    230000.0,
+    260000.0,
+    300000.0,
+    360000.0,
+    420000.0,
+    500000.0
+   ]
+  },
+  "cross_check_vs_sklearn": {
+   "function": "sklearn.inspection.partial_dependence(method='brute', custom_values=...)",
+   "max_abs_difference_per_feature": {
+    "PAY_1": 0.0,
+    "N_MONTHS_DELAYED": 0.0,
+    "UTIL_MEAN": 0.0,
+    "LIMIT_BAL": 0.0
+   },
+   "note": "sklearn refuses integer columns for PDP, so it was given X_train.astype(float); that cast changes no prediction of this tree model (max |Δp| = 0.00e+00)"
+  },
+  "link_check_margin_vs_probability": 6.832212895435674e-08
+ },
+ "one_way": {
+  "PAY_1": {
+   "feature": "PAY_1",
+   "grid": [
+    -2.0,
+    -1.0,
+    0.0,
+    1.0,
+    2.0,
+    3.0,
+    4.0,
+    5.0,
+    6.0,
+    7.0,
+    8.0
+   ],
+   "partial_dependence": [
+    0.17860932648181915,
+    0.19440728425979614,
+    0.18670092523097992,
+    0.20993691682815552,
+    0.37202081084251404,
+    0.37202081084251404,
+    0.3659564256668091,
+    0.3619149327278137,
+    0.3619149327278137,
+    0.3619149327278137,
+    0.3619149327278137
+   ],
+   "partial_dependence_log_odds": [
+    -1.7400092971719705,
+    -1.6394637060482904,
+    -1.6938722134312376,
+    -1.5135690415856435,
+    -0.5944172127055075,
+    -0.5944172127055075,
+    -0.6240013686058731,
+    -0.6447797572917774,
+    -0.6447797572917774,
+    -0.6447797572917774,
+    -0.6447797572917774
+   ],
+   "n_train_rows_per_bin": [
+    1904,
+    3941,
+    10380,
+    2540,
+    1871,
+    234,
+    57,
+    16,
+    6,
+    9,
+    17
+   ],
+   "empirical_default_rate_per_bin": [
+    0.13655462184873948,
+    0.16899264146155799,
+    0.1291907514450867,
+    0.33937007874015745,
+    0.6761090326028861,
+    0.7735042735042735,
+    0.6666666666666666,
+    0.5625,
+    0.3333333333333333,
+    0.7777777777777778,
+    0.5882352941176471
+   ],
+   "shape": {
+    "n_grid": 11,
+    "value_min": -2.0,
+    "value_max": 8.0,
+    "pd_min": 0.17860932648181915,
+    "pd_max": 0.37202081084251404,
+    "pd_range": 0.19341148436069489,
+    "pd_at_left_end": 0.17860932648181915,
+    "pd_at_right_end": 0.3619149327278137,
+    "value_at_pd_min": -2.0,
+    "value_at_pd_max": 2.0,
+    "monotone_increasing": false,
+    "monotone_decreasing": false,
+    "n_steps": 10,
+    "n_steps_up": 3,
+    "n_steps_down": 3,
+    "spearman_grid_vs_pd": 0.5456339417907411,
+    "expected_sign": 1,
+    "steps_against_expected_sign": 3,
+    "largest_step_against_expected_sign": 0.007706359028816223,
+    "direction_matches_expected_sign": true
+   },
+   "ice": {
+    "n_clients": 20975,
+    "share_ice_monotone_increasing": 0.0,
+    "share_ice_monotone_decreasing": 0.0,
+    "ice_range_mean": 0.1953934133052826,
+    "ice_range_median": 0.1719241589307785,
+    "ice_range_p90": 0.3692949414253235,
+    "ice_range_max": 0.47363710403442383,
+    "pd_range": 0.19341148436069489,
+    "ice_range_p90_over_pd_range": 1.909374475479126
+   }
+  },
+  "N_MONTHS_DELAYED": {
+   "feature": "N_MONTHS_DELAYED",
+   "grid": [
+    0.0,
+    1.0,
+    2.0,
+    3.0,
+    4.0,
+    5.0,
+    6.0
+   ],
+   "partial_dependence": [
+    0.18975730240345,
+    0.22649915516376495,
+    0.2519279420375824,
+    0.2837735712528229,
+    0.3018728494644165,
+    0.3018728494644165,
+    0.32056543231010437
+   ],
+   "partial_dependence_log_odds": [
+    -1.69445419680903,
+    -1.4185780060770494,
+    -1.2425894297614704,
+    -1.053514084438205,
+    -0.9531854401252831,
+    -0.9531854401252831,
+    -0.8523311394597881
+   ],
+   "n_train_rows_per_bin": [
+    13933,
+    3081,
+    1341,
+    808,
+    663,
+    203,
+    946
+   ],
+   "empirical_default_rate_per_bin": [
+    0.11820856958300438,
+    0.29730606945796817,
+    0.3907531692766592,
+    0.5061881188118812,
+    0.5671191553544495,
+    0.5566502463054187,
+    0.693446088794926
+   ],
+   "shape": {
+    "n_grid": 7,
+    "value_min": 0.0,
+    "value_max": 6.0,
+    "pd_min": 0.18975730240345,
+    "pd_max": 0.32056543231010437,
+    "pd_range": 0.13080812990665436,
+    "pd_at_left_end": 0.18975730240345,
+    "pd_at_right_end": 0.32056543231010437,
+    "value_at_pd_min": 0.0,
+    "value_at_pd_max": 6.0,
+    "monotone_increasing": true,
+    "monotone_decreasing": false,
+    "n_steps": 6,
+    "n_steps_up": 5,
+    "n_steps_down": 0,
+    "spearman_grid_vs_pd": 0.9910312089651149,
+    "expected_sign": 1,
+    "steps_against_expected_sign": 0,
+    "largest_step_against_expected_sign": 0.0,
+    "direction_matches_expected_sign": true
+   },
+   "ice": {
+    "n_clients": 20975,
+    "share_ice_monotone_increasing": 0.9762574493444577,
+    "share_ice_monotone_decreasing": 0.0,
+    "ice_range_mean": 0.13081105053424835,
+    "ice_range_median": 0.121946781873703,
+    "ice_range_p90": 0.21082797646522522,
+    "ice_range_max": 0.30040648579597473,
+    "pd_range": 0.13080812990665436,
+    "ice_range_p90_over_pd_range": 1.6117345094680786
+   }
+  },
+  "UTIL_MEAN": {
+   "feature": "UTIL_MEAN",
+   "grid": [
+    0.0,
+    0.00138,
+    0.00476759074074071,
+    0.010327708333333293,
+    0.018866336996336976,
+    0.03158067667958653,
+    0.05198218137254898,
+    0.08376665000000001,
+    0.1331232592592592,
+    0.1976687500000001,
+    0.2782954861111111,
+    0.3591639194577352,
+    0.44200116666666706,
+    0.5229892329661362,
+    0.6035306666666668,
+    0.6790822916666668,
+    0.7496890316205533,
+    0.8147688541666667,
+    0.8789971212121213,
+    0.9475908333333333,
+    1.04295
+   ],
+   "partial_dependence": [
+    0.2280181497335434,
+    0.21075071394443512,
+    0.21011003851890564,
+    0.206461563706398,
+    0.204363614320755,
+    0.204363614320755,
+    0.20424440503120422,
+    0.20409713685512543,
+    0.20409713685512543,
+    0.20409713685512543,
+    0.20552164316177368,
+    0.20699863135814667,
+    0.21519237756729126,
+    0.22767649590969086,
+    0.2297656238079071,
+    0.23015522956848145,
+    0.23064371943473816,
+    0.2314881980419159,
+    0.23389069736003876,
+    0.2353629469871521,
+    0.2436213195323944
+   ],
+   "partial_dependence_log_odds": [
+    -1.4589390703435672,
+    -1.6141870087442594,
+    -1.6197396427463697,
+    -1.6543615860448284,
+    -1.677220686176757,
+    -1.677220686176757,
+    -1.678310961026093,
+    -1.6799157189649832,
+    -1.6799157189649832,
+    -1.6799157189649832,
+    -1.6671230138430213,
+    -1.6535893928972756,
+    -1.584437413742939,
+    -1.465647038853768,
+    -1.4461640070898363,
+    -1.4321415012967644,
+    -1.4274318947002715,
+    -1.4155728906955092,
+    -1.3917810229923082,
+    -1.382261564216393,
+    -1.3264675655920686
+   ],
+   "n_train_rows_per_bin": [
+    887,
+    891,
+    998,
+    1042,
+    1050,
+    996,
+    1031,
+    1007,
+    1022,
+    993,
+    1042,
+    1049,
+    1033,
+    991,
+    1045,
+    1065,
+    1026,
+    1018,
+    1021,
+    1279,
+    489
+   ],
+   "empirical_default_rate_per_bin": [
+    0.3246899661781285,
+    0.21773288439955107,
+    0.22745490981963928,
+    0.190978886756238,
+    0.14,
+    0.1495983935742972,
+    0.12900096993210475,
+    0.13406156901688182,
+    0.149706457925636,
+    0.14098690835850958,
+    0.1727447216890595,
+    0.20877025738798857,
+    0.21006776379477252,
+    0.25630676084762866,
+    0.2574162679425837,
+    0.26009389671361505,
+    0.25146198830409355,
+    0.2779960707269155,
+    0.31341821743388837,
+    0.3307271305707584,
+    0.35991820040899797
+   ],
+   "shape": {
+    "n_grid": 21,
+    "value_min": 0.0,
+    "value_max": 1.04295,
+    "pd_min": 0.20409713685512543,
+    "pd_max": 0.2436213195323944,
+    "pd_range": 0.03952418267726898,
+    "pd_at_left_end": 0.2280181497335434,
+    "pd_at_right_end": 0.2436213195323944,
+    "value_at_pd_min": 0.08376665000000001,
+    "value_at_pd_max": 1.04295,
+    "monotone_increasing": false,
+    "monotone_decreasing": false,
+    "n_steps": 20,
+    "n_steps_up": 11,
+    "n_steps_down": 6,
+    "spearman_grid_vs_pd": 0.6744724363446125,
+    "expected_sign": 1,
+    "steps_against_expected_sign": 6,
+    "largest_step_against_expected_sign": 0.017267435789108276,
+    "direction_matches_expected_sign": true
+   },
+   "ice": {
+    "n_clients": 20975,
+    "share_ice_monotone_increasing": 0.00019070321811680572,
+    "share_ice_monotone_decreasing": 0.0,
+    "ice_range_mean": 0.049062129110097885,
+    "ice_range_median": 0.04607130587100983,
+    "ice_range_p90": 0.07206817716360092,
+    "ice_range_max": 0.1494823694229126,
+    "pd_range": 0.03952418267726898,
+    "ice_range_p90_over_pd_range": 1.823394536972046
+   }
+  },
+  "LIMIT_BAL": {
+   "feature": "LIMIT_BAL",
+   "grid": [
+    10000.0,
+    20000.0,
+    30000.0,
+    50000.0,
+    70000.0,
+    80000.0,
+    100000.0,
+    120000.0,
+    140000.0,
+    150000.0,
+    180000.0,
+    200000.0,
+    210000.0,
+    230000.0,
+    260000.0,
+    300000.0,
+    360000.0,
+    420000.0,
+    500000.0
+   ],
+   "partial_dependence": [
+    0.25665658712387085,
+    0.24489419162273407,
+    0.24010001122951508,
+    0.23380205035209656,
+    0.22337967157363892,
+    0.21981516480445862,
+    0.21569544076919556,
+    0.21510854363441467,
+    0.21351119875907898,
+    0.21059627830982208,
+    0.21018078923225403,
+    0.21048329770565033,
+    0.21026641130447388,
+    0.21023544669151306,
+    0.2098250389099121,
+    0.20670747756958008,
+    0.20103830099105835,
+    0.2011180967092514,
+    0.2011180967092514
+   ],
+   "partial_dependence_log_odds": [
+    -1.2485317069258128,
+    -1.3293237627259766,
+    -1.3578149709161216,
+    -1.4029557366856136,
+    -1.5021717482775532,
+    -1.5365138895097061,
+    -1.5731186699346502,
+    -1.576994228479222,
+    -1.5856919383679442,
+    -1.6090195162322165,
+    -1.611193299802618,
+    -1.609607456642349,
+    -1.6120135993450904,
+    -1.6139044490471595,
+    -1.6179329858211156,
+    -1.6439231989643324,
+    -1.6943275645808722,
+    -1.6938697128501057,
+    -1.6938697128501057
+   ],
+   "n_train_rows_per_bin": [
+    357,
+    1415,
+    1292,
+    2958,
+    508,
+    1549,
+    1130,
+    1000,
+    519,
+    1237,
+    1218,
+    1085,
+    852,
+    954,
+    1099,
+    1153,
+    1199,
+    616,
+    834
+   ],
+   "empirical_default_rate_per_bin": [
+    0.4117647058823529,
+    0.35335689045936397,
+    0.3591331269349845,
+    0.2680865449628127,
+    0.2933070866141732,
+    0.2317624273724984,
+    0.2513274336283186,
+    0.216,
+    0.21772639691714837,
+    0.185125303152789,
+    0.16666666666666666,
+    0.17695852534562212,
+    0.1643192488262911,
+    0.16247379454926625,
+    0.16287534121929026,
+    0.15004336513443192,
+    0.1501251042535446,
+    0.1266233766233766,
+    0.10431654676258993
+   ],
+   "shape": {
+    "n_grid": 19,
+    "value_min": 10000.0,
+    "value_max": 500000.0,
+    "pd_min": 0.20103830099105835,
+    "pd_max": 0.25665658712387085,
+    "pd_range": 0.0556182861328125,
+    "pd_at_left_end": 0.25665658712387085,
+    "pd_at_right_end": 0.2011180967092514,
+    "value_at_pd_min": 360000.0,
+    "value_at_pd_max": 10000.0,
+    "monotone_increasing": false,
+    "monotone_decreasing": false,
+    "n_steps": 18,
+    "n_steps_up": 2,
+    "n_steps_down": 15,
+    "spearman_grid_vs_pd": -0.9837649038317644,
+    "expected_sign": -1,
+    "steps_against_expected_sign": 2,
+    "largest_step_against_expected_sign": 0.00030250847339630127,
+    "direction_matches_expected_sign": true
+   },
+   "ice": {
+    "n_clients": 20975,
+    "share_ice_monotone_increasing": 0.0,
+    "share_ice_monotone_decreasing": 0.3740166865315852,
+    "ice_range_mean": 0.05771017447113991,
+    "ice_range_median": 0.05515735596418381,
+    "ice_range_p90": 0.08929212391376495,
+    "ice_range_max": 0.1497066766023636,
+    "pd_range": 0.0556182861328125,
+    "ice_range_p90_over_pd_range": 1.605445384979248
+   }
+  }
+ },
+ "utilisation_u_shape": {
+  "pd_curve_test": {
+   "index_of_minimum": 7,
+   "value_at_minimum": 0.08376665000000001,
+   "pd_at_minimum": 0.20409713685512543,
+   "pd_at_left_end": 0.2280181497335434,
+   "pd_at_right_end": 0.2436213195323944,
+   "fall_from_left_end_into_minimum": 0.02392101287841797,
+   "rise_from_minimum_to_right_end": 0.03952418267726898,
+   "minimum_is_interior": true,
+   "tolerance": 0.002,
+   "u_shape_survives": true
+  },
+  "empirical_deciles_training": {
+   "edges": [
+    -0.23259,
+    0.00431209523809516,
+    0.01819336231884056,
+    0.05144714009661829,
+    0.13332092222222225,
+    0.2826266666666667,
+    0.4474644444444445,
+    0.6119978095238096,
+    0.7580883555555555,
+    0.8898511111111111,
+    2.726269444444444
+   ],
+   "n": [
+    2098,
+    2097,
+    2098,
+    2097,
+    2098,
+    2097,
+    2097,
+    2098,
+    2097,
+    2098
+   ],
+   "default_rate": [
+    0.2635843660629171,
+    0.19360991893180735,
+    0.1406101048617731,
+    0.139723414401526,
+    0.15490943755958056,
+    0.19790176442536958,
+    0.24654268001907487,
+    0.2540514775977121,
+    0.2875536480686695,
+    0.3341277407054338
+   ],
+   "index_of_minimum": 3,
+   "min_rate": 0.139723414401526,
+   "rate_first_decile": 0.2635843660629171,
+   "rate_last_decile": 0.3341277407054338,
+   "u_shaped": true
+  },
+  "corr_UTIL_1_UTIL_MEAN": 0.9091303070211263,
+  "logistic_coefficient_UTIL_MEAN": {
+   "coef_per_sd": 0.2882258323199601,
+   "odds_ratio": 1.334058543643168,
+   "p_value": 0.0186785415235656,
+   "source": "results/logistic_coefficients.csv"
+  },
+  "verdict": "The EDA found utilisation U-shaped rather than monotone. In the PD curve of UTIL_MEAN the minimum is 0.2041 at UTIL_MEAN = 0.084, it is interior, the curve falls +0.0239 into it from the left end and rises +0.0395 out of it to the right end, so the U-shape SURVIVES in the fitted model and not only in the raw default rates. The empirical training deciles of UTIL_MEAN move 0.264 -> minimum 0.140 (decile 4) -> 0.334, i.e. the same shape. This matters for the report's argument for tree-based methods: a linear model in UTIL_MEAN can only be monotone — the logistic regression is forced into a single coefficient of +0.288 per SD (odds ratio 1.334), which has to average the falling and the rising half of the curve into one number, while the booster fits the fall and the rise separately. Note that the EDA measured the U-shape on UTIL_1, which correlates r = 0.91 with UTIL_MEAN."
+ },
+ "interaction": {
+  "claim_tested": "the proposal's hypothesis that the ranking is explainable by the interaction of repayment delay with credit limit and utilisation",
+  "statistic": "Friedman's H: the share of the variance of the two-way partial dependence that the sum of the two one-way curves cannot reproduce. 0 = perfectly additive, 1 = nothing additive about it. Reported both weighted by the number of training clients per grid cell (the number used to choose the pair, so that empty corners of the grid cannot manufacture an interaction) and uniform over the grid; and on both the probability scale (what the figures show) and the raw log-odds scale (where a boosted tree ensemble is additive by construction, so H there is interaction rather than the curvature of the logistic link).",
+  "chosen_pair": [
+   "PAY_1",
+   "LIMIT_BAL"
+  ],
+  "rival_pair": [
+   "N_MONTHS_DELAYED",
+   "UTIL_MEAN"
+  ],
+  "margin_scale_ranking_agrees": true,
+  "candidates": {
+   "PAY_1 x LIMIT_BAL": {
+    "range_effects": {
+     "effect_of_a_at_lowest_b": 0.20097751915454865,
+     "effect_of_a_at_highest_b": 0.17196010053157806,
+     "effect_of_b_at_lowest_a": -0.038833290338516235,
+     "effect_of_b_at_highest_a": -0.06785070896148682,
+     "ratio_effect_of_a_low_b_over_high_b": 1.1687450666362105,
+     "ratio_effect_of_b_low_a_over_high_a": 0.5723343342006736,
+     "sweep_a": [
+      -2.0,
+      8.0
+     ],
+     "sweep_b": [
+      10000.0,
+      500000.0
+     ]
+    },
+    "h_probability_weighted": 0.06064372049269292,
+    "h_probability_uniform": 0.046387552329852824,
+    "h_margin_weighted": 0.05962982577410512,
+    "h_margin_uniform": 0.05666127494229053,
+    "n_cells": 209,
+    "n_cells_empty": 52,
+    "share_cells_empty": 0.24880382775119617,
+    "share_clients_in_the_10pct_densest_cells": 0.5252920143027413,
+    "surface_range": 0.2540047615766525,
+    "residual_max_abs": 0.010699829198464461,
+    "seconds": 9.7,
+    "rival_h_probability_weighted": 0.04446999351204605,
+    "rival_a": "N_MONTHS_DELAYED",
+    "rival_b": "UTIL_MEAN"
+   },
+   "N_MONTHS_DELAYED x UTIL_MEAN": {
+    "range_effects": {
+     "effect_of_a_at_lowest_b": 0.13877305388450623,
+     "effect_of_a_at_highest_b": 0.12843522429466248,
+     "effect_of_b_at_lowest_a": 0.016125798225402832,
+     "effect_of_b_at_highest_a": 0.005787968635559082,
+     "ratio_effect_of_a_low_b_over_high_b": 1.0804906103182892,
+     "ratio_effect_of_b_low_a_over_high_a": 2.7860894280477004,
+     "sweep_a": [
+      0.0,
+      6.0
+     ],
+     "sweep_b": [
+      0.0,
+      1.04295
+     ]
+    },
+    "h_probability_weighted": 0.04446999351204605,
+    "h_probability_uniform": 0.0697028451137096,
+    "h_margin_weighted": 0.048279102333103105,
+    "h_margin_uniform": 0.07108341246205957,
+    "n_cells": 147,
+    "n_cells_empty": 1,
+    "share_cells_empty": 0.006802721088435374,
+    "share_clients_in_the_10pct_densest_cells": 0.49163289630512513,
+    "surface_range": 0.17002072930335999,
+    "residual_max_abs": 0.008632953272814964,
+    "seconds": 6.9
+   }
+  },
+  "reading": "On the probability scale the density-weighted H is 0.0606 for PAY_1 x LIMIT_BAL against 0.0445 for N_MONTHS_DELAYED x UTIL_MEAN; on the log-odds scale 0.0596 against 0.0483. The largest departure from additivity anywhere on the chosen grid is 0.0107 in probability, against a total surface range of 0.2540 — i.e. the interaction is small next to the two main effects, which is the honest version of the proposal's hypothesis: the effects mostly ADD, they do not mostly INTERACT. In plain terms: sweeping PAY_1 over its whole range moves the partial dependence by +0.2010 for clients at the lowest LIMIT_BAL and by +0.1720 at the highest (ratio 1.17); sweeping LIMIT_BAL moves it by -0.0388 at the lowest PAY_1 and -0.0679 at the highest (ratio 0.57)."
+ },
+ "correlation_caveat": {
+  "per_pdp_feature": {
+   "PAY_1": {
+    "top_absolute_correlations": [
+     {
+      "feature": "PAY_2",
+      "r": 0.6738173756675377
+     },
+     {
+      "feature": "MAX_DELAY",
+      "r": 0.6399731996601518
+     },
+     {
+      "feature": "N_MONTHS_DELAYED",
+      "r": 0.6366231189455401
+     },
+     {
+      "feature": "PAY_3",
+      "r": 0.5784017956209793
+     },
+     {
+      "feature": "PAY_4",
+      "r": 0.5433274050118887
+     },
+     {
+      "feature": "PAY_5",
+      "r": 0.5115507074648414
+     }
+    ],
+    "max_abs_r": 0.6738173756675377,
+    "max_abs_r_with": "PAY_2",
+    "n_features_with_abs_r_above_0_5": 6,
+    "n_features_with_abs_r_above_0_8": 0,
+    "max_abs_r_with_a_bill_amount": 0.18972005738231706,
+    "max_abs_r_with_a_bill_amount_col": "BILL_AMT2"
+   },
+   "N_MONTHS_DELAYED": {
+    "top_absolute_correlations": [
+     {
+      "feature": "MAX_DELAY",
+      "r": 0.8256573232266031
+     },
+     {
+      "feature": "PAY_2",
+      "r": 0.6631680335436225
+     },
+     {
+      "feature": "PAY_3",
+      "r": 0.6554172304713083
+     },
+     {
+      "feature": "PAY_1",
+      "r": 0.6366231189455401
+     },
+     {
+      "feature": "PAY_4",
+      "r": 0.6362483324133437
+     },
+     {
+      "feature": "PAY_5",
+      "r": 0.6076492549635957
+     }
+    ],
+    "max_abs_r": 0.8256573232266031,
+    "max_abs_r_with": "MAX_DELAY",
+    "n_features_with_abs_r_above_0_5": 7,
+    "n_features_with_abs_r_above_0_8": 1,
+    "max_abs_r_with_a_bill_amount": 0.04373569827927883,
+    "max_abs_r_with_a_bill_amount_col": "BILL_AMT6"
+   },
+   "UTIL_MEAN": {
+    "top_absolute_correlations": [
+     {
+      "feature": "UTIL_1",
+      "r": 0.9091303070211263
+     },
+     {
+      "feature": "BILL_AMT3",
+      "r": 0.5318850165970449
+     },
+     {
+      "feature": "BILL_AMT2",
+      "r": 0.531267013188287
+     },
+     {
+      "feature": "BILL_AMT4",
+      "r": 0.5311555993677057
+     },
+     {
+      "feature": "BILL_AMT5",
+      "r": 0.5171353235272202
+     },
+     {
+      "feature": "BILL_AMT1",
+      "r": 0.5066121482423607
+     }
+    ],
+    "max_abs_r": 0.9091303070211263,
+    "max_abs_r_with": "UTIL_1",
+    "n_features_with_abs_r_above_0_5": 7,
+    "n_features_with_abs_r_above_0_8": 1,
+    "max_abs_r_with_a_bill_amount": 0.5318850165970449,
+    "max_abs_r_with_a_bill_amount_col": "BILL_AMT3"
+   },
+   "LIMIT_BAL": {
+    "top_absolute_correlations": [
+     {
+      "feature": "UTIL_MEAN",
+      "r": -0.38306179301334353
+     },
+     {
+      "feature": "UTIL_1",
+      "r": -0.37221241802087907
+     },
+     {
+      "feature": "BILL_AMT5",
+      "r": 0.29851263726917465
+     },
+     {
+      "feature": "BILL_AMT4",
+      "r": 0.2980479927832565
+     },
+     {
+      "feature": "PAY_2",
+      "r": -0.29708134426235105
+     },
+     {
+      "feature": "BILL_AMT6",
+      "r": 0.2943795085962293
+     }
+    ],
+    "max_abs_r": 0.38306179301334353,
+    "max_abs_r_with": "UTIL_MEAN",
+    "n_features_with_abs_r_above_0_5": 0,
+    "n_features_with_abs_r_above_0_8": 0,
+    "max_abs_r_with_a_bill_amount": 0.29851263726917465,
+    "max_abs_r_with_a_bill_amount_col": "BILL_AMT5"
+   }
+  },
+  "bill_amount_block": {
+   "columns": [
+    "BILL_AMT1",
+    "BILL_AMT2",
+    "BILL_AMT3",
+    "BILL_AMT4",
+    "BILL_AMT5",
+    "BILL_AMT6"
+   ],
+   "n_pairs": 15,
+   "min_abs_r": 0.800550487703704,
+   "mean_abs_r": 0.8872671197744992,
+   "max_abs_r": 0.9508483436307331
+  },
+  "identity_util_mean_max_abs_error": 2.220446049250313e-16,
+  "identity_n_months_delayed_n_rows_violating": 0,
+  "two_way_cells_without_any_training_client": {
+   "pair": [
+    "PAY_1",
+    "LIMIT_BAL"
+   ],
+   "empty": 52,
+   "total": 209,
+   "share": 0.24880382775119617
+  },
+  "limitation": "Partial dependence averages the model's prediction over the MARGINAL distribution of the other features: to draw the curve at UTIL_MEAN = x it takes all 20,975 training clients, overwrites that one column with x and leaves every other column untouched. When the swept feature is strongly correlated with the ones held fixed, those synthetic clients are combinations the data never contain, and the curve is then partly extrapolation rather than a description of real borrowers. This dataset is exactly that case, and here is how far it goes: the six bill columns BILL_AMT1..6 have pairwise |r| between 0.80 and 0.95 (mean 0.89); PAY_1 has |r| = 0.67 with PAY_2 and 6 features above 0.5; N_MONTHS_DELAYED has |r| = 0.83 with MAX_DELAY and 7 features above 0.5; UTIL_MEAN has |r| = 0.91 with UTIL_1 and 7 features above 0.5; LIMIT_BAL has |r| = 0.38 with UTIL_MEAN and 0 features above 0.5. Worse than correlation, two of the four are DETERMINISTIC functions of columns the sweep holds fixed: UTIL_MEAN = mean(BILL_AMT1..6)/LIMIT_BAL holds in the training data to 2.22e-16, and N_MONTHS_DELAYED = #(PAY_k > 0) holds in all but 0 of 20,975 rows, so moving either one alone produces rows that are arithmetically impossible. The two-way surface makes the same point visibly: 52 of 209 cells of the PAY_1 x LIMIT_BAL grid (24.9%) contain no training client at all, and those cells are averaged into the picture with the same weight as the dense ones. Three things are done about it rather than said about it: the Friedman H statistics are weighted by the number of training clients per cell, so empty corners cannot create an interaction; the cells with no client are marked with a cross in figures/pdp_interaction.png; and the ICE curves are shown, because a PD curve is only a mean and the ICE spread (p90 of the per-client range is 0.369) shows how much that mean hides. The honest reading is that these curves describe the MODEL's response surface, which is what the report claims about, and not the conditional expectation of default given the feature, which would need accumulated local effects (ALE) instead."
+ },
+ "files": {
+  "results": [
+   "pdp_values.csv",
+   "pdp_summary.json"
+  ],
+  "figures": [
+   "pdp_main.png",
+   "pdp_interaction.png"
+  ]
+ },
+ "seconds": 22.2
+}

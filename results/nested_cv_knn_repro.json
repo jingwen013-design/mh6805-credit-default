@@ -1,0 +1,71 @@
+{
+ "method": "nested CV: outer = project 5-fold, inner = 5-fold (seed+1) grid over K x weights; training rows only",
+ "grid": {
+  "K": [
+   5,
+   11,
+   21,
+   31,
+   51,
+   75,
+   101,
+   151
+  ],
+  "weights": [
+   "uniform",
+   "distance"
+  ]
+ },
+ "outer_auc": [
+  0.7792701373716265,
+  0.7575538232376007,
+  0.7693942428464372,
+  0.771975733035686,
+  0.7639884328670576
+ ],
+ "outer_choices": [
+  {
+   "clf__n_neighbors": 101,
+   "clf__weights": "distance"
+  },
+  {
+   "clf__n_neighbors": 101,
+   "clf__weights": "uniform"
+  },
+  {
+   "clf__n_neighbors": 101,
+   "clf__weights": "uniform"
+  },
+  {
+   "clf__n_neighbors": 151,
+   "clf__weights": "distance"
+  },
+  {
+   "clf__n_neighbors": 151,
+   "clf__weights": "uniform"
+  }
+ ],
+ "nested_cv_auc": 0.7684364738716817,
+ "nested_cv_auc_std": 0.0073352449893825744,
+ "full_training_choice": {
+  "n_neighbors": 101,
+  "weights": "uniform",
+  "cv_auc": 0.7700333660038201,
+  "cv_auc_std": 0.008717447421272694
+ },
+ "frozen_choice": {
+  "n_neighbors": 101,
+  "weights": "uniform",
+  "cv_auc": 0.7700333660038201,
+  "test_auc": 0.7705565871542163,
+  "first_scored": "2026-09-16"
+ },
+ "selection_agrees_with_frozen": true,
+ "oof_calibration": {
+  "brier": 0.13946270551561807,
+  "mean_pred": 0.21478195912319425,
+  "obs_rate": 0.22126340882002385,
+  "cal_slope": 0.9664299319261593,
+  "cal_intercept": 0.009550213536444894
+ }
+}

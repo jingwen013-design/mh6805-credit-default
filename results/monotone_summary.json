@@ -1,0 +1,538 @@
+{
+ "name": "XGBoost (monotone constraints)",
+ "slug": "xgboost_monotone",
+ "member": "LU Xinyu",
+ "seed": 2607526,
+ "versions": {
+  "python": "3.13.5",
+  "sklearn": "1.9.0",
+  "xgboost": "3.4.1",
+  "numpy": "2.5.1",
+  "pandas": "3.0.5"
+ },
+ "hyper_parameters": {
+  "objective": "binary:logistic",
+  "eval_metric": "auc",
+  "tree_method": "hist",
+  "n_jobs": 2,
+  "random_state": 2607526,
+  "learning_rate": 0.03,
+  "max_depth": 3,
+  "min_child_weight": 5,
+  "n_estimators": 300,
+  "subsample": 0.8,
+  "colsample_bytree": 0.8,
+  "scale_pos_weight": 1.0,
+  "monotone_constraints": "(-1,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,-1,1,1,1,0,0,0,0,0,0)"
+ },
+ "baseline": {
+  "slug": "xgboost",
+  "name": "XGBoost",
+  "test_auc": 0.7886523644650636,
+  "test_ap": 0.5783567346946304,
+  "cv_auc": 0.7862905873025212,
+  "test_brier": 0.13107356429100037,
+  "test_logloss": 0.42049330472946167,
+  "f1_at_tuned": 0.5497674418604651,
+  "cost_at_tuned": 4981.0
+ },
+ "constrained": {
+  "test_auc": 0.7870035301284619,
+  "test_ap": 0.5725205566451784,
+  "cv_auc": 0.7843689648245447,
+  "cv_auc_std": 0.006851626421260679,
+  "test_brier": 0.1317315548658371,
+  "test_logloss": 0.42212212085723877,
+  "f1_at_tuned": 0.5468487898394441,
+  "cost_at_tuned": 4990.0
+ },
+ "cost_of_the_constraint": {
+  "delta_test_auc": -0.0016488343366016789,
+  "delta_test_ap": -0.005836178049452023,
+  "delta_cv_auc": -0.001921622477976559,
+  "delta_test_auc_pct": -0.20906985268725717,
+  "delta_test_ap_pct": -1.0090965833627747,
+  "delta_f1_at_tuned": -0.00291865202102104,
+  "delta_cost_at_tuned": 9.0,
+  "constrained_is_worse_on_auc": true,
+  "constrained_is_worse_on_ap": true,
+  "paired_bootstrap": {
+   "B": 500,
+   "seed": 2607526,
+   "auc_diff_mean": -0.0016701071760466817,
+   "auc_diff_2_5": -0.0030116898097308246,
+   "auc_diff_97_5": -0.00015712728944064253,
+   "auc_diff_excludes_zero": true,
+   "share_replicates_constrained_better": 0.004,
+   "ap_diff_mean": -0.0060208113338905585,
+   "ap_diff_2_5": -0.011267859485899718,
+   "ap_diff_97_5": -0.0007954116818272849,
+   "ap_diff_excludes_zero": true,
+   "share_replicates_constrained_better_ap": 0.01
+  }
+ },
+ "constraint_vector": {
+  "order": "transformed columns, from feature_names_out(pre)",
+  "string": "(-1,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,-1,1,1,1,0,0,0,0,0,0)",
+  "n_plus": 11,
+  "n_minus": 2,
+  "n_zero": 19,
+  "plus_features": [
+   "PAY_1",
+   "PAY_2",
+   "PAY_3",
+   "PAY_4",
+   "PAY_5",
+   "PAY_6",
+   "N_MONTHS_DELAYED",
+   "MAX_DELAY",
+   "UTIL_1",
+   "UTIL_MEAN",
+   "BILL_TREND"
+  ],
+  "minus_features": [
+   "LIMIT_BAL",
+   "PAY_RATIO_MEAN"
+  ],
+  "read_back_from_booster": "(-1,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,-1,1,1,1,0,0,0,0,0,0)",
+  "column_order_identical_in_all_folds": true,
+  "columns": [
+   {
+    "index": 0,
+    "transformed": "num__LIMIT_BAL",
+    "raw": "LIMIT_BAL",
+    "constraint": -1
+   },
+   {
+    "index": 1,
+    "transformed": "num__AGE",
+    "raw": "AGE",
+    "constraint": 0
+   },
+   {
+    "index": 2,
+    "transformed": "num__PAY_1",
+    "raw": "PAY_1",
+    "constraint": 1
+   },
+   {
+    "index": 3,
+    "transformed": "num__PAY_2",
+    "raw": "PAY_2",
+    "constraint": 1
+   },
+   {
+    "index": 4,
+    "transformed": "num__PAY_3",
+    "raw": "PAY_3",
+    "constraint": 1
+   },
+   {
+    "index": 5,
+    "transformed": "num__PAY_4",
+    "raw": "PAY_4",
+    "constraint": 1
+   },
+   {
+    "index": 6,
+    "transformed": "num__PAY_5",
+    "raw": "PAY_5",
+    "constraint": 1
+   },
+   {
+    "index": 7,
+    "transformed": "num__PAY_6",
+    "raw": "PAY_6",
+    "constraint": 1
+   },
+   {
+    "index": 8,
+    "transformed": "num__BILL_AMT1",
+    "raw": "BILL_AMT1",
+    "constraint": 0
+   },
+   {
+    "index": 9,
+    "transformed": "num__BILL_AMT2",
+    "raw": "BILL_AMT2",
+    "constraint": 0
+   },
+   {
+    "index": 10,
+    "transformed": "num__BILL_AMT3",
+    "raw": "BILL_AMT3",
+    "constraint": 0
+   },
+   {
+    "index": 11,
+    "transformed": "num__BILL_AMT4",
+    "raw": "BILL_AMT4",
+    "constraint": 0
+   },
+   {
+    "index": 12,
+    "transformed": "num__BILL_AMT5",
+    "raw": "BILL_AMT5",
+    "constraint": 0
+   },
+   {
+    "index": 13,
+    "transformed": "num__BILL_AMT6",
+    "raw": "BILL_AMT6",
+    "constraint": 0
+   },
+   {
+    "index": 14,
+    "transformed": "num__PAY_AMT1",
+    "raw": "PAY_AMT1",
+    "constraint": 0
+   },
+   {
+    "index": 15,
+    "transformed": "num__PAY_AMT2",
+    "raw": "PAY_AMT2",
+    "constraint": 0
+   },
+   {
+    "index": 16,
+    "transformed": "num__PAY_AMT3",
+    "raw": "PAY_AMT3",
+    "constraint": 0
+   },
+   {
+    "index": 17,
+    "transformed": "num__PAY_AMT4",
+    "raw": "PAY_AMT4",
+    "constraint": 0
+   },
+   {
+    "index": 18,
+    "transformed": "num__PAY_AMT5",
+    "raw": "PAY_AMT5",
+    "constraint": 0
+   },
+   {
+    "index": 19,
+    "transformed": "num__PAY_AMT6",
+    "raw": "PAY_AMT6",
+    "constraint": 0
+   },
+   {
+    "index": 20,
+    "transformed": "num__UTIL_1",
+    "raw": "UTIL_1",
+    "constraint": 1
+   },
+   {
+    "index": 21,
+    "transformed": "num__UTIL_MEAN",
+    "raw": "UTIL_MEAN",
+    "constraint": 1
+   },
+   {
+    "index": 22,
+    "transformed": "num__PAY_RATIO_MEAN",
+    "raw": "PAY_RATIO_MEAN",
+    "constraint": -1
+   },
+   {
+    "index": 23,
+    "transformed": "num__N_MONTHS_DELAYED",
+    "raw": "N_MONTHS_DELAYED",
+    "constraint": 1
+   },
+   {
+    "index": 24,
+    "transformed": "num__MAX_DELAY",
+    "raw": "MAX_DELAY",
+    "constraint": 1
+   },
+   {
+    "index": 25,
+    "transformed": "num__BILL_TREND",
+    "raw": "BILL_TREND",
+    "constraint": 1
+   },
+   {
+    "index": 26,
+    "transformed": "cat__SEX_2",
+    "raw": "SEX",
+    "constraint": 0
+   },
+   {
+    "index": 27,
+    "transformed": "cat__EDUCATION_2",
+    "raw": "EDUCATION",
+    "constraint": 0
+   },
+   {
+    "index": 28,
+    "transformed": "cat__EDUCATION_3",
+    "raw": "EDUCATION",
+    "constraint": 0
+   },
+   {
+    "index": 29,
+    "transformed": "cat__EDUCATION_4",
+    "raw": "EDUCATION",
+    "constraint": 0
+   },
+   {
+    "index": 30,
+    "transformed": "cat__MARRIAGE_2",
+    "raw": "MARRIAGE",
+    "constraint": 0
+   },
+   {
+    "index": 31,
+    "transformed": "cat__MARRIAGE_3",
+    "raw": "MARRIAGE",
+    "constraint": 0
+   }
+  ]
+ },
+ "violations": {
+  "method": "one feature is swept while the others are held at their training median (categoricals at the rounded median level); a violation is a step of the grid on which the predicted probability moves against the required direction. The sweep probes the model's response surface, not real clients.",
+  "pay1_median_profile": {
+   "grid": [
+    -2.0,
+    -1.0,
+    0.0,
+    1.0,
+    2.0,
+    3.0,
+    4.0,
+    5.0,
+    6.0,
+    7.0,
+    8.0
+   ],
+   "n_steps": 10,
+   "unconstrained": {
+    "violations": 3,
+    "largest_fall": 0.0034048110246658325,
+    "p": [
+     0.06207413226366043,
+     0.06658732891082764,
+     0.06451332569122314,
+     0.0878753662109375,
+     0.225372314453125,
+     0.225372314453125,
+     0.2224321812391281,
+     0.21902737021446228,
+     0.21902737021446228,
+     0.21902737021446228,
+     0.21902737021446228
+    ]
+   },
+   "constrained": {
+    "violations": 0,
+    "largest_fall": 0.0,
+    "p": [
+     0.06825584173202515,
+     0.06944552809000015,
+     0.06944552809000015,
+     0.09719415009021759,
+     0.2215508669614792,
+     0.2215508669614792,
+     0.2215508669614792,
+     0.2215508669614792,
+     0.2215508669614792,
+     0.2215508669614792,
+     0.2215508669614792
+    ]
+   }
+  },
+  "pay1_random_profiles": {
+   "unconstrained": {
+    "profiles_with_violation": 200,
+    "n_profiles": 200,
+    "violating_steps": 576,
+    "total_steps": 2000,
+    "largest_fall": 0.035889893770217896
+   },
+   "constrained": {
+    "profiles_with_violation": 0,
+    "n_profiles": 200,
+    "violating_steps": 0,
+    "total_steps": 2000,
+    "largest_fall": 0.0
+   }
+  },
+  "all_constrained_features": {
+   "total_violations_unconstrained": 24,
+   "total_violations_constrained": 0,
+   "per_feature": [
+    {
+     "feature": "PAY_1",
+     "required_sign": 1,
+     "n_grid": 11,
+     "n_steps": 10,
+     "violations_unconstrained": 3,
+     "largest_wrong_move_unconstrained": 0.003405,
+     "violations_constrained": 0,
+     "largest_wrong_move_constrained": 0.0,
+     "range_unconstrained": 0.163298,
+     "range_constrained": 0.153295
+    },
+    {
+     "feature": "PAY_2",
+     "required_sign": 1,
+     "n_grid": 10,
+     "n_steps": 9,
+     "violations_unconstrained": 0,
+     "largest_wrong_move_unconstrained": 0.0,
+     "violations_constrained": 0,
+     "largest_wrong_move_constrained": 0.0,
+     "range_unconstrained": 0.003728,
+     "range_constrained": 0.0
+    },
+    {
+     "feature": "PAY_3",
+     "required_sign": 1,
+     "n_grid": 11,
+     "n_steps": 10,
+     "violations_unconstrained": 1,
+     "largest_wrong_move_unconstrained": 0.000202,
+     "violations_constrained": 0,
+     "largest_wrong_move_constrained": 0.0,
+     "range_unconstrained": 0.000401,
+     "range_constrained": 0.001776
+    },
+    {
+     "feature": "PAY_4",
+     "required_sign": 1,
+     "n_grid": 11,
+     "n_steps": 10,
+     "violations_unconstrained": 1,
+     "largest_wrong_move_unconstrained": 0.003215,
+     "violations_constrained": 0,
+     "largest_wrong_move_constrained": 0.0,
+     "range_unconstrained": 0.003215,
+     "range_constrained": 0.000394
+    },
+    {
+     "feature": "PAY_5",
+     "required_sign": 1,
+     "n_grid": 9,
+     "n_steps": 8,
+     "violations_unconstrained": 0,
+     "largest_wrong_move_unconstrained": 0.0,
+     "violations_constrained": 0,
+     "largest_wrong_move_constrained": 0.0,
+     "range_unconstrained": 0.001112,
+     "range_constrained": 0.0
+    },
+    {
+     "feature": "PAY_6",
+     "required_sign": 1,
+     "n_grid": 10,
+     "n_steps": 9,
+     "violations_unconstrained": 0,
+     "largest_wrong_move_unconstrained": 0.0,
+     "violations_constrained": 0,
+     "largest_wrong_move_constrained": 0.0,
+     "range_unconstrained": 0.000592,
+     "range_constrained": 0.0
+    },
+    {
+     "feature": "N_MONTHS_DELAYED",
+     "required_sign": 1,
+     "n_grid": 7,
+     "n_steps": 6,
+     "violations_unconstrained": 0,
+     "largest_wrong_move_unconstrained": 0.0,
+     "violations_constrained": 0,
+     "largest_wrong_move_constrained": 0.0,
+     "range_unconstrained": 0.094648,
+     "range_constrained": 0.086182
+    },
+    {
+     "feature": "MAX_DELAY",
+     "required_sign": 1,
+     "n_grid": 9,
+     "n_steps": 8,
+     "violations_unconstrained": 0,
+     "largest_wrong_move_unconstrained": 0.0,
+     "violations_constrained": 0,
+     "largest_wrong_move_constrained": 0.0,
+     "range_unconstrained": 0.054199,
+     "range_constrained": 0.04799
+    },
+    {
+     "feature": "UTIL_1",
+     "required_sign": 1,
+     "n_grid": 21,
+     "n_steps": 20,
+     "violations_unconstrained": 2,
+     "largest_wrong_move_unconstrained": 0.00583,
+     "violations_constrained": 0,
+     "largest_wrong_move_constrained": 0.0,
+     "range_unconstrained": 0.033908,
+     "range_constrained": 0.031816
+    },
+    {
+     "feature": "UTIL_MEAN",
+     "required_sign": 1,
+     "n_grid": 21,
+     "n_steps": 20,
+     "violations_unconstrained": 3,
+     "largest_wrong_move_unconstrained": 0.013352,
+     "violations_constrained": 0,
+     "largest_wrong_move_constrained": 0.0,
+     "range_unconstrained": 0.041383,
+     "range_constrained": 0.045913
+    },
+    {
+     "feature": "BILL_TREND",
+     "required_sign": 1,
+     "n_grid": 21,
+     "n_steps": 20,
+     "violations_unconstrained": 8,
+     "largest_wrong_move_unconstrained": 0.004266,
+     "violations_constrained": 0,
+     "largest_wrong_move_constrained": 0.0,
+     "range_unconstrained": 0.015566,
+     "range_constrained": 0.002878
+    },
+    {
+     "feature": "LIMIT_BAL",
+     "required_sign": -1,
+     "n_grid": 19,
+     "n_steps": 18,
+     "violations_unconstrained": 0,
+     "largest_wrong_move_unconstrained": 0.0,
+     "violations_constrained": 0,
+     "largest_wrong_move_constrained": 0.0,
+     "range_unconstrained": 0.047109,
+     "range_constrained": 0.030432
+    },
+    {
+     "feature": "PAY_RATIO_MEAN",
+     "required_sign": -1,
+     "n_grid": 20,
+     "n_steps": 19,
+     "violations_unconstrained": 6,
+     "largest_wrong_move_unconstrained": 0.001778,
+     "violations_constrained": 0,
+     "largest_wrong_move_constrained": 0.0,
+     "range_unconstrained": 0.00467,
+     "range_constrained": 0.003312
+    }
+   ]
+  }
+ },
+ "files": {
+  "results": [
+   "xgboost_monotone.json",
+   "monotone_check.csv",
+   "monotone_feature_sweep.csv",
+   "monotone_summary.json"
+  ],
+  "figures": [
+   "xgboost_monotone_eval.png",
+   "monotone_pay1.png"
+  ]
+ },
+ "seconds": 21.4
+}

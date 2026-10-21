@@ -1,0 +1,84 @@
+% MH6805 Machine Learning in Finance --- Group Project Final Report, Group B19
+% Typeset with the NeurIPS 2021 style file supplied by the instructor.
+% Build:  ./build_report_tex.sh      (body must stay within 7 pages INCLUDING references;
+%                                     the appendix is exempt under the course guideline)
+\documentclass{article}
+
+% [preprint] is the option the template prescribes for a non-anonymous paper that is not a
+% NeurIPS acceptance: it typesets the real \author block (the contribution statement is
+% mandatory for this course) and does not load the anonymous-submission line numbers.
+% [final] is deliberately NOT used --- the template reserves it for accepted papers.
+\usepackage[preprint]{neurips_2021}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\renewcommand{\ttdefault}{lmtt}      % Type 1 T1 typewriter: no bitmap fonts in the PDF
+\usepackage{xcolor}                  % red draft percentages in the contribution statement
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{longtable}
+\graphicspath{{../figures/}}
+
+% Unicode characters that appear in the drafted text.
+\DeclareUnicodeCharacter{2212}{\ensuremath{-}}
+\DeclareUnicodeCharacter{2265}{\ensuremath{\ge}}
+\DeclareUnicodeCharacter{2264}{\ensuremath{\le}}
+\DeclareUnicodeCharacter{2248}{\ensuremath{\approx}}
+\DeclareUnicodeCharacter{00D7}{\ensuremath{\times}}
+\DeclareUnicodeCharacter{2192}{\ensuremath{\rightarrow}}
+\DeclareUnicodeCharacter{2026}{\dots}
+\DeclareUnicodeCharacter{00B1}{\ensuremath{\pm}}
+\DeclareUnicodeCharacter{2013}{--}
+\DeclareUnicodeCharacter{2014}{---}
+
+% The style file prints a venue line at the foot of page 1. This is coursework, so the slot
+% carries the course identification instead of "Preprint. Under review."
+\makeatletter
+\renewcommand{\@noticestring}{%
+  MH6805 Machine Learning in Finance, Nanyang Technological University.
+  Group project final report, Group B19.}
+\makeatother
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\title{Predicting Credit-Card Default:\\ A Comparative Study of\\ Machine-Learning Classifiers}
+
+\author{%
+  RUAN Hangjing\\
+  G2607546F\\
+  \texttt{hangjing001@e.ntu.edu.sg}
+  \And
+  LU Xinyu\\
+  G2603537D\\
+  \texttt{xinyu057@e.ntu.edu.sg}
+  \And
+  LI Jingwen\\
+  G2607526K\\
+  \texttt{jingwen013@e.ntu.edu.sg}
+}
+
+\begin{document}
+\maketitle
+
+\input{sec_front}          % abstract, contribution statement, introduction, objectives
+\input{sec_data}           % data, pre-split argument, exploratory findings
+\input{sec_methods}        % protocol and the method table
+\input{sec_results}        % benchmark-versus-the-rest comparison
+\input{sec_interpretation} % why trees, four importance measures, SHAP, monotone, PDP
+\input{sec_operating}      % threshold, cost, sensitivity
+\input{sec_conclusion}     % conclusion, limitations, references
+
+% ---------------------------------------------------------------------------------------
+% Everything below is the appendix, which the course guideline exempts from the page limit.
+% ---------------------------------------------------------------------------------------
+\clearpage                      % the appendix starts on a fresh page, so the body page count is exact
+\appendix
+\setcounter{table}{0}\renewcommand{\thetable}{A\arabic{table}}\renewcommand{\theHtable}{A\arabic{table}}
+\setcounter{figure}{0}\renewcommand{\thefigure}{A\arabic{figure}}\renewcommand{\theHfigure}{A\arabic{figure}}
+\input{sec_appendix}
+
+\end{document}
