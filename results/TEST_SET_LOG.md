@@ -124,6 +124,7 @@ These read the test labels against already-frozen vectors and select nothing. Th
 | 21 Oct 15:46 | `eda.py`: test class balance (split check, 22.12%) and the target-distribution figure. The data-quality counts include the test rows' **features** (Section D) | `eda_*` |
 | 21 Oct, afternoon | Report verify / fix rounds: at least one recount against the test labels (naive Bayes at 0.15 → 5,473 against 5,337 at 0.25) | `report/CHANGELOG_2026-10-21.md` line 244 |
 | 21 Oct 17:13 | `make_slide_figures.py`: ROC / PR and cost curves on the test rows for the deck | `figures/slides/` |
+| 22 Oct 04:27–04:35 | `make_slide_figures.py` re-run with its new file filter for deck v2 (labels and layout only). Only the cost curve re-read the test labels and the frozen logistic / XGBoost test vectors; it reproduces the existing figures (7,063 / 5,126 / 6,642 / 4,981; flag nobody 9,945, flag everybody 7,001). `load_split()` opened `test.csv`. The threshold-vs-model, leakage, KNN and clustering figures were redrawn from saved results files; ROC / PR was not run. Nothing selected or refitted | `figures/slides/s_cost_vs_threshold.png`, `s_threshold_vs_model.png`, `s_leakage.png`, `s_knn_k.png`, `s_cluster_stability.png` |
 | 21 Oct 16:49–18:05 (fresh clone, not this folder) | Full `run_all.sh` reproduction. Every `evaluate()` and every reporting script above re-read the test set; every frozen configuration came back `reproduced`. | `results/REPRODUCTION_2026-10-21.md` |
 
 ---

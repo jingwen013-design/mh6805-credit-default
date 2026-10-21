@@ -4,8 +4,14 @@ Owner: shared. Reads results/*.csv / *.json / *.npy and data/processed/train.csv
 Every number drawn here is the same number as in the report (same frozen files). Writes figures/slides/s_*.png.
 
 Palette = the report's validated categorical palette (colour = model family, fixed slot order); text never wears a
-series colour; bars thin with square baseline; legends present whenever two or more series are drawn.
+series colour; bars thin with square baseline; legends present whenever two or more series are drawn. Series that are
+not a model family (honest vs leaky, distance weights, cluster metrics) use ink or the deck navy, not a family colour.
+
+Optional file filter (22 Oct 2026): `python3 make_slide_figures.py s_cost_vs_threshold s_leakage` writes only the
+named files. The two sections that read frozen test vectors (ROC / PR and the cost curve) run only when requested.
+Every test read is dated in results/TEST_SET_LOG.md, section C.
 """
+import sys
 import json
 import os
 
@@ -35,10 +41,21 @@ plt.rcParams.update({"font.size": 16, "axes.titlesize": 17, "axes.labelsize": 17
                      "axes.grid": True, "grid.color": GRID, "grid.linewidth": 1.0, "legend.frameon": False, "figure.dpi": 150,
                      "savefig.dpi": 150, "lines.linewidth": 2.5, "font.family": "DejaVu Sans"})
 SIZE = (12.8, 6.4)
+MINUS = "\u2212"
+NAVY = "#18395b"          # deck title colour: used for non-model highlights
+NEUTRAL = "#b4b3ad"
+WB = dict(boxstyle="square,pad=0.15", fc="white", ec="none")   # white box behind annotations
+ONLY = {a if a.endswith(".png") else a + ".png" for a in sys.argv[1:]}
 
 
-def save(fig, name):
-    fig.tight_layout(); fig.savefig(os.path.join(OUT, name), dpi=150, facecolor="white"); plt.close(fig); print("wrote", name)
+def want(name):
+    return not ONLY or name in ONLY
+
+
+def save(fig, name, rect=None):
+    if not want(name):
+        plt.close(fig); return
+    fig.tight_layout(rect=rect) if rect else fig.tight_layout(); fig.savefig(os.path.join(OUT, name), dpi=150, facecolor="white"); plt.close(fig); print("wrote", name)
 
 
 X_train, X_test, y_train, y_test, _ = load_split()
@@ -73,63 +90,86 @@ ax.set_xlabel("ROC-AUC on the test set   († SVM tuned on 6,000 rows; its marke
 save(fig, "s_auc_headline.png")
 
 # ------------------------------------------------------------------ B. ROC + PR for the three story models
-fig, axes = plt.subplots(1, 2, figsize=SIZE)
-trio = [("knn", PAL["green"], "-"), ("logistic", PAL["orange"], "-"), ("xgboost", PAL["blue"], "-")]
-for s, c, ls in trio:
-    p = P_TEST(s); fx, ty, _ = roc_curve(yte, p); pr, rc, _ = precision_recall_curve(yte, p)
-    axes[0].plot(fx, ty, color=c, ls=ls, label=f"{SHORT[s].split(' —')[0]} — AUC {R[s]['test_auc']:.3f}")
-    axes[1].plot(rc, pr, color=c, ls=ls, label=f"{SHORT[s].split(' —')[0]} — AP {R[s]['test_ap']:.3f}")
-axes[0].plot([0, 1], [0, 1], color=INK3, lw=1.2, ls="--", label="chance (AUC 0.5)")
-axes[1].axhline(yte.mean(), color=INK3, lw=1.2, ls="--", label=f"prevalence {yte.mean():.3f} (no skill)")
-axes[0].set_xlabel("False-positive rate (good clients flagged)"); axes[0].set_ylabel("True-positive rate (defaulters caught)"); axes[0].set_title("ROC curves (test set)")
-axes[1].set_xlabel("Recall (defaulters caught)"); axes[1].set_ylabel("Precision (flagged clients who default)"); axes[1].set_title("Precision–recall curves (test set)")
-for ax in axes: ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.legend(loc="lower right" if ax is axes[0] else "upper right")
-save(fig, "s_roc_pr.png")
+if want("s_roc_pr.png"):
+    fig, axes = plt.subplots(1, 2, figsize=SIZE)
+    trio = [("knn", PAL["green"], "-"), ("logistic", PAL["orange"], "-"), ("xgboost", PAL["blue"], "-")]
+    for s, c, ls in trio:
+        p = P_TEST(s); fx, ty, _ = roc_curve(yte, p); pr, rc, _ = precision_recall_curve(yte, p)
+        axes[0].plot(fx, ty, color=c, ls=ls, label=f"{SHORT[s].split(' —')[0]} — AUC {R[s]['test_auc']:.3f}")
+        axes[1].plot(rc, pr, color=c, ls=ls, label=f"{SHORT[s].split(' —')[0]} — AP {R[s]['test_ap']:.3f}")
+    axes[0].plot([0, 1], [0, 1], color=INK3, lw=1.2, ls="--", label="chance (AUC 0.5)")
+    axes[1].axhline(yte.mean(), color=INK3, lw=1.2, ls="--", label=f"prevalence {yte.mean():.3f} (no skill)")
+    axes[0].set_xlabel("False-positive rate (good clients flagged)"); axes[0].set_ylabel("True-positive rate (defaulters caught)"); axes[0].set_title("ROC curves (test set)")
+    axes[1].set_xlabel("Recall (defaulters caught)"); axes[1].set_ylabel("Precision (flagged clients who default)"); axes[1].set_title("Precision–recall curves (test set)")
+    for ax in axes: ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.legend(loc="lower right" if ax is axes[0] else "upper right")
+    save(fig, "s_roc_pr.png")
 
-# ------------------------------------------------------------------ C. cost vs threshold, logistic and XGBoost
-grid = np.round(np.arange(0.02, 0.981, 0.01), 2)
-def cost_curve(y, p):
-    P = p[None, :] >= grid[:, None]
-    fn = (~P & (y == 1)).sum(1); fp = (P & (y == 0)).sum(1)
-    return (COST_FN * fn + COST_FP * fp).astype(float)   # total over the test clients (same unit as the report tables)
-flag_none = COST_FN * int(yte.sum()); flag_all = COST_FP * int((1 - yte).sum())
-fig, ax = plt.subplots(figsize=SIZE)
-for s, c in [("logistic", PAL["orange"]), ("xgboost", PAL["blue"])]:
-    cc = cost_curve(yte, P_TEST(s)); ax.plot(grid, cc, color=c, label=SHORT[s].split(" —")[0])
-    t = R[s]["at_tuned_cost"]["threshold"]; i = int(np.argmin(np.abs(grid - t)))
-    ax.plot([t], [cc[i]], marker="D", ms=11, color=c, mec="white", mew=1.5, zorder=5)
-    i5 = int(np.argmin(np.abs(grid - 0.5))); ax.plot([0.5], [cc[i5]], marker="o", ms=11, color=c, mec="white", mew=1.5, zorder=5)
-    dy = 1200 if s == "logistic" else -650; dx = -0.02 if s == "logistic" else 0.06
-    ax.annotate(f"{SHORT[s].split(' —')[0]}: {R[s]['at_tuned_cost']['cost']:,.0f} at t = {t:.2f}", (t, cc[i]), xytext=(t + dx, cc[i] + dy), fontsize=14, color=INK2,
-                ha="left", arrowprops=dict(arrowstyle="-", color=INK3))
-    ax.annotate(f"{R[s]['at_0_5']['cost']:,.0f} at 0.5", (0.5, cc[i5]), xytext=(0.53 if s == "logistic" else 0.40, cc[i5] + (360 if s == "logistic" else -540)), fontsize=14, color=INK2)
-ax.axhline(flag_none, color=INK3, lw=1.2, ls="--"); ax.text(0.98, flag_none + 70, f"flag nobody: {flag_none:,.0f}", ha="right", fontsize=13, color=INK2)
-ax.axhline(flag_all, color=INK3, lw=1.2, ls="--"); ax.text(0.98, flag_all + 70, f"flag everybody: {flag_all:,.0f}", ha="right", fontsize=13, color=INK2)
-ax.plot([], [], marker="o", color=INK, ls="none", ms=9, label="default cut-off 0.5"); ax.plot([], [], marker="D", color=INK, ls="none", ms=9, label="cut-off chosen on training OOF (5:1)")
-ax.set_xlim(0, 1); ax.set_ylim(4000, 10800); ax.set_xlabel("Decision threshold on P(default)"); ax.set_ylabel("Expected cost, 8,990 test clients (5·FN + 1·FP)")
-ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
-ax.set_title("Expected cost against the decision threshold (test set, 5:1 cost assumption)", loc="left")
-ax.legend(loc="upper left")
-save(fig, "s_cost_vs_threshold.png")
+# ------------------------------------------------------------------ C. cost vs threshold, logistic and XGBoost (reads frozen test vectors)
+if want("s_cost_vs_threshold.png"):
+    grid = np.round(np.arange(0.02, 0.981, 0.01), 2)
+    def cost_curve(y, p):
+        P = p[None, :] >= grid[:, None]
+        fn = (~P & (y == 1)).sum(1); fp = (P & (y == 0)).sum(1)
+        return (COST_FN * fn + COST_FP * fp).astype(float)   # total over the test clients (same unit as the report tables)
+    flag_none = COST_FN * int(yte.sum()); flag_all = COST_FP * int((1 - yte).sum())
+    tvm5 = pd.read_csv(os.path.join(RESULTS, "threshold_vs_model_saving.csv")).set_index("ratio").loc[5]
+    NAME = {"logistic": "Logistic", "xgboost": "XGBoost"}
+    fig, ax = plt.subplots(figsize=SIZE)
+    ax.axhline(flag_none, color=INK3, lw=1.2, ls="--", zorder=1)
+    ax.text(0.02, flag_none + 110, f"flag nobody: {flag_none:,.0f}", ha="left", va="bottom", fontsize=14, color=INK2, bbox=WB, zorder=6)
+    ax.axhline(flag_all, color=INK3, lw=1.2, ls="--", zorder=1)
+    ax.text(0.98, flag_all + 140, f"flag everybody: {flag_all:,.0f}", ha="right", va="bottom", fontsize=14, color=INK2, bbox=WB, zorder=6)
+    # label positions chosen in empty regions of the plot (checked on the rendered PNG)
+    lab_half = {"logistic": (0.27, 7950), "xgboost": (0.55, 5650)}
+    lab_tuned = {"logistic": (0.03, 7250), "xgboost": (0.22, 4300)}
+    for s, c in [("logistic", PAL["orange"]), ("xgboost", PAL["blue"])]:
+        cc = cost_curve(yte, P_TEST(s)); ax.plot(grid, cc, color=c, label=NAME[s], zorder=3)
+        t = R[s]["at_tuned_cost"]["threshold"]; i = int(np.argmin(np.abs(grid - t)))
+        ax.plot([t], [cc[i]], marker="D", ms=12, color=c, mec="white", mew=1.5, zorder=5)
+        i5 = int(np.argmin(np.abs(grid - 0.5))); ax.plot([0.5], [cc[i5]], marker="o", ms=12, color=c, mec="white", mew=1.5, zorder=5)
+        ax.annotate(f"{NAME[s]} at cut-off {t:.2f}: {R[s]['at_tuned_cost']['cost']:,.0f}", (t, cc[i]), xytext=lab_tuned[s], fontsize=15,
+                    color=INK, ha="left", va="bottom", bbox=WB, zorder=6, arrowprops=dict(arrowstyle="-", color=INK3, lw=1.2, shrinkB=7))
+        ax.annotate(f"{NAME[s]} at 0.5: {R[s]['at_0_5']['cost']:,.0f}", (0.5, cc[i5]), xytext=lab_half[s], fontsize=15, color=INK,
+                    ha="left", va="bottom", bbox=WB, zorder=6, arrowprops=dict(arrowstyle="-", color=INK3, lw=1.2, shrinkB=7))
+    nf = lambda v: f"{v:,.0f}".replace("-", MINUS)
+    ax.text(0.03, 9500, (f"Moving the logit's cut-off from 0.5 to {R['logistic']['at_tuned_cost']['threshold']:.2f} saves {nf(tvm5.threshold_saving)}\n"
+                         f"Switching to XGBoost saves {nf(tvm5.model_saving)} more "
+                         f"[{nf(tvm5.model_saving_lo)}, {nf(tvm5.model_saving_hi)}]"),
+            ha="left", va="top", fontsize=16, color=INK, bbox=dict(boxstyle="round,pad=0.45", fc="#f3f2ef", ec="none"), zorder=6)
+    ax.plot([], [], marker="o", color=INK, ls="none", ms=10, label="usual cut-off 0.5")
+    ax.plot([], [], marker="D", color=INK, ls="none", ms=10, label="cut-off chosen on training OOF")
+    ax.set_xlim(0, 1); ax.set_ylim(4000, 10800); ax.set_xlabel("Cut-off on P(default): flag the client above it")
+    ax.set_ylabel("Cost, 8,990 test clients\n(5 per missed defaulter, 1 per false alarm)")
+    ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
+    ax.set_title("Test-set cost against the cut-off, reporting only (5:1 scenario borrowed from German credit data)", loc="left", fontsize=16)
+    fig.legend(*ax.get_legend_handles_labels(), loc="lower center", bbox_to_anchor=(0.5, 0.0), ncol=4, fontsize=15, columnspacing=1.6)
+    save(fig, "s_cost_vs_threshold.png", rect=[0, 0.07, 1, 1])
 
-# ------------------------------------------------------------------ D. threshold saving vs model saving over cost ratios
+# ------------------------------------------------------------------ D. threshold saving vs model saving over cost ratios (saved CSV only)
+# Drawn for a 900 x 400 px appendix cell: 1620 x 720 px canvas, so 15-16 pt text stays >= 17 px when placed.
 tab = pd.read_csv(os.path.join(RESULTS, "threshold_vs_model_saving.csv"))
-fig, ax = plt.subplots(figsize=SIZE)
-for col, lab, c in [("threshold_saving", "move the logistic cut-off from 0.5 to the tuned value", PAL["orange"]),
-                    ("model_saving", "then switch logistic → XGBoost (both tuned)", PAL["blue"])]:
+fig, ax = plt.subplots(figsize=(10.8, 4.8))
+for col, lab, c in [("threshold_saving", "move the logit's cut-off from 0.5 to the tuned value", PAL["orange"]),
+                    ("model_saving", "then switch logit \u2192 XGBoost (both tuned)", PAL["blue"])]:
     ax.plot(tab.ratio, tab[col], marker="o", ms=9, color=c, label=lab)
     ax.fill_between(tab.ratio, tab[col + "_lo"], tab[col + "_hi"], color=c, alpha=0.15)
 r5 = tab.set_index("ratio").loc[5]
-ax.annotate(f"5:1 — threshold saves {r5.threshold_saving:,.0f} [{r5.threshold_saving_lo:,.0f}, {r5.threshold_saving_hi:,.0f}]",
-            (5, r5.threshold_saving), xytext=(1.6, 9000), fontsize=14, color=INK2, arrowprops=dict(arrowstyle="-", color=INK3))
-ax.annotate(f"model saves {r5.model_saving:,.0f} [{r5.model_saving_lo:,.0f}, {r5.model_saving_hi:,.0f}] — interval includes 0",
-            (5, r5.model_saving), xytext=(1.6, 4500), fontsize=14, color=INK2, arrowprops=dict(arrowstyle="-", color=INK3))
+fmt = lambda v: f"{v:,.0f}".replace("-", MINUS)
+ax.annotate(f"5:1: cut-off saves {fmt(r5.threshold_saving)} [{fmt(r5.threshold_saving_lo)}, {fmt(r5.threshold_saving_hi)}]",
+            (5, r5.threshold_saving), xytext=(1.05, 9500), fontsize=15, color=INK, ha="left", va="center", bbox=WB,
+            arrowprops=dict(arrowstyle="-", color=INK3, lw=1.2, shrinkB=6, relpos=(1.0, 0.5)))
+ax.annotate(f"model saves {fmt(r5.model_saving)} [{fmt(r5.model_saving_lo)}, {fmt(r5.model_saving_hi)}]: interval includes 0",
+            (5, r5.model_saving), xytext=(1.05, -2300), fontsize=15, color=INK, ha="left", va="center", bbox=WB,
+            arrowprops=dict(arrowstyle="-", color=INK3, lw=1.2, shrinkB=6, relpos=(0.75, 1.0)))
 ax.axhline(0, color=INK, lw=1); ax.axvline(5, color=INK3, lw=1.2, ls="--")
-ax.set_xscale("log"); ax.set_xticks(tab.ratio); ax.set_xticklabels([f"{r}:1" for r in tab.ratio])
-ax.set_xlabel("Assumed cost ratio  C_FN : C_FP  (5:1 is the report's reference, not the truth)")
-ax.set_ylabel("Test cost saved (C_FP = 1)")
-ax.set_title("Cost saved by re-thresholding vs by changing model, with 95% paired-bootstrap bands", loc="left")
-ax.legend(loc="upper left")
+ax.set_xscale("log"); ax.minorticks_off(); ax.set_xticks(tab.ratio); ax.set_xticklabels([f"{r}:1" for r in tab.ratio])
+ax.set_ylim(-3600, 23000)
+ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: fmt(v)))
+ax.set_xlabel("Assumed cost ratio, missed defaulter : false alarm\n5:1 = scenario borrowed from German credit data")
+ax.set_ylabel("Test cost saved\n(1 unit = 1 false alarm)")
+ax.set_title("Test cost saved by moving the cut-off vs by switching model (reporting only)", loc="left", fontsize=16)
+leg = ax.legend(loc="upper left", fontsize=15, frameon=True, facecolor="white", edgecolor="none", framealpha=1.0)
+leg.set_zorder(7)
 save(fig, "s_threshold_vs_model.png")
 
 # ------------------------------------------------------------------ E. Platt recalibration, training OOF (cross-fitted)
@@ -147,12 +187,12 @@ save(fig, "s_calibration_platt.png")
 
 # ------------------------------------------------------------------ F. leakage demo
 lk = pd.read_csv(os.path.join(RESULTS, "imbalance_leakage_demo.csv")).set_index("learner")
-fig, ax = plt.subplots(figsize=SIZE)
+fig, ax = plt.subplots(figsize=SIZE); ax.set_axisbelow(True)
 labs = ["Logistic", "Random forest"]; x = np.arange(2); w = 0.3
 hon = [lk.loc["logistic", "honest_test_auc_smote"], lk.loc["rf", "honest_test_auc_smote"]]
 leak = [lk.loc["logistic", "leaky_test_auc"], lk.loc["rf", "leaky_test_auc"]]
-ax.bar(x - w / 2 - 0.01, hon, width=w, color=PAL["aqua"], label="SMOTE inside the folds (honest test AUC)")
-ax.bar(x + w / 2 + 0.01, leak, width=w, color=PAL["red"], label="SMOTE before the split (leaky \"test\" AUC)")
+ax.bar(x - w / 2 - 0.01, hon, width=w, color=NAVY, label="SMOTE inside the folds (honest test AUC)")
+ax.bar(x + w / 2 + 0.01, leak, width=w, color=NEUTRAL, hatch="//", edgecolor="white", lw=0, label="SMOTE before the split (leaky \"test\" AUC)")
 for i in range(2):
     ax.text(x[i] - w / 2 - 0.01, hon[i] + 0.004, f"{hon[i]:.3f}", ha="center", fontsize=15, color=INK2)
     ax.text(x[i] + w / 2 + 0.01, leak[i] + 0.004, f"{leak[i]:.3f}", ha="center", fontsize=15, color=INK2)
@@ -193,10 +233,11 @@ if len(u):
 # ------------------------------------------------------------------ I. clustering: silhouette and stability vs K (RUAN's 30 Sep run)
 ks = pd.read_csv(os.path.join(RESULTS, "kmeans_selection_v2.csv"))
 fig, axes = plt.subplots(1, 2, figsize=SIZE)
-axes[0].plot(ks.K, ks.silhouette, marker="o", ms=9, color=PAL["blue"]); axes[0].set_title("Silhouette (10 PCs, training set)"); axes[0].set_ylabel("silhouette")
-axes[1].plot(ks.K, ks.boot_ari_mean, marker="o", ms=9, color=PAL["aqua"], label="mean bootstrap ARI")
-axes[1].plot(ks.K, ks.min_cluster_jaccard, marker="s", ms=9, color=PAL["orange"], label="least stable cluster (Jaccard)")
-axes[1].axhline(0.75, color=INK3, lw=1.2, ls="--"); axes[1].set_title("Stability under bootstrap refits"); axes[1].legend(loc="lower left")
+axes[0].plot(ks.K, ks.silhouette, marker="o", ms=9, color=INK); axes[0].set_title("Silhouette (10 PCs, training set)"); axes[0].set_ylabel("silhouette")
+axes[1].plot(ks.K, ks.boot_ari_mean, marker="o", ms=9, color=INK, label="mean bootstrap ARI")
+axes[1].plot(ks.K, ks.min_cluster_jaccard, marker="s", ms=9, color=INK2, ls="--", mfc="white", mew=2, label="least stable cluster (Jaccard)")
+axes[1].axhline(0.75, color=INK3, lw=1.2, ls="--")
+axes[1].text(ks.K.min(), 0.742, "usual stability bar 0.75", ha="left", va="top", fontsize=13, color=INK2, bbox=WB); axes[1].set_title("Stability under bootstrap refits"); axes[1].legend(loc="lower left")
 for ax in axes: ax.axvline(5, color=INK3, lw=1.2, ls=":"); ax.set_xlabel("K"); ax.set_xticks(ks.K)
 k5 = ks.set_index("K").loc[5]
 axes[0].annotate(f"K = 5: {k5.silhouette:.2f}\nweak-to-moderate separation", (5, k5.silhouette), xytext=(2.2, 0.222), fontsize=13, color=INK2, arrowprops=dict(arrowstyle="-", color=INK3))
@@ -279,9 +320,10 @@ save(fig, "s_mlp_overfit.png")
 kn = json.load(open(os.path.join(RESULTS, "knn.json")))
 ct = pd.DataFrame(kn["extra"]["cv_table"])
 fig, ax = plt.subplots(figsize=SIZE)
-for wgt, c, mk in [("uniform", PAL["green"], "o"), ("distance", PAL["aqua"], "s")]:
+for wgt, c, mk, ls, mfc in [("uniform", PAL["green"], "o", "-", PAL["green"]), ("distance", PAL["green"], "s", "--", "white")]:
     t = ct[ct.weights == wgt].sort_values("K")
-    ax.errorbar(t.K, t.cv_auc_mean, yerr=t.cv_auc_std, color=c, marker=mk, ms=7, capsize=4, label=f"{wgt} weights (mean ± 1 sd over 5 folds)")
+    ax.errorbar(t.K, t.cv_auc_mean, yerr=t.cv_auc_std, color=c, marker=mk, ms=8, mfc=mfc, mew=1.8, ls=ls, capsize=4,
+                label=f"{wgt} weights (mean ± 1 sd over 5 folds)")
 best = ct.sort_values("cv_auc_mean", ascending=False).iloc[0]
 ax.plot(best.K, best.cv_auc_mean, "o", ms=16, mfc="none", mec=INK, mew=2)
 ax.annotate(f"chosen: K = {int(best.K)}, {best.weights} — CV AUC {best.cv_auc_mean:.3f}", (best.K, best.cv_auc_mean), xytext=(-330, -110),
