@@ -64,7 +64,7 @@ zsh code/run_all.sh               # 40–60 minutes on a laptop: regenerates eve
 
 - **Report**: `report/MH6805_Group_Project_Report.pdf`, built by `report/build_report_tex.sh` from the NeurIPS 2021 template; body of at most 7 pages including references, appendix from page 8. Due with code and data on 29 Oct 2026.
 - **Proposal**: `proposal/MH6805_Group_Project_Proposal.pdf` (4 pages).
-- **Presentation**: 27 Oct 2026, 10 minutes plus Q&A, all three members presenting; slides due 26 Oct noon. `slides/` holds the speaker specification (the running order and cut rules are in `slides/slides_outline.md`), the Q&A bank and the contribution draft. The Canva deck itself is shared privately with the course.
+- **Presentation**: 27 Oct 2026, 10 minutes plus Q&A, all three members presenting; slides due 26 Oct noon. `slides/` holds the speaker specification (the running order and cut rules are in `slides/slides_outline.md`), the Q&A bank and the contribution draft. The final 15-slide deck is exported here as `slides/MH6805_B19_Presentation.pdf` and `slides/MH6805_B19_Presentation.pptx` (Canva design DAHYodggd94, view link https://www.canva.com/d/z5qNbWxTPuQSw2t); the slide figures come from `code/make_slide_figures.py`.
 
 ## Data and licence
 

@@ -60,15 +60,16 @@ ax.errorbar(head.cv_auc[ok], yy[ok.values], xerr=head.cv_auc_std[ok].fillna(0), 
 for y_, v, c_, sd in zip(yy, head.test_auc, head.cv_auc.fillna(head.test_auc), head.cv_auc_std.fillna(0)):
     ax.text(max(v, c_ + sd) + 0.0015, y_, f"{v:.3f}", va="center", ha="left", fontsize=14, color=INK2)
 knn, lr = R["knn"]["test_auc"], R["logistic"]["test_auc"]
-ax.axvline(knn, color=INK3, lw=1.2, ls="--", zorder=1); ax.text(knn + 0.0008, -0.45, "KNN 0.771", fontsize=12, color=INK2, va="bottom")
-ax.axvline(lr, color=INK3, lw=1.2, ls=":", zorder=1); ax.text(lr - 0.0008, -0.45, "logistic 0.764", fontsize=12, color=INK2, va="bottom", ha="right")
+ytop = len(head) - 0.42   # reference labels sit above the top bar, clear of every value label
+ax.axvline(knn, color=INK3, lw=1.2, ls="--", zorder=1); ax.text(knn + 0.0008, ytop, f"KNN {knn:.3f} (benchmark)", fontsize=12, color=INK2, va="bottom")
+ax.axvline(lr, color=INK3, lw=1.2, ls=":", zorder=1); ax.text(lr - 0.0008, ytop, f"logistic {lr:.3f}", fontsize=12, color=INK2, va="bottom", ha="right")
 ax.set_yticks(yy); ax.set_yticklabels([SHORT[s] + (" †" if s == "svm_rbf" else "") for s in head.slug])
 ax.set_xlim(0.72, 0.805)
 ax.set_title("Headline models ordered by CV AUC (the selection score); bars = test AUC", loc="left")
 for f_, c_ in FAMILY_COLOR.items():
     if f_ in set(head.family): ax.barh([-5], [0], color=c_, label=f_)
-ax.set_ylim(-0.6, len(head) - 0.4); ax.legend(loc="upper center", bbox_to_anchor=(0.42, -0.13), ncol=4, columnspacing=1.0, handlelength=1.3, fontsize=12)
-ax.set_xlabel("ROC-AUC on the test set   († SVM tuned on a 6,000-row subsample; marker = full-training OOF AUC)")
+ax.set_ylim(-0.6, len(head) + 0.05); ax.legend(loc="upper center", bbox_to_anchor=(0.42, -0.13), ncol=4, columnspacing=1.0, handlelength=1.3, fontsize=12)
+ax.set_xlabel("ROC-AUC on the test set   († SVM tuned on 6,000 rows; its marker = OOF AUC)")
 save(fig, "s_auc_headline.png")
 
 # ------------------------------------------------------------------ B. ROC + PR for the three story models
@@ -90,22 +91,23 @@ grid = np.round(np.arange(0.02, 0.981, 0.01), 2)
 def cost_curve(y, p):
     P = p[None, :] >= grid[:, None]
     fn = (~P & (y == 1)).sum(1); fp = (P & (y == 0)).sum(1)
-    return (COST_FN * fn + COST_FP * fp) / len(y) * 1000.0
-prev = yte.mean(); flag_none = COST_FN * prev * 1000; flag_all = COST_FP * (1 - prev) * 1000
+    return (COST_FN * fn + COST_FP * fp).astype(float)   # total over the test clients (same unit as the report tables)
+flag_none = COST_FN * int(yte.sum()); flag_all = COST_FP * int((1 - yte).sum())
 fig, ax = plt.subplots(figsize=SIZE)
 for s, c in [("logistic", PAL["orange"]), ("xgboost", PAL["blue"])]:
     cc = cost_curve(yte, P_TEST(s)); ax.plot(grid, cc, color=c, label=SHORT[s].split(" —")[0])
     t = R[s]["at_tuned_cost"]["threshold"]; i = int(np.argmin(np.abs(grid - t)))
     ax.plot([t], [cc[i]], marker="D", ms=11, color=c, mec="white", mew=1.5, zorder=5)
     i5 = int(np.argmin(np.abs(grid - 0.5))); ax.plot([0.5], [cc[i5]], marker="o", ms=11, color=c, mec="white", mew=1.5, zorder=5)
-    dy = 130 if s == "logistic" else -70; dx = -0.02 if s == "logistic" else 0.06
+    dy = 1200 if s == "logistic" else -650; dx = -0.02 if s == "logistic" else 0.06
     ax.annotate(f"{SHORT[s].split(' —')[0]}: {R[s]['at_tuned_cost']['cost']:,.0f} at t = {t:.2f}", (t, cc[i]), xytext=(t + dx, cc[i] + dy), fontsize=14, color=INK2,
                 ha="left", arrowprops=dict(arrowstyle="-", color=INK3))
-    ax.annotate(f"{R[s]['at_0_5']['cost']:,.0f} at 0.5", (0.5, cc[i5]), xytext=(0.53 if s == "logistic" else 0.40, cc[i5] + (40 if s == "logistic" else -60)), fontsize=14, color=INK2)
-ax.axhline(flag_none, color=INK3, lw=1.2, ls="--"); ax.text(0.98, flag_none + 8, f"flag nobody: {flag_none:,.0f}", ha="right", fontsize=13, color=INK2)
-ax.axhline(flag_all, color=INK3, lw=1.2, ls="--"); ax.text(0.98, flag_all + 8, f"flag everybody: {flag_all:,.0f}", ha="right", fontsize=13, color=INK2)
+    ax.annotate(f"{R[s]['at_0_5']['cost']:,.0f} at 0.5", (0.5, cc[i5]), xytext=(0.53 if s == "logistic" else 0.40, cc[i5] + (360 if s == "logistic" else -540)), fontsize=14, color=INK2)
+ax.axhline(flag_none, color=INK3, lw=1.2, ls="--"); ax.text(0.98, flag_none + 70, f"flag nobody: {flag_none:,.0f}", ha="right", fontsize=13, color=INK2)
+ax.axhline(flag_all, color=INK3, lw=1.2, ls="--"); ax.text(0.98, flag_all + 70, f"flag everybody: {flag_all:,.0f}", ha="right", fontsize=13, color=INK2)
 ax.plot([], [], marker="o", color=INK, ls="none", ms=9, label="default cut-off 0.5"); ax.plot([], [], marker="D", color=INK, ls="none", ms=9, label="cut-off chosen on training OOF (5:1)")
-ax.set_xlim(0, 1); ax.set_ylim(450, 1200); ax.set_xlabel("Decision threshold on P(default)"); ax.set_ylabel("Expected cost per 1,000 clients (5·FN + 1·FP)")
+ax.set_xlim(0, 1); ax.set_ylim(4000, 10800); ax.set_xlabel("Decision threshold on P(default)"); ax.set_ylabel("Expected cost, 8,990 test clients (5·FN + 1·FP)")
+ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
 ax.set_title("Expected cost against the decision threshold (test set, 5:1 cost assumption)", loc="left")
 ax.legend(loc="upper left")
 save(fig, "s_cost_vs_threshold.png")
@@ -215,14 +217,14 @@ lab = {"logistic_balanced": "logistic, weighted", "imb_logistic_smote": "logisti
        "imb_rf_balanced": "forest, weighted", "imb_rf_smote": "forest, SMOTE", "imb_rf_under": "forest, under-sampled",
        "xgboost_weighted": "XGBoost, weighted", "mlp_weighted": "MLP, weighted"}
 rc = rc[rc.slug.isin(lab)].reset_index(drop=True); yy = np.arange(len(rc))
-axes[1].barh(yy + 0.2, rc.test_brier_raw, height=0.36, color=PAL["red"], label="raw, after weighting / resampling")
-axes[1].barh(yy - 0.2, rc.test_brier_platt, height=0.36, color=PAL["blue"], label="after Platt scaling on training OOF")
+axes[1].barh(yy + 0.2, rc.test_brier_raw, height=0.36, color=PAL["red"], label="raw (weighted / resampled)")
+axes[1].barh(yy - 0.2, rc.test_brier_platt, height=0.36, color=PAL["blue"], label="Platt-scaled on training OOF")
 for i, r in rc.iterrows():
     axes[1].text(r.test_brier_raw + 0.002, i + 0.2, f"{r.test_brier_raw:.3f}", va="center", fontsize=12, color=INK2)
     axes[1].text(r.test_brier_platt + 0.002, i - 0.2, f"{r.test_brier_platt:.3f}", va="center", fontsize=12, color=INK2)
 axes[1].set_yticks(yy); axes[1].set_yticklabels([lab[s] for s in rc.slug]); axes[1].set_xlim(0.10, 0.22); axes[1].invert_yaxis()
 axes[1].set_xlabel("Test Brier score (lower = better calibrated)"); axes[1].set_title("Brier score, raw vs Platt-recalibrated", loc="left")
-axes[1].legend(loc="upper center", bbox_to_anchor=(0.5, -0.16), ncol=2, fontsize=13)
+axes[1].legend(loc="upper center", bbox_to_anchor=(0.42, -0.16), ncol=2, fontsize=13)
 save(fig, "s_imbalance.png")
 
 # ------------------------------------------------------------------ K. EDA: default rate by September status and by limit quintile (training rows)

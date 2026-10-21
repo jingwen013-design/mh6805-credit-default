@@ -24,7 +24,15 @@ Model-family ownership (unchanged from `README.md`): RUAN — KNN (benchmark), l
 
 (The three headline figures are the unweighted means of the nine rows above: RUAN 29.2, LU 29.1, LI 41.8 → 29 / 29 / 42; adjust if the table changes.)
 
-This line is printed on slide 1 (body bullet 3, labelled "Contribution (draft, to confirm)") so that the deck itself carries the contribution statement required by guideline §4; the presenting order (RUAN 1–5 · LU 6–7, 13–14 · LI 8–12) is a separate smaller line. The word "draft" stays on the slide until RUAN and LU confirm (deadline 25 Oct evening; PPT upload 26 Oct noon). Slide 1 and the report (`sec_front.tex`, Table `tab:a-workload`) must change together if any row changes.
+## Slide-1 form (as set on the slide: small heading + 3 × 3 mini-table, each row ≤ 12 words)
+
+**Contribution (draft, to confirm)**
+
+| RUAN | 29 % | KNN benchmark, logistic family, clustering, nested-CV pass |
+| LU | 29 % | tree, forest, boosting, SHAP/PDP/monotone |
+| LI | 42 % | SVM/MLP/discriminants, imbalance & Platt, freeze/aggregation, report |
+
+On slide 1 the statement is set as the mini-table above under the small heading "Contribution (draft, to confirm)" (the one-line version is for the report and messages; as a single bullet its 38 words would set at about 14 pt on a 1920 × 1080 slide), so that the deck itself carries the contribution statement required by guideline §4; the presenting order (RUAN 1–5 · LU 6–7, 13–14 · LI 8–12) is a separate smaller line. The word "draft" stays on the slide until RUAN and LU confirm (deadline 25 Oct evening; PPT upload 26 Oct noon). Slide 1 and the report (`sec_front.tex`, Table `tab:a-workload`) must change together if any row changes.
 
 ## 给 RUAN 和 LU 的确认留言（中文，3 行）
 
