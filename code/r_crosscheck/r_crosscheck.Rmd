@@ -1,0 +1,754 @@
+---
+title: "R Cross-check of the Model Comparison - Training Rows Only"
+author: "MH6805 Group B19 (LI Jingwen, RUAN Hangjing, LU Xinyu)"
+output:
+  html_document:
+    df_print: paged
+    toc: true
+    toc_depth: 2
+  pdf_document: default
+header-includes:
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- \fancyfoot[C]{\thepage}
+- \fancypagestyle{plain}{\pagestyle{fancy}}
+- \fancyhead[L]{Machine Learning in Finance}
+- \fancyhead[R]{R Lab - Cross-check of the Group Project}
+---
+
+
+```{r global_options, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(eval = TRUE, message = FALSE, comment = "##")
+t.start <- proc.time()
+```
+
+## References
+
+Chapters 4.7, 5.3, 6.5, 8.3, 9.6 and 10.9 of [ISLR2] *An Introduction to Statistical Learning - with Applications in R* (2nd Edition), https://www.statlearning.com/, and the course R labs (Supervised Learning I-V, Deep Learning I). The Python side of the project is described in `README.md` and `code/README.md` of this repository.
+
+To see the help file of a function `funcname`, type `?funcname`.
+
+## What this cross-check does
+
+Our project fits every model in Python (scikit-learn, XGBoost). A reader may fairly ask whether the ranking of the model families is a property of the *data* or of the *software*. Here we refit the same families with the R functions used in the course labs (`glm()`, `cv.glmnet()`, `lda()`, `qda()`, `naiveBayes()`, `knn()`, `tree()`, `randomForest()`, `gbm()`, `xgb.train()`, `svm()` and `nnet()`) and compare their five-fold cross-validated ROC-AUC with the Python numbers.
+
+Three rules keep the check honest.
+
+* **Training rows only.** We read `data/processed/train.csv` (20,975 clients) and nothing else from the data folder except the fold file below. The test file is never opened, so this document cannot influence any test-set number in the report.
+* **The same five folds.** `code/export_folds.py` rebuilds the Python folds (`StratifiedKFold(n_splits = 5, shuffle = True, random_state = 2607526)`, the object `CV` in `common.py`) from the training labels and writes them to `data/processed/cv_folds.csv`. Section 2 proves that they are the folds the Python models were scored on.
+* **No selection.** Nothing here is used to choose a model, a threshold or a hyper-parameter for the report. The Python configurations are frozen (`results/frozen_manifest.json`); R simply refits them, or the closest lab-style equivalent, and reports what it finds.
+
+Throughout, standardisation is done *inside* each fold with the pseudo-training rows' means and standard deviations, exactly as the lab notes insist ("we cannot standardize the whole dataset and then split it"), and only for the 26 numeric columns: the six dummy columns stay 0/1, as in the Python preprocessor.
+
+```{r setup}
+seed <- 2607526                  # project seed (matriculation number G2607526K)
+root <- normalizePath(file.path("..", ".."))
+stopifnot(file.exists(file.path(root, "code", "common.py")))
+train.file <- file.path(root, "data", "processed", "train.csv")
+fold.file <- file.path(root, "data", "processed", "cv_folds.csv")
+res.dir <- file.path(root, "results")
+fig.dir <- file.path(root, "figures")
+```
+
+## 1. Data
+
+The training file already contains the cleaned columns written by `common.py`: EDUCATION 0/5/6 recoded to 4, MARRIAGE 0 recoded to 3, 35 duplicates removed, and the six engineered features (UTIL_1, UTIL_MEAN, PAY_RATIO_MEAN, N_MONTHS_DELAYED, MAX_DELAY, BILL_TREND). That gives 29 predictors.
+
+```{r data}
+Credit <- read.csv(train.file)
+dim(Credit)
+names(Credit)
+Credit$SEX <- factor(Credit$SEX, levels = 1:2)
+Credit$EDUCATION <- factor(Credit$EDUCATION, levels = 1:4)
+Credit$MARRIAGE <- factor(Credit$MARRIAGE, levels = 1:3)
+Credit$DEFAULT <- factor(Credit$DEFAULT, levels = c(0, 1), labels = c("No", "Yes"))
+summary(Credit$DEFAULT)
+mean(Credit$DEFAULT == "Yes")
+```
+
+About 22.1 % of the training clients default next month, so always predicting "No" is right 77.9 % of the time. As in the `Caravan` example of the KNN lab, the error rate is therefore the wrong yardstick; we compare models by ROC-AUC (ranking quality, threshold-free) and report average precision (AP, the area under the precision-recall curve) as well.
+
+`model.matrix()` turns the three categorical variables into dummies with the first level as the reference, the same coding as the Python `OneHotEncoder(drop = "first")`. The result is the 32-column design matrix every Python model sees.
+
+```{r design}
+x <- model.matrix(DEFAULT ~ ., data = Credit)[, -1]
+truth <- Credit$DEFAULT
+n <- nrow(x)
+dim(x)
+dummy.cols <- grep("^(SEX|EDUCATION|MARRIAGE)", colnames(x), value = TRUE)
+num.cols <- setdiff(colnames(x), dummy.cols)
+dummy.cols
+length(num.cols)
+```
+
+## 2. The five folds
+
+In the lab we built folds with `cut()` and `sample()`. Here we must use the Python folds instead, so we read them from disk.
+
+```{r folds}
+fold.tab <- read.csv(fold.file)
+stopifnot(nrow(fold.tab) == n, all(fold.tab$row == 1:n))
+stopifnot(all(fold.tab$DEFAULT == as.numeric(truth == "Yes")))   # same rows, same order
+folds <- fold.tab$fold
+F <- 5
+table(folds, truth)
+```
+
+Each fold holds 4,195 rows, 928 or 929 of them defaulters: the split is stratified.
+
+Two small helpers compute the metrics. `auc.fun()` uses `pROC`; `ap.fun()` is average precision written out by hand (the step-wise sum of precision times the increase in recall, which is how scikit-learn defines it).
+
+```{r metrics}
+library(pROC)
+auc.fun <- function(truth, p) {
+  as.numeric(auc(roc(truth, as.numeric(p), levels = c("No", "Yes"), direction = "<", quiet = TRUE)))
+}
+ap.fun <- function(truth, p) {
+  o <- order(as.numeric(p), decreasing = TRUE)
+  yy <- as.numeric(truth[o] == "Yes"); pp <- as.numeric(p)[o]
+  last <- c(which(diff(pp) != 0), length(pp))        # last row of each distinct score (ties together)
+  tp <- cumsum(yy)[last]; fp <- cumsum(1 - yy)[last]
+  sum(diff(c(0, tp / sum(yy))) * tp / (tp + fp))
+}
+fold.metrics <- function(p.oof) {
+  data.frame(fold = 1:F,
+             auc = sapply(1:F, function(f) auc.fun(truth[folds == f], p.oof[folds == f])),
+             ap = sapply(1:F, function(f) ap.fun(truth[folds == f], p.oof[folds == f])))
+}
+```
+
+**Proof that these are the Python folds.** Every Python script saved its out-of-fold training probabilities (`results/<slug>_p_oof.npy`). If our fold labels are right, the AUC of those probabilities computed fold by fold in R must reproduce the Python CV AUC to the last digit. A `.npy` file is a short text header followed by raw little-endian numbers (float64, or float32 for XGBoost), so base R can read it.
+
+```{r npy}
+read.npy <- function(path) {
+  con <- file(path, "rb"); on.exit(close(con))
+  readBin(con, "raw", 6)                                    # magic string \x93NUMPY
+  ver <- readBin(con, "integer", 2, size = 1)
+  hlen <- if (ver[1] == 1) readBin(con, "integer", 1, size = 2, signed = FALSE, endian = "little")
+          else readBin(con, "integer", 1, size = 4, endian = "little")
+  header <- rawToChar(readBin(con, "raw", hlen))
+  stopifnot(grepl("'<f[48]'", header), grepl("False", header))  # little-endian float64 or float32, C order
+  size <- if (grepl("'<f4'", header)) 4 else 8                    # XGBoost saved float32
+  len <- as.integer(gsub("[^0-9]", "", regmatches(header, regexpr("shape.: \\(([0-9]+)", header))))
+  readBin(con, "double", len, size = size, endian = "little")
+}
+comparison <- read.csv(file.path(res.dir, "model_comparison.csv"))
+py.logit <- read.npy(file.path(res.dir, "logistic_p_oof.npy"))
+check <- fold.metrics(py.logit)
+check
+c(R.mean.of.folds = mean(check$auc), Python.cv_auc = comparison$cv_auc[comparison$slug == "logistic"])
+```
+
+The two numbers agree to machine precision, and so does AP (scikit-learn gives 0.5193 for fold 1). The folds are identical, so every R-minus-Python difference below is a difference between *implementations*, not between data splits.
+
+A last helper standardises the numeric columns with the statistics of the pseudo-training rows only and applies them to all rows (the lab's `scale(X.test, center = X.train.mean, scale = X.train.sd)`).
+
+```{r scalefold}
+scale.fold <- function(x, rows) {
+  x.mean <- apply(x[rows, num.cols], 2, mean)
+  x.sd <- apply(x[rows, num.cols], 2, sd)
+  x[, num.cols] <- scale(x[, num.cols], center = x.mean, scale = x.sd)
+  x
+}
+oof <- list(); secs <- c(); notes <- c()
+```
+
+Every model below follows the F-fold loop of the resampling lab: for fold `f`, the rows `pdtrainind` (fold != f) are the pseudo-training set and the remaining rows the pseudo-test set; the out-of-fold predicted probabilities of default are stored in one vector of length 20,975.
+
+## 3. Logistic regression
+
+`glm()` with `family = binomial` fits the plain (unpenalised) logistic regression, the Python baseline `logistic`.
+
+```{r glm}
+glm.oof <- rep(NA, n)
+t0 <- proc.time()
+for (f in 1:F) {
+  pdtrainind <- which(folds != f)
+  xs <- scale.fold(x, pdtrainind)
+  pdtrain <- data.frame(xs[pdtrainind, ], DEFAULT = truth[pdtrainind])
+  pdtest <- data.frame(xs[-pdtrainind, ])
+  glm.fits <- glm(DEFAULT ~ ., data = pdtrain, family = binomial)
+  glm.oof[-pdtrainind] <- predict(glm.fits, pdtest, type = "response")
+}
+secs["glm (logistic)"] <- (proc.time() - t0)[["elapsed"]]
+oof[["glm (logistic)"]] <- glm.oof
+summary(glm.fits)$coef[c("PAY_1", "MAX_DELAY", "LIMIT_BAL", "PAY_RATIO_MEAN"), ]
+glm.pred <- rep("No", n)
+glm.pred[glm.oof > .5] <- "Yes"
+table(glm.pred, truth)
+mean(glm.pred == truth)
+fold.metrics(glm.oof)
+```
+
+The out-of-fold confusion matrix at the 0.5 cut-off shows the usual picture on this data: accuracy around 81 %, only a few points above the 77.9 % of the "always No" rule, because most defaulters are predicted "No". That is why the project chooses the cut-off on training out-of-fold probabilities instead of using 0.5.
+
+## 4. Ridge and lasso logistic regression
+
+We follow the regularised-logistic section of the logistic-regression lab: `cv.glmnet()` with `family = "binomial"`, `alpha = 0` (ridge) or `alpha = 1` (lasso), and $\lambda$ chosen by 10-fold cross-validation *inside* the pseudo-training rows (`lambda.min`). This is a nested CV: the inner folds choose $\lambda$, the outer fold scores it.
+
+One detail matters. With the default $\lambda$ path the ridge CV curve is still falling at the smallest $\lambda$ that `glmnet` tries (0.016 on fold 1): the best ridge model is almost unpenalised, and `lambda.min` lands on the edge of the grid. So, as the regression lab does with `grid <- 10^seq(10, -2, length = 100)`, we supply our own grid that reaches far enough down.
+
+```{r glmnet}
+library(glmnet)
+grid <- 10^seq(2, -6, length = 100)
+ridge.oof <- lasso.oof <- rep(NA, n)
+ridge.lam <- lasso.lam <- lasso.nz <- rep(NA, F)
+t.ridge <- t.lasso <- 0
+for (f in 1:F) {
+  pdtrainind <- which(folds != f)
+  xs <- scale.fold(x, pdtrainind)
+  t0 <- proc.time()
+  set.seed(seed)
+  cv.ridge <- cv.glmnet(xs[pdtrainind, ], truth[pdtrainind], family = "binomial", alpha = 0, lambda = grid)
+  ridge.lam[f] <- cv.ridge$lambda.min
+  ridge.oof[-pdtrainind] <- predict(cv.ridge, s = "lambda.min", newx = xs[-pdtrainind, ], type = "response")
+  t.ridge <- t.ridge + (proc.time() - t0)[["elapsed"]]
+  t0 <- proc.time()
+  set.seed(seed)
+  cv.lasso <- cv.glmnet(xs[pdtrainind, ], truth[pdtrainind], family = "binomial", alpha = 1, lambda = grid)
+  lasso.lam[f] <- cv.lasso$lambda.min
+  lasso.nz[f] <- sum(coef(cv.lasso, s = "lambda.min")[-1] != 0)
+  lasso.oof[-pdtrainind] <- predict(cv.lasso, s = "lambda.min", newx = xs[-pdtrainind, ], type = "response")
+  t.lasso <- t.lasso + (proc.time() - t0)[["elapsed"]]
+}
+secs["cv.glmnet ridge"] <- t.ridge; secs["cv.glmnet lasso"] <- t.lasso
+oof[["cv.glmnet ridge"]] <- ridge.oof; oof[["cv.glmnet lasso"]] <- lasso.oof
+plot(cv.lasso)
+rbind(ridge.lambda = signif(ridge.lam, 3), lasso.lambda = signif(lasso.lam, 3), lasso.nonzero = lasso.nz)
+```
+
+Both penalties end up small in every fold and the lasso keeps most of the 32 coefficients. With 20,975 rows and 32 predictors there is little variance for a penalty to remove, which is the same conclusion the Python grid reached (it picked $C = 31.6$ and $C = 100$, i.e. almost no penalty). The ridge and lasso AUCs should therefore be almost identical to that of plain `glm()`.
+
+```{r glmnet-auc}
+sapply(list(glm = glm.oof, ridge = ridge.oof, lasso = lasso.oof), function(p) mean(fold.metrics(p)$auc))
+```
+
+## 5. LDA, QDA and naive Bayes
+
+The generative classifiers of the logistic-regression lab: `lda()` and `qda()` from `MASS`, `naiveBayes()` from `e1071` (Gaussian for every column, as the Python `GaussianNB`).
+
+```{r generative}
+library(MASS)
+library(e1071)
+lda.oof <- qda.oof <- nb.oof <- rep(NA, n)
+t.lda <- t.qda <- t.nb <- 0
+for (f in 1:F) {
+  pdtrainind <- which(folds != f)
+  xs <- scale.fold(x, pdtrainind)
+  pdtrain <- data.frame(xs[pdtrainind, ], DEFAULT = truth[pdtrainind])
+  pdtest <- data.frame(xs[-pdtrainind, ])
+  t0 <- proc.time()
+  lda.fit <- lda(DEFAULT ~ ., data = pdtrain)
+  lda.oof[-pdtrainind] <- predict(lda.fit, pdtest)$posterior[, "Yes"]
+  t.lda <- t.lda + (proc.time() - t0)[["elapsed"]]
+  t0 <- proc.time()
+  qda.fit <- qda(DEFAULT ~ ., data = pdtrain)
+  qda.oof[-pdtrainind] <- predict(qda.fit, pdtest)$posterior[, "Yes"]
+  t.qda <- t.qda + (proc.time() - t0)[["elapsed"]]
+  t0 <- proc.time()
+  nb.fit <- naiveBayes(DEFAULT ~ ., data = pdtrain)
+  nb.oof[-pdtrainind] <- predict(nb.fit, pdtest, type = "raw")[, "Yes"]
+  t.nb <- t.nb + (proc.time() - t0)[["elapsed"]]
+}
+secs["MASS::lda"] <- t.lda; secs["MASS::qda"] <- t.qda; secs["e1071::naiveBayes"] <- t.nb
+oof[["MASS::lda"]] <- lda.oof; oof[["MASS::qda"]] <- qda.oof; oof[["e1071::naiveBayes"]] <- nb.oof
+lda.fit$prior
+qda.class <- ifelse(qda.oof > .5, "Yes", "No")
+table(qda.class, truth)
+mean(nb.oof < 1e-6 | nb.oof > 1 - 1e-6)     # share of naive Bayes probabilities that are numerically 0 or 1
+```
+
+At the 0.5 cut-off QDA flags almost 10,000 clients, against about 2,200 for logistic regression. With its own covariance matrix for each class, QDA gives a high default posterior to any client whose amounts are unusual in a direction where the defaulters' covariance is wider, and many of those clients do not default. Naive Bayes pushes about 13 % of its probabilities to numerically 0 or 1. It multiplies 32 densities as if they were independent, although the six monthly bill amounts are almost collinear, so the same evidence is counted six times. Those tied extreme scores cost ranking quality.
+
+The Python QDA was tuned over `reg_param`, which shrinks each class covariance towards the identity, $\hat\Sigma_k \leftarrow (1-r)\hat\Sigma_k + rI$, and chose $r = 0.5$. `MASS::qda()` has no such option, so as a **diagnostic** (not part of the course toolkit) we also write the regularised QDA posterior by hand and score it with $r = 0.5$, the frozen Python value.
+
+```{r rqda}
+rqda.prob <- function(xtr, ytr, xte, r) {
+  lev <- levels(ytr)
+  ll <- sapply(lev, function(k) {
+    xk <- xtr[ytr == k, , drop = FALSE]
+    S <- (1 - r) * cov(xk) + r * diag(ncol(xk))
+    log(mean(ytr == k)) - 0.5 * as.numeric(determinant(S)$modulus) - 0.5 * mahalanobis(xte, colMeans(xk), S)
+  })
+  1 / (1 + exp(ll[, "No"] - ll[, "Yes"]))
+}
+rqda.oof <- rep(NA, n)
+t0 <- proc.time()
+for (f in 1:F) {
+  pdtrainind <- which(folds != f)
+  xs <- scale.fold(x, pdtrainind)
+  rqda.oof[-pdtrainind] <- rqda.prob(xs[pdtrainind, ], truth[pdtrainind], xs[-pdtrainind, ], r = 0.5)
+}
+secs["[diagnostic] QDA reg 0.5 (by hand)"] <- (proc.time() - t0)[["elapsed"]]
+oof[["[diagnostic] QDA reg 0.5 (by hand)"]] <- rqda.oof
+sapply(list(qda = qda.oof, qda.reg.0.5 = rqda.oof), function(p) mean(fold.metrics(p)$auc))
+```
+
+## 6. K-nearest neighbours
+
+`knn()` from `class` returns classes; with `prob = TRUE` it also returns the share of the $K$ neighbours that voted for the *winning* class. The probability of default is that share when the winner is "Yes" and one minus it otherwise. We set the seed before every call because `knn()` breaks ties at random. $K = 101$ with uniform weights is the frozen Python benchmark (chosen by CV in Python); $K = 5$ is the small, lab-style $K$, kept for contrast.
+
+```{r knn}
+library(class)
+knn101.oof <- knn5.oof <- rep(NA, n)
+t.101 <- t.5 <- 0
+for (f in 1:F) {
+  pdtrainind <- which(folds != f)
+  xs <- scale.fold(x, pdtrainind)
+  t0 <- proc.time()
+  set.seed(seed)
+  knn.pred <- knn(train = xs[pdtrainind, ], test = xs[-pdtrainind, ], cl = truth[pdtrainind], k = 101, prob = TRUE)
+  knn101.oof[-pdtrainind] <- ifelse(knn.pred == "Yes", attr(knn.pred, "prob"), 1 - attr(knn.pred, "prob"))
+  t.101 <- t.101 + (proc.time() - t0)[["elapsed"]]
+  t0 <- proc.time()
+  set.seed(seed)
+  knn.pred <- knn(train = xs[pdtrainind, ], test = xs[-pdtrainind, ], cl = truth[pdtrainind], k = 5, prob = TRUE)
+  knn5.oof[-pdtrainind] <- ifelse(knn.pred == "Yes", attr(knn.pred, "prob"), 1 - attr(knn.pred, "prob"))
+  t.5 <- t.5 + (proc.time() - t0)[["elapsed"]]
+}
+secs["class::knn K=101"] <- t.101; secs["class::knn K=5"] <- t.5
+oof[["class::knn K=101"]] <- knn101.oof; oof[["class::knn K=5"]] <- knn5.oof
+knn.class <- ifelse(knn101.oof > .5, "Yes", "No")
+table(knn.class, truth)
+length(unique(knn5.oof))
+```
+
+With $K = 5$ the predicted probability takes only a handful of values: 0, 0.2, ..., 1, plus a few more when `knn()` keeps every point tied at the fifth distance (13 distinct values in all). The ROC curve therefore has only a few corners, and the AUC suffers. $K = 101$ averages over enough neighbours to rank clients finely, and it is also the more stable estimate of a local default rate.
+
+## 7. Classification tree
+
+The tree lab grows a tree with `tree()` and lets `cv.tree()` choose its size. `tree()` splits on the deviance, $-2\sum_m\sum_k n_{mk}\log\hat p_{mk}$, which is the entropy criterion of the Python tree. Two practical points:
+
+* With the default `tree.control()` (`mindev = 0.01`) the tree stops after 3 or 4 leaves on this data, far too early for cost-complexity pruning to have anything to choose from. We therefore grow a larger tree (`mindev = 0.0005`, `minsize = 20`, `mincut = 10`).
+* `cv.tree()` re-grows its fold trees with `tree(model = ...)`, i.e. with the **default** control, whatever control the original tree used. For a tree grown with a smaller `mindev` its CV deviances come out flat and meaningless. We therefore write the same loop out by hand, passing our control to each fold tree. As in `cv.tree()`, the inner folds are 10 random groups of the pseudo-training rows and the pruning sequence is cost-complexity on the deviance (`prune.tree`), because we care about probabilities, not about the 0.5-cut-off error rate that `prune.misclass` targets.
+
+```{r cvtreectrl}
+library(tree)
+cv.tree.ctrl <- function(object, K = 10, FUN = prune.tree, ...) {
+  m <- model.frame(object)
+  init <- FUN(object)                                 # cost-complexity sequence of the full tree
+  rand <- sample(K, nrow(m), replace = TRUE)          # the same random groups cv.tree() uses
+  cvdev <- 0
+  for (i in 1:K) {
+    tlearn <- tree(model = m[rand != i, , drop = FALSE], control = tree.control(nobs = sum(rand != i), ...))
+    plearn <- FUN(tlearn, newdata = m[rand == i, , drop = FALSE], k = init$k)
+    cvdev <- cvdev + plearn$dev
+  }
+  init$dev <- cvdev
+  init
+}
+```
+
+For contrast we also run the lab recipe unchanged: default `tree()`, `cv.tree(..., FUN = prune.misclass)`.
+
+```{r tree, fig.width=11, fig.height=5}
+tree.oof <- tree.lab.oof <- rep(NA, n)
+tree.size <- tree.big <- tree.lab.size <- rep(NA, F)
+t.tree <- t.lab <- 0
+for (f in 1:F) {
+  pdtrainind <- which(folds != f)
+  pdtrain <- data.frame(x[pdtrainind, ], DEFAULT = truth[pdtrainind])     # trees need no scaling
+  pdtest <- data.frame(x[-pdtrainind, ])
+  t0 <- proc.time()
+  tree.credit <- tree(DEFAULT ~ ., pdtrain,
+                      control = tree.control(nobs = nrow(pdtrain), mincut = 10, minsize = 20, mindev = 0.0005))
+  set.seed(seed)
+  cv.credit <- cv.tree.ctrl(tree.credit, mincut = 10, minsize = 20, mindev = 0.0005)
+  tree.big[f] <- summary(tree.credit)$size
+  tree.size[f] <- cv.credit$size[which.min(cv.credit$dev)]
+  prune.credit <- prune.tree(tree.credit, best = tree.size[f])
+  tree.oof[-pdtrainind] <- predict(prune.credit, pdtest)[, "Yes"]
+  t.tree <- t.tree + (proc.time() - t0)[["elapsed"]]
+  t0 <- proc.time()
+  tree.lab <- tree(DEFAULT ~ ., pdtrain)
+  set.seed(seed)
+  cv.lab <- cv.tree(tree.lab, FUN = prune.misclass)
+  tree.lab.size[f] <- cv.lab$size[which.min(cv.lab$dev)]
+  prune.lab <- if (tree.lab.size[f] < summary(tree.lab)$size) prune.misclass(tree.lab, best = tree.lab.size[f]) else tree.lab
+  tree.lab.oof[-pdtrainind] <- predict(prune.lab, pdtest)[, "Yes"]
+  t.lab <- t.lab + (proc.time() - t0)[["elapsed"]]
+}
+secs["tree + CV pruning"] <- t.tree; secs["tree lab defaults (prune.misclass)"] <- t.lab
+oof[["tree + CV pruning"]] <- tree.oof; oof[["tree lab defaults (prune.misclass)"]] <- tree.lab.oof
+rbind(grown = tree.big, pruned = tree.size, lab.default = tree.lab.size)
+par(mfrow = c(1, 2))
+plot(cv.credit$size, cv.credit$dev, type = "b", xlab = "size", ylab = "CV deviance", main = "Fold 5: CV deviance")
+plot(prune.credit, type = "uniform")
+text(prune.credit, pretty = 0, cex = 0.55)
+head(prune.credit$frame[, c("var", "n", "dev")], 4)      # first splits of the fold-5 tree
+```
+
+The CV deviance falls steeply over the first few splits, bottoms out between about 10 and 20 leaves and rises again for larger trees, which over-fit. The pruned trees have 10 to 19 leaves, close to the 17 leaves of the frozen Python tree. In fold 5 the first split is on the latest repayment status `PAY_1`. The next splits use `N_MONTHS_DELAYED` and an older status column. The Python tree's first split was on `MAX_DELAY`, which summarises the same six status columns. Both trees tell the story of the SHAP analysis: recent arrears dominate.
+
+## 8. Random forest
+
+`randomForest()` with 500 trees, `mtry = 5` ($\lfloor\sqrt{32}\rfloor$, the Python `max_features = "sqrt"`) and `nodesize = 20` (the Python `min_samples_leaf = 20`).
+
+Two details of `randomForest()` differ from scikit-learn, and both matter for probabilities. First, `predict(type = "prob")` returns the share of the 500 trees whose *majority class* in the leaf is "Yes" (hard votes); scikit-learn averages each leaf's *share* of defaulters (soft votes). Second, `nodesize = 20` only stops `randomForest()` from splitting a node of 20 rows or fewer, so a split can still leave a child with a single row, whereas `min_samples_leaf = 20` forbids any leaf with fewer than 20 rows. As a **diagnostic**, the helper below recomputes the forest's output as soft votes from the same R trees, using the bootstrap counts kept by `keep.inbag = TRUE`, and records how many distinct bootstrap rows each leaf holds. A second, diagnostic-only forest with `nodesize = 80` shows what happens when the R leaves are about as large as scikit-learn's.
+
+```{r rf}
+library(randomForest)
+soft.votes <- function(rf.fit, pdtrain, pdtest) {
+  node.tr <- attr(predict(rf.fit, pdtrain, nodes = TRUE), "nodes")
+  node.te <- attr(predict(rf.fit, pdtest, nodes = TRUE), "nodes")
+  yes <- as.numeric(pdtrain$DEFAULT == "Yes")
+  leaf.rows <- c()
+  soft <- sapply(1:rf.fit$ntree, function(b) {
+    w <- rf.fit$inbag[, b]                                     # bootstrap counts of each pseudo-training row
+    leaf.share <- tapply(w * yes, node.tr[, b], sum) / tapply(w, node.tr[, b], sum)
+    leaf.rows <<- c(leaf.rows, tapply(w > 0, node.tr[, b], sum))   # distinct bootstrap rows per leaf
+    leaf.share[as.character(node.te[, b])]
+  })
+  list(p = rowMeans(soft), leaf.rows = leaf.rows)
+}
+rf.oof <- rf.soft.oof <- rf80.soft.oof <- rep(NA, n)
+leaf.stats <- matrix(NA, F, 4, dimnames = list(paste("fold", 1:F), c("ns20.share.below.20", "ns20.median", "ns80.share.below.20", "ns80.median")))
+t.rf <- t.soft <- t.rf80 <- 0
+for (f in 1:F) {
+  pdtrainind <- which(folds != f)
+  pdtrain <- data.frame(x[pdtrainind, ], DEFAULT = truth[pdtrainind])
+  pdtest <- data.frame(x[-pdtrainind, ])
+  t0 <- proc.time()
+  set.seed(seed)
+  rf.credit <- randomForest(DEFAULT ~ ., data = pdtrain, ntree = 500, mtry = 5, nodesize = 20, keep.inbag = TRUE)
+  rf.oof[-pdtrainind] <- predict(rf.credit, pdtest, type = "prob")[, "Yes"]
+  t.rf <- t.rf + (proc.time() - t0)[["elapsed"]]
+  t0 <- proc.time()
+  sv <- soft.votes(rf.credit, pdtrain, pdtest)
+  rf.soft.oof[-pdtrainind] <- sv$p
+  leaf.stats[f, 1:2] <- c(mean(sv$leaf.rows < 20), median(sv$leaf.rows))
+  t.soft <- t.soft + (proc.time() - t0)[["elapsed"]]
+  t0 <- proc.time()
+  set.seed(seed)
+  rf80 <- randomForest(DEFAULT ~ ., data = pdtrain, ntree = 500, mtry = 5, nodesize = 80, keep.inbag = TRUE)
+  sv <- soft.votes(rf80, pdtrain, pdtest)
+  rf80.soft.oof[-pdtrainind] <- sv$p
+  leaf.stats[f, 3:4] <- c(mean(sv$leaf.rows < 20), median(sv$leaf.rows))
+  t.rf80 <- t.rf80 + (proc.time() - t0)[["elapsed"]]
+}
+secs["randomForest"] <- t.rf
+secs["[diagnostic] randomForest soft votes"] <- t.rf + t.soft
+secs["[diagnostic] randomForest soft votes, nodesize 80"] <- t.rf80
+oof[["randomForest"]] <- rf.oof
+oof[["[diagnostic] randomForest soft votes"]] <- rf.soft.oof
+oof[["[diagnostic] randomForest soft votes, nodesize 80"]] <- rf80.soft.oof
+rf.credit
+head(importance(rf.credit)[order(-importance(rf.credit)[, 1]), , drop = FALSE], 8)
+round(leaf.stats, 3)
+sapply(list(hard.votes = rf.oof, soft.votes = rf.soft.oof, soft.votes.nodesize.80 = rf80.soft.oof),
+       function(p) mean(fold.metrics(p)$auc))
+```
+
+With `nodesize = 20`, `r round(100 * mean(leaf.stats[, 1]))` % of the R leaves hold fewer than 20 distinct bootstrap rows (median `r median(leaf.stats[, 2])`), which scikit-learn's `min_samples_leaf = 20` would not allow. A leaf of a few rows has a defaulter share near 0 or 1, so each tree's vote is noisy. Soft votes recover part of the gap to Python. Larger leaves recover most of the rest: with `nodesize = 80` the median leaf has `r median(leaf.stats[, 4])` rows. Section 13 puts numbers on both steps. The importance ranking (`PAY_1`, `MAX_DELAY`, `N_MONTHS_DELAYED` first) is the same as in the Python forest.
+
+## 9. Boosting
+
+`gbm()` as in the tree lab, with `distribution = "bernoulli"` for a 0/1 response, `shrinkage = 0.03`, `interaction.depth = 3`, `bag.fraction = 0.8` (the Python `subsample = 0.8`) and 300 trees; we read the predictions after 200 trees (the frozen scikit-learn gradient boosting has 200) and after 300. XGBoost uses the settings of the frozen Python `xgboost`: `eta = 0.03`, `max_depth = 3`, `min_child_weight = 5`, `subsample = 0.8`, `colsample_bytree = 0.8`, 300 rounds, histogram trees. In xgboost 3.x the lab's shortcut `xgboost(data = , label = )` is being replaced by a new `xgboost(x, y)` interface, so we call the stable lower-level `xgb.train()`, whose parameter names are those of the Python `XGBClassifier`.
+
+```{r boosting}
+library(gbm)
+library(xgboost)
+gbm200.oof <- gbm300.oof <- xgb.oof <- rep(NA, n)
+t.gbm <- t.xgb <- 0
+for (f in 1:F) {
+  pdtrainind <- which(folds != f)
+  pdtrain <- data.frame(x[pdtrainind, ], DEFAULT = as.numeric(truth[pdtrainind] == "Yes"))
+  pdtest <- data.frame(x[-pdtrainind, ])
+  t0 <- proc.time()
+  set.seed(seed)
+  boost.credit <- gbm(DEFAULT ~ ., data = pdtrain, distribution = "bernoulli", n.trees = 300,
+                      interaction.depth = 3, shrinkage = 0.03, bag.fraction = 0.8, verbose = FALSE)
+  yhat.boost <- predict(boost.credit, newdata = pdtest, n.trees = c(200, 300), type = "response")
+  gbm200.oof[-pdtrainind] <- yhat.boost[, 1]; gbm300.oof[-pdtrainind] <- yhat.boost[, 2]
+  t.gbm <- t.gbm + (proc.time() - t0)[["elapsed"]]
+  t0 <- proc.time()
+  set.seed(seed)
+  xgb.credit <- xgb.train(
+    params = list(objective = "binary:logistic", eta = 0.03, max_depth = 3, min_child_weight = 5,
+                  subsample = 0.8, colsample_bytree = 0.8, tree_method = "hist", nthread = 2, seed = seed),
+    data = xgb.DMatrix(x[pdtrainind, ], label = as.numeric(truth[pdtrainind] == "Yes")),
+    nrounds = 300, verbose = 0)
+  xgb.oof[-pdtrainind] <- predict(xgb.credit, xgb.DMatrix(x[-pdtrainind, ]))
+  t.xgb <- t.xgb + (proc.time() - t0)[["elapsed"]]
+}
+secs["gbm 200 trees"] <- t.gbm; secs["gbm 300 trees"] <- t.gbm; secs["xgboost"] <- t.xgb
+oof[["gbm 200 trees"]] <- gbm200.oof; oof[["gbm 300 trees"]] <- gbm300.oof; oof[["xgboost"]] <- xgb.oof
+head(summary(boost.credit, plotit = FALSE), 8)
+xgb.class <- ifelse(xgb.oof > .5, "Yes", "No")
+table(xgb.class, truth)
+```
+
+In the relative-influence table of the last fold, `PAY_1` alone carries about half of the total influence, followed by `N_MONTHS_DELAYED` and `MAX_DELAY`. The Gini importance of `randomForest()`, the Python XGBoost gain and the Python TreeSHAP put the same three variables on top (`PAY_1`, `MAX_DELAY`, `N_MONTHS_DELAYED`): the most recent repayment status first, then how badly and how often the client was late.
+
+## 10. Support vector machine
+
+`svm()` from `e1071` with a radial kernel, `cost = 1`, `gamma = 0.01` and balanced class weights ($w_k = n / (2 n_k)$, the Python `class_weight = "balanced"`), fitted on all 16,780 pseudo-training rows of each fold, not on a subsample. We pass `scale = FALSE` because the numeric columns are already standardised inside the fold; `svm()`'s own scaling would also rescale the six dummies and change the kernel distances relative to Python. As in the SVM lab, we score with the decision values (`decision.values = TRUE`): AUC needs a ranking, not calibrated probabilities. The sign of the decision value refers to the first class listed in its column name ("No/Yes"), so we flip it.
+
+```{r svm}
+svm.oof <- rep(NA, n)
+svm.secs <- rep(NA, F); svm.nsv <- rep(NA, F)
+for (f in 1:F) {
+  pdtrainind <- which(folds != f)
+  xs <- scale.fold(x, pdtrainind)
+  pdtrain <- data.frame(xs[pdtrainind, ], DEFAULT = truth[pdtrainind])
+  pdtest <- data.frame(xs[-pdtrainind, ])
+  w <- table(pdtrain$DEFAULT)
+  cw <- setNames(as.numeric(nrow(pdtrain) / (2 * w)), names(w))
+  t0 <- proc.time()
+  svmfit <- svm(DEFAULT ~ ., data = pdtrain, kernel = "radial", cost = 1, gamma = 0.01,
+                class.weights = cw, scale = FALSE, cachesize = 1000)
+  fitted <- attributes(predict(svmfit, pdtest, decision.values = TRUE))$decision.values
+  svm.oof[-pdtrainind] <- if (colnames(fitted) == "No/Yes") -fitted[, 1] else fitted[, 1]
+  svm.secs[f] <- (proc.time() - t0)[["elapsed"]]
+  svm.nsv[f] <- sum(svmfit$nSV)
+}
+secs["e1071::svm radial"] <- sum(svm.secs)
+oof[["e1071::svm radial"]] <- svm.oof
+rbind(seconds = round(svm.secs, 1), support.vectors = svm.nsv)
+svm.class <- ifelse(svm.oof > 0, "Yes", "No")
+table(svm.class, truth)
+```
+
+About 63 % of the pseudo-training rows become support vectors (10,448 to 10,630 of 16,780; the Python fit on all training rows had 62.6 %). The two classes overlap heavily, so most points lie inside the margin. Each fit takes about 25 seconds on a laptop (more than a minute when the machine is busy), which is why the Python script tuned $C$ and $\gamma$ on a 6,000-row subsample before refitting on the full data. The balanced weights move the boundary towards the "No" class, so at its natural cut-off of zero the SVM flags many more clients than logistic regression.
+
+## 11. Neural network
+
+The deep-learning lab fits one-hidden-layer networks with `nnet()` (sigmoid hidden units) on standardised inputs and repeats each fit from several random starts, keeping the lowest objective (its helper `nn.rep()`, copied below). We choose the number of hidden units, `size` in {2, 5, 10}, by a 3-fold CV *inside* each pseudo-training set (folds built with the lab's `cut()` and `sample()`, inputs re-standardised inside each inner fold), with weight decay fixed at `decay = 1` following the lab's advice to "add `decay` to regularize" (0.1 was tried on one inner split and ranked worse at every size). The chosen size is then refitted on the whole pseudo-training set with `nn.rep(rep = 3)`. The Python MLP is a different network (two ReLU layers of 64 and 32 units, Adam, early stopping), so this is the closest course-style counterpart, not a replica.
+
+```{r nnet}
+library(nnet)
+nn.rep <- function(rep, ...) {  # ... means the function takes any number of arguments
+   v.min <- Inf                 # initialize v.min
+   for (r in 1:rep) {           # repeat nnet
+      nn.temp <- nnet(...)      # fit the first nnet
+      v.temp <- nn.temp$value   # store the cost
+      if (v.temp < v.min) {     # choose better weights
+         v.min <- v.temp
+         nn.min <- nn.temp
+      }
+   }
+   return(nn.min)
+}
+size.grid <- c(2, 5, 10)
+nnet.oof <- rep(NA, n)
+nnet.size <- rep(NA, F)
+inner.cv <- matrix(NA, F, length(size.grid), dimnames = list(paste("fold", 1:F), paste("size", size.grid)))
+t0 <- proc.time()
+for (f in 1:F) {
+  pdtrainind <- which(folds != f)
+  n.in <- length(pdtrainind)
+  set.seed(seed)
+  inner <- cut(seq(1, n.in), breaks = 3, labels = FALSE)
+  inner <- inner[sample(n.in)]
+  auc.in <- matrix(NA, 3, length(size.grid))
+  for (i in 1:3) {
+    in.train <- pdtrainind[inner != i]; in.test <- pdtrainind[inner == i]
+    xs.in <- scale.fold(x, in.train)
+    for (j in seq_along(size.grid)) {
+      set.seed(seed)
+      nn.fit <- nnet(DEFAULT ~ ., data = data.frame(xs.in[in.train, ], DEFAULT = truth[in.train]),
+                     size = size.grid[j], decay = 1, maxit = 500, trace = FALSE)
+      auc.in[i, j] <- auc.fun(truth[in.test], predict(nn.fit, data.frame(xs.in[in.test, ]), type = "raw"))
+    }
+  }
+  inner.cv[f, ] <- colMeans(auc.in)
+  nnet.size[f] <- size.grid[which.max(inner.cv[f, ])]
+  xs <- scale.fold(x, pdtrainind)
+  set.seed(seed)
+  nn.best <- nn.rep(rep = 3, DEFAULT ~ ., data = data.frame(xs[pdtrainind, ], DEFAULT = truth[pdtrainind]),
+                    size = nnet.size[f], decay = 1, maxit = 500, trace = FALSE)
+  nnet.oof[-pdtrainind] <- predict(nn.best, data.frame(xs[-pdtrainind, ]), type = "raw")
+}
+secs["nnet"] <- (proc.time() - t0)[["elapsed"]]
+oof[["nnet"]] <- nnet.oof
+round(inner.cv, 4)
+nnet.size
+nn.class <- ifelse(nnet.oof > .5, "Yes", "No")
+table(nn.class, truth)
+```
+
+## 12. R versus Python
+
+For every R model we take the Python configuration of the same family from `results/model_comparison.csv`. The Python CV AUC is its `cv_auc` column (the mean of the five fold AUCs). The one exception is the RBF SVM, whose `cv_auc` was measured on the 6,000-row tuning subsample; for it we use the mean fold AUC of its out-of-fold probabilities on the full training set, which is what R computes. From each Python model's saved out-of-fold probabilities we also recompute the five fold AUCs and APs with the same R functions, so we can look at paired, fold-by-fold differences.
+
+```{r compare}
+py.map <- c("glm (logistic)" = "logistic",
+            "cv.glmnet ridge" = "logistic_l2",
+            "cv.glmnet lasso" = "logistic_l1",
+            "MASS::lda" = "lda",
+            "MASS::qda" = "qda",
+            "[diagnostic] QDA reg 0.5 (by hand)" = "qda",
+            "e1071::naiveBayes" = "naive_bayes",
+            "class::knn K=101" = "knn",
+            "class::knn K=5" = "knn_k5",
+            "tree + CV pruning" = "tree_pruned",
+            "tree lab defaults (prune.misclass)" = "tree_pruned",
+            "randomForest" = "random_forest",
+            "[diagnostic] randomForest soft votes" = "random_forest",
+            "[diagnostic] randomForest soft votes, nodesize 80" = "random_forest",
+            "gbm 200 trees" = "gradient_boosting",
+            "gbm 300 trees" = "gradient_boosting",
+            "xgboost" = "xgboost",
+            "e1071::svm radial" = "svm_rbf",
+            "nnet" = "mlp")
+stopifnot(setequal(names(py.map), names(oof)))
+py.folds <- lapply(unique(py.map), function(s) fold.metrics(read.npy(file.path(res.dir, paste0(s, "_p_oof.npy")))))
+names(py.folds) <- unique(py.map)
+rows <- lapply(names(py.map), function(m) {
+  s <- py.map[[m]]; r <- fold.metrics(oof[[m]]); p <- py.folds[[s]]
+  cmp <- comparison[comparison$slug == s, ]
+  py.cv <- if (s == "svm_rbf") mean(p$auc) else cmp$cv_auc
+  data.frame(model = m, r_cv_auc = mean(r$auc), r_cv_auc_sd = sd(r$auc), r_ap = mean(r$ap),
+             python_cv_auc = py.cv, diff = mean(r$auc) - py.cv, r_seconds = round(secs[[m]], 1),
+             python_slug = s, python_name = cmp$name, python_ap = mean(p$ap),
+             python_auc_from_oof = mean(p$auc), diff_fold_sd = sd(r$auc - p$auc),
+             folds_r_higher = sum(r$auc > p$auc))
+})
+crosscheck <- do.call(rbind, rows)
+# the Python fold AUCs recomputed in R must equal the Python cv_auc (all but the SVM, see above)
+with(crosscheck[crosscheck$python_slug != "svm_rbf", ], max(abs(python_auc_from_oof - python_cv_auc)))
+```
+
+The last line is the second proof that both sides use the same folds. For every Python model, the fold AUCs recomputed in R from its saved out-of-fold probabilities reproduce its `cv_auc` to within $10^{-7}$; the XGBoost probabilities were saved in single precision.
+
+```{r notes, include=FALSE}
+notes <- c(
+  "glm (logistic)" = "glm IRLS vs scikit-learn lbfgs on the same unpenalised likelihood; identical up to solver tolerance.",
+  "cv.glmnet ridge" = "lambda by nested 10-fold CV on binomial deviance (lab default) vs Python C by CV AUC on the outer folds; glmnet also standardises the dummies before penalising.",
+  "cv.glmnet lasso" = "as ridge; both penalties end up tiny, so lasso is close to plain glm.",
+  "MASS::lda" = "same model as scikit-learn LDA (lsqr, no shrinkage).",
+  "MASS::qda" = "MASS::qda has no regularisation; the frozen Python QDA uses reg_param = 0.5 (its unregularised grid point had CV AUC 0.7394).",
+  "[diagnostic] QDA reg 0.5 (by hand)" = "diagnostic only: QDA with (1 - r) S_k + r I, r = 0.5, written by hand to mirror the frozen Python reg_param.",
+  "e1071::naiveBayes" = "Gaussian naive Bayes in both; Python adds var_smoothing = 0.01 to every variance.",
+  "class::knn K=101" = "K = 101, uniform votes, Euclidean on fold-standardised inputs in both; class::knn keeps all ties at the 101st distance.",
+  "class::knn K=5" = "lab-style small K for contrast; probabilities take only six values.",
+  "tree + CV pruning" = "deviance (entropy) tree grown to mindev = 0.0005 and pruned by a hand-written cv.tree with the same control (nested 10-fold); Python pruned by ccp_alpha x max_depth chosen on the outer folds.",
+  "tree lab defaults (prune.misclass)" = "contrast only: default tree.control stops at a few leaves and misclassification pruning ignores probability quality.",
+  "randomForest" = "randomForest hard votes (share of trees voting Yes) vs scikit-learn soft votes (mean leaf share); nodesize = 20 only stops splitting nodes of 20 or fewer, min_samples_leaf = 20 forbids leaves under 20.",
+  "[diagnostic] randomForest soft votes" = "diagnostic only: the same 500 R trees averaged as leaf shares (scikit-learn style).",
+  "[diagnostic] randomForest soft votes, nodesize 80" = "diagnostic only: a second R forest with nodesize = 80 (median leaf about as large as scikit-learn's 20-row minimum), soft votes.",
+  "gbm 200 trees" = "gbm interaction.depth = 3 means 3 splits (4 leaves) and n.minobsinnode = 10; scikit-learn max_depth = 3 allows 8 leaves.",
+  "gbm 300 trees" = "as gbm 200 trees, read after 300 trees (the XGBoost round count).",
+  "xgboost" = "same library and parameters (R xgboost 3.2.1.1 vs Python 3.4.1); only the row/column subsampling draws differ.",
+  "e1071::svm radial" = "both are libsvm with C = 1, gamma = 0.01, balanced weights, full folds; Python value = mean fold AUC of its nested Platt OOF (pooled OOF AUC 0.7606).",
+  "nnet" = "one sigmoid hidden layer (size by inner 3-fold CV, decay = 1, BFGS) vs Python two ReLU layers 64-32 with Adam and early stopping.")
+crosscheck$notes <- notes[crosscheck$model]
+```
+
+```{r table}
+out <- crosscheck[, c("model", "r_cv_auc", "r_cv_auc_sd", "r_ap", "python_cv_auc", "diff", "r_seconds", "notes",
+                      "python_slug", "python_ap", "diff_fold_sd", "folds_r_higher")]
+num <- sapply(out, is.numeric) & !names(out) %in% c("r_seconds", "folds_r_higher")
+out[num] <- lapply(out[num], round, 5)
+write.csv(out, file.path(res.dir, "r_crosscheck.csv"), row.names = FALSE)
+kable(crosscheck[, c("model", "r_cv_auc", "r_cv_auc_sd", "python_cv_auc", "diff", "diff_fold_sd", "folds_r_higher", "r_ap", "python_ap", "r_seconds")],
+      row.names = FALSE,
+      digits = 4, caption = "Five-fold CV on the 20,975 training rows, same folds in R and Python. diff = R - Python; diff_fold_sd = standard deviation of the five paired fold differences; folds_r_higher = folds (of 5) in which R scores higher.")
+```
+
+```{r figure, fig.width=11, fig.height=5.2, out.width="100%"}
+draw.crosscheck <- function() {
+  main <- out[!grepl("^\\[diagnostic\\]", out$model) & out$model != "tree lab defaults (prune.misclass)", ]
+  diag.of <- c("MASS::qda" = "[diagnostic] QDA reg 0.5 (by hand)",
+               "randomForest" = "[diagnostic] randomForest soft votes, nodesize 80")
+  ink <- "#0b0b0b"; ink2 <- "#52514e"; grid.col <- "#e4e3df"; blue <- "#2a78d6"; band <- "#eef3fb"
+  layout(matrix(1:2, 1), widths = c(1, 1.3))
+  par(family = "sans", col.axis = ink2, col.lab = ink, fg = ink2, las = 1)
+  # (a) R against Python, 45-degree line with a +/- 0.005 band
+  par(pty = "s", mar = c(4.2, 4.6, 3.2, 1))
+  lim <- range(c(main$r_cv_auc, main$python_cv_auc)) + c(-0.004, 0.004)
+  plot(NA, xlim = lim, ylim = lim, xlab = "Python five-fold CV AUC", ylab = "R five-fold CV AUC", axes = FALSE)
+  polygon(c(-1, 2, 2, -1), c(-1.005, 1.995, 2.005, -0.995), col = band, border = NA)
+  abline(h = pretty(lim), v = pretty(lim), col = grid.col, lwd = 1)
+  abline(0, 1, col = ink2, lwd = 1.5)
+  axis(1, at = pretty(lim), lwd = 0, lwd.ticks = 0); axis(2, at = pretty(lim), lwd = 0, lwd.ticks = 0)
+  points(main$python_cv_auc, main$r_cv_auc, pch = 21, bg = blue, col = "white", cex = 1.6, lwd = 1.5)
+  far <- abs(main$diff) > 0.005
+  # label the outliers: to the right of the dot, or below it near the right edge (may run into the margin)
+  text(main$python_cv_auc[far], main$r_cv_auc[far], main$model[far], xpd = NA, cex = 0.75, col = ink,
+       pos = ifelse(main$python_cv_auc[far] < lim[2] - 0.02, 4, 1), offset = 0.7)
+  mtext("(a) One dot per model; band = 45-degree line \u00b1 0.005", side = 3, line = 1, adj = 0, cex = 0.85, col = ink)
+  # (b) paired difference per model: mean over folds (dot) and range of the five fold differences (line)
+  par(pty = "m", mar = c(4.2, 12, 3.2, 1))
+  d <- main[order(main$python_cv_auc), ]
+  fd <- lapply(d$model, function(m) fold.metrics(oof[[m]])$auc - py.folds[[py.map[[m]]]]$auc)
+  xl <- range(c(unlist(fd), -0.006, 0.006)) + c(-0.002, 0.002)
+  plot(NA, xlim = xl, ylim = c(0.5, nrow(d) + 0.5), axes = FALSE, xlab = "R minus Python CV AUC", ylab = "")
+  rect(-0.005, -1, 0.005, nrow(d) + 2, col = band, border = NA)
+  abline(v = pretty(xl), col = grid.col, lwd = 1)
+  abline(v = 0, col = ink2, lwd = 1.5)
+  segments(sapply(fd, min), 1:nrow(d), sapply(fd, max), 1:nrow(d), col = blue, lwd = 2)
+  points(d$diff, 1:nrow(d), pch = 21, bg = blue, col = "white", cex = 1.6, lwd = 1.5)
+  for (m in names(diag.of)) {
+    i <- which(d$model == m)
+    points(out$diff[out$model == diag.of[[m]]], i, pch = 21, bg = "white", col = blue, cex = 1.5, lwd = 2)
+  }
+  axis(1, at = pretty(xl), lwd = 0, lwd.ticks = 0)
+  axis(2, at = 1:nrow(d), labels = d$model, lwd = 0, lwd.ticks = 0, cex.axis = 0.8, col.axis = ink)
+  legend("topleft", legend = c("R as fitted", "R refit, Python setting"),
+         pch = 21, pt.bg = c(blue, "white"), col = c("white", blue), pt.lwd = c(1.5, 2), pt.cex = 1.4,
+         bty = "n", cex = 0.75, text.col = ink, inset = c(0.01, 0.01))
+  mtext("(b) R minus Python: mean (dot) and range over the five folds (line)", side = 3, line = 1, adj = 0, cex = 0.85, col = ink)
+}
+png(file.path(fig.dir, "r_crosscheck.png"), width = 11, height = 5.2, units = "in", res = 200)
+draw.crosscheck()
+invisible(dev.off())
+draw.crosscheck()
+```
+
+## 13. Explaining the differences
+
+```{r helpers13, include=FALSE}
+g <- function(m, col = "diff") crosscheck[[col]][crosscheck$model == m]   # unrounded values
+f4 <- function(v) sprintf("%.4f", v)
+fs <- function(v) sprintf("%+.4f", ifelse(abs(v) < 5e-5, 0, v))
+main.rows <- crosscheck[!grepl("^\\[diagnostic\\]", crosscheck$model) & crosscheck$model != "tree lab defaults (prune.misclass)", ]
+n.main <- nrow(main.rows)
+n.within <- sum(abs(main.rows$diff) <= 0.005)
+rho <- cor(main.rows$r_cv_auc, main.rows$python_cv_auc, method = "spearman")
+gap.r <- g("xgboost", "r_cv_auc") - g("glm (logistic)", "r_cv_auc")
+gap.py <- g("xgboost", "python_cv_auc") - g("glm (logistic)", "python_cv_auc")
+```
+
+```{r bigdiff}
+big <- crosscheck[abs(crosscheck$diff) > 0.005 & !grepl("^\\[diagnostic\\]", crosscheck$model),
+                  c("model", "r_cv_auc", "python_cv_auc", "diff", "diff_fold_sd", "folds_r_higher")]
+kable(big, digits = 4, row.names = FALSE, caption = "Fitted R models whose CV AUC differs from Python by more than 0.005 (diagnostic refits excluded)")
+```
+
+**Overview.** `r n.main` R fits mirror a Python configuration. Of these, `r n.within` land within 0.005 of the Python CV AUC, and the rank correlation between the R and Python columns is `r sprintf("%.2f", rho)`. Five agree within 0.0002:
+
+* `glm()` (`r fs(g("glm (logistic)"))`) and `lda()` (`r fs(g("MASS::lda"))`) compute the same estimators as scikit-learn: the same likelihood maximum and the same closed form.
+* The RBF SVM (`r fs(g("e1071::svm radial"))`) agrees because `e1071::svm()` and scikit-learn's `SVC` are both wrappers of the same libsvm solver.
+* KNN with $K = 101$ (`r fs(g("class::knn K=101"))`) agrees because its only freedom is the handling of distance ties.
+* XGBoost (`r fs(g("xgboost"))`) is the same library with different random draws for the row and column subsamples.
+
+The paired fold differences (`diff_fold_sd`) are much smaller than the fold-to-fold spread of the AUC itself (`r_cv_auc_sd`, about 0.01). The folds differ in difficulty, and both implementations feel that equally.
+
+Three fitted rows differ by more than 0.005. Each has a specific cause, and a refit confirms each one.
+
+**1. `MASS::qda` (`r fs(g("MASS::qda"))`): a different configuration, not a different implementation.** `qda()` has no regularisation. Its CV AUC, `r f4(g("MASS::qda", "r_cv_auc"))`, equals the Python grid point `reg_param = 0` (0.7394 in `results/qda.json`). The frozen Python QDA uses `reg_param = 0.5`, and the hand-written regularised QDA with $r = 0.5$ scores `r f4(g("[diagnostic] QDA reg 0.5 (by hand)", "r_cv_auc"))`, against Python's `r f4(g("MASS::qda", "python_cv_auc"))`. For the model this means the following. The defaulters' covariance matrix is estimated from about 3,700 rows and 32 strongly correlated columns. Shrinking it halfway towards the identity is worth about 0.012 AUC, and even the shrunk QDA stays below LDA (`r f4(g("MASS::lda", "r_cv_auc"))`). A separate covariance matrix for each class adds estimation noise rather than signal here.
+
+**2. `randomForest` (`r fs(g("randomForest"))`): two implementation choices about leaves.** Section 8 explains the mechanics. Turning the hard votes into soft votes over the same 500 trees moves the CV AUC from `r f4(g("randomForest", "r_cv_auc"))` to `r f4(g("[diagnostic] randomForest soft votes", "r_cv_auc"))`. Growing the R trees with leaves about as large as scikit-learn's (`nodesize = 80`, median leaf `r median(leaf.stats[, 4])` distinct rows) moves it to `r f4(g("[diagnostic] randomForest soft votes, nodesize 80", "r_cv_auc"))`, `r fs(g("[diagnostic] randomForest soft votes, nodesize 80"))` from Python. Majority votes in tiny leaves throw away the difference between a leaf with a 30 % default rate and one with 45 %, and that gradation is exactly what AUC rewards. The model-level conclusion of the report is that a well-specified forest comes close to boosting on this data. That conclusion also holds in R, but only once the forest averages leaf shares over leaves of reasonable size. The `nodesize = 80` forest is a diagnostic of this explanation, not a new candidate: it changes nothing in the report, and it uses no test row.
+
+**3. Lab-default tree (`r fs(g("tree lab defaults (prune.misclass)"))`): a deliberate contrast.** With the default `tree.control()` the tree stops at 3 or 4 leaves. `prune.misclass` then optimises the error rate at the 0.5 cut-off. With 22 % defaulters almost every leaf predicts "No", so extra leaves hardly change that error and CV keeps the small tree. A 3-leaf tree can output only three probabilities, so its ROC curve has three corners. Grown deeper and pruned on the deviance, the R tree is within `r sprintf("%.3f", abs(g("tree + CV pruning")))` of Python. For a credit-scoring tree the pruning criterion should match the use of the output: the deviance (probability quality), not the error rate at 0.5.
+
+**Smaller differences (below 0.005).**
+
+* *Ridge and lasso* (`r fs(g("cv.glmnet ridge"))`, `r fs(g("cv.glmnet lasso"))`). `cv.glmnet()` picks $\lambda$ by the inner-fold deviance, and the mild shrinkage it chooses costs a little AUC. The Python grid chose $C$ by AUC and kept almost no penalty. Both sides say the same thing: with 20,975 rows and 32 inputs the logistic model is not limited by variance but by its linear, additive form.
+* *gbm* (`r fs(g("gbm 200 trees"))` at 200 trees, `r fs(g("gbm 300 trees"))` at 300). In `gbm()`, `interaction.depth = 3` means three splits (four leaves) per tree and at least 10 rows per leaf (`n.minobsinnode`). scikit-learn's `max_depth = 3` allows up to eight leaves. Each `gbm` tree therefore learns less, and `gbm` needs more trees for the same fit: at 300 trees it is within 0.001 of the 200-tree scikit-learn model.
+* *Pruned tree* (`r fs(g("tree + CV pruning"))`). The pruning paths differ. R chooses the size by an inner CV, which is nested. Python picked `ccp_alpha` and `max_depth` on the outer folds themselves, which makes its CV AUC slightly optimistic.
+* *Neural network* (`r fs(g("nnet"))`). A different network reaches the same AUC: five sigmoid hidden units with weight decay match a 64-32 ReLU network. The default signal is low-dimensional (repayment status, utilisation, limit), so network capacity is not the bottleneck.
+* *Naive Bayes* (`r fs(g("e1071::naiveBayes"))`). Python adds `var_smoothing` to every variance, which slightly tempers the extreme probabilities.
+
+**What this means for the report.** The ranking of the model families is a property of the data, not of the software. In both languages boosting is on top (XGBoost `r f4(g("xgboost", "r_cv_auc"))` in R, `r f4(g("xgboost", "python_cv_auc"))` in Python). The neural network, KNN with $K = 101$ and the pruned tree come next. The RBF SVM, the logistic family and LDA sit around 0.76, and QDA, naive Bayes and KNN with $K = 5$ trail. The gain of the best model over plain logistic regression is `r sprintf("%.3f", gap.r)` in R and `r sprintf("%.3f", gap.py)` in Python. The only family that changes place is the random forest, which falls behind the neural network in R because of its hard votes and small leaves. Every difference larger than 0.005 traces back to a documented implementation choice (QDA regularisation, the random forest's vote and leaf rules, the tree-pruning criterion), and a refit confirms each one. None of these refits reads the test set.
+
+## Run time and session
+
+```{r session}
+round(secs, 1)
+total.minutes <- (proc.time() - t.start)[["elapsed"]] / 60
+round(total.minutes, 1)
+sessionInfo()
+```
