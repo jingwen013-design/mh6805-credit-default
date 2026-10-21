@@ -57,6 +57,7 @@ zsh code/run_all.sh               # 40–60 minutes on a laptop: regenerates eve
 
 - `fetch_data.py` downloads the UCI zip if the `.xls` is absent and checks its SHA-256 before anything else runs.
 - RUAN's `*_v2.py` scripts are gated behind `MH6805_RUN_V2=1` in `run_all.sh`: each ends with a test-set evaluation of a configuration that is already frozen, and a re-fit on another machine could drift past the 1e-6 tolerance, in which case `evaluate()` refuses it. Their training-only parts (`nested_cv_check.py`, `cluster_stability.py`) run by default.
+- **Reproduced on a fresh clone on 21 Oct 2026** (`results/REPRODUCTION_2026-10-21.md`): every selection and test metric came back identical, `freeze.py --check` passed on the regenerated results, and the only differences were wall-clock fields and floating-point noise below 1e-15. The full run took 76 minutes at reduced priority while other work ran; allow 40–60 minutes on an idle laptop.
 - One model at a time: `cd code && python3 model_rf.py` writes `results/random_forest.json`, `figures/random_forest_eval.png` and the companion files. Scripts use at most `n_jobs=2`.
 - Report: `zsh report/build_report_tex.sh` (needs `pdflatex` and the Python package `pymupdf` for the page check); proposal: `zsh proposal/build_proposal_tex.sh`.
 

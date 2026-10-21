@@ -5,6 +5,10 @@ export PATH="/usr/local/bin:$PATH"
 SRC=${1:-report.tex}
 OUT=${2:-MH6805_Group_Project_Report}
 
+# A stale or truncated .aux from an interrupted direct pdflatex run poisons pass 1 (every \ref
+# prints "??"), so start from a clean slate; three passes below rebuild it.
+rm -f "$OUT.aux" "$OUT.out" "$OUT.toc"
+
 pdflatex -interaction=nonstopmode -jobname="$OUT" "$SRC" >/dev/null 2>&1
 pdflatex -interaction=nonstopmode -jobname="$OUT" "$SRC" >/dev/null 2>&1
 pdflatex -interaction=nonstopmode -jobname="$OUT" "$SRC" > _tex.log 2>&1

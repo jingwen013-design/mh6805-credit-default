@@ -29,7 +29,9 @@ def esc(s):
 
 
 def tt(s):
-    return r"\texttt{" + esc(s) + "}"
+    # \allowbreak after each underscore lets long file and column names break inside a
+    # caption or a narrow cell instead of forcing an underfull line.
+    return r"\texttt{" + esc(s).replace(r"\_", r"\_\allowbreak{}") + "}"
 
 
 def num(x, nd=3):
@@ -59,8 +61,11 @@ def _flush():
     return "\n\\clearpage" if _FLOATS[0] % 6 == 0 else ""
 
 
-def table(caption, label, colspec, header, rows, small=True, note=None, tabcolsep=None, footnotesize=False):
-    out = [r"\begin{table}[htbp]", f"  \\caption{{{caption}}}", f"  \\label{{{label}}}",
+def table(caption, label, colspec, header, rows, small=True, note=None, tabcolsep=None, footnotesize=False,
+          placement="!htbp", note_ragged=False):
+    # "!" lets consecutive tables share a page (the appendix is tables only, so the usual
+    # float-fraction limits only produce half-empty pages and float-only pages).
+    out = [f"\\begin{{table}}[{placement}]", f"  \\caption{{{caption}}}", f"  \\label{{{label}}}",
            r"  \centering"]
     if footnotesize:
         out.append(r"  \footnotesize")
@@ -77,16 +82,26 @@ def table(caption, label, colspec, header, rows, small=True, note=None, tabcolse
     out.append(r"    \bottomrule")
     out.append(r"  \end{tabular}")
     if note:
-        out.append(f"  \\\\[2pt]{{\\footnotesize {note}}}")
+        # A justified minipage rather than centred lines: a multi-line note set with \centering
+        # produces underfull (badness 10000) lines at every forced break.
+        rag = "\\raggedright " if note_ragged else ""
+        out.append(f"  \\\\[3pt]\\begin{{minipage}}{{\\linewidth}}\\footnotesize {rag}{note}\\end{{minipage}}")
     out.append(r"\end{table}")
     return "\n".join(out) + _flush()
 
 
-def figure(path, caption, label, width="0.92"):
+FULLPAGE_FIGS = {"eda_correlation_heatmap.png", "pdp_main.png", "pdp_interaction.png", "pca_loadings.png"}
+# Multi-panel figures whose panel titles and tick labels are illegible at 0.92\linewidth: set at
+# full width on a float page of their own (the appendix is exempt from the page limit).
+
+
+def figure(path, caption, label, width="0.92", placement="htbp"):
     if not os.path.exists(os.path.join(FIGDIR, path)):
         return f"% MISSING FIGURE: {path}"
+    if path in FULLPAGE_FIGS:
+        width, placement = "1.0", "p"
     return "\n".join([
-        r"\begin{figure}[htbp]", r"  \centering",
+        f"\\begin{{figure}}[{placement}]", r"  \centering",
         f"  \\includegraphics[width={width}\\linewidth]{{{path}}}",
         f"  \\caption{{{caption}}}", f"  \\label{{{label}}}", r"\end{figure}"]) + _flush()
 
@@ -151,6 +166,21 @@ A(table(f"Default rate along the two strongest credit-risk gradients, training p
         "tab:a-gradients", "lrrlrr",
         ["September status", "Clients", "Default", "Credit-limit quintile", "Clients", "Default"], rows))
 A("")
+
+# ------------------------------------------------------------------ A1c data-quality checks (verbatim from the EDA)
+dq_path = os.path.join(RESULTS, "eda_data_quality.csv")
+if os.path.exists(dq_path):
+    dq = pd.read_csv(dq_path)
+    rows = [[esc(r_.check), esc(r_.finding), "---" if pd.isna(r_.action) else esc(r_.action)]
+            for r_ in dq.itertuples()]
+    A(table("Data-quality checks run on the raw download before modelling, and what was done about each "
+            "finding. Reproduced verbatim from \\texttt{results/eda\\_data\\_quality.csv}; the three cleaning "
+            "steps that precede the split (duplicate removal, the fixed recoding of undocumented codes, the "
+            "row-wise engineered features) estimate nothing from the data, and everything else is left to "
+            "the in-fold pipeline.",
+            "tab:a-quality", "L{0.19\\linewidth}L{0.36\\linewidth}L{0.39\\linewidth}",
+            ["Check", "Finding", "Action"], rows, tabcolsep="3pt", footnotesize=True))
+    A("")
 
 # ------------------------------------------------------------------ A2 workload
 # The instructor asks for per-section attribution, not a flat "all contributed equally".
@@ -385,7 +415,7 @@ if ms:
     allc = viol["all_constrained_features"]
     pb = ms["cost_of_the_constraint"]["paired_bootstrap"]
     A(table("The monotone constraint vector of the constrained XGBoost, fixed a priori from credit logic "
-            f"and read back from the fitted booster: {tt(cv_['string'])} over the "
+            f"and read back from the fitted booster: {tt(cv_['string']).replace(',', ',\\allowbreak ')} over the "
             f"{len(cv_['columns'])} preprocessed columns (one-hot categories count once per raw variable here). "
             "Hyper-parameters are inherited unchanged from the tuned unconstrained model.",
             "tab:a-monotone", "L{0.30\\linewidth}L{0.54\\linewidth}c",
@@ -397,8 +427,8 @@ if ms:
                  f"\\texttt{{PAY\\_1}} on {rp['unconstrained']['violating_steps']} of {rp['unconstrained']['total_steps']:,} "
                  f"steps (largest fall {rp['unconstrained']['largest_fall']:.3f}); the constrained booster on none. "
                  f"Price of the constraint: CV AUC {snum(ms['cost_of_the_constraint']['delta_cv_auc'])}, test AUC "
-                 f"{snum(pb['auc_diff_mean'])} [{snum(pb['auc_diff_2_5'])}, {snum(pb['auc_diff_97_5'])}] "
-                 f"(paired bootstrap, $B={pb['B']}$)."))
+                 f"{snum(ms['cost_of_the_constraint']['delta_test_auc'])} (paired bootstrap, $B={pb['B']}$: mean "
+                 f"{snum(pb['auc_diff_mean'])}, 95\\,\\% interval [{snum(pb['auc_diff_2_5'])}, {snum(pb['auc_diff_97_5'])}])."))
     A("")
 
 # ------------------------------------------------------------------ freeze timeline
@@ -481,14 +511,39 @@ if os.path.exists(ncv_path):
             "Brier score and calibration slope of the nested out-of-fold scores, the 5:1 cut-off chosen on those "
             f"scores (closed form $1/6 = 0.167$) and the cross-fitted 5:1 cost on the {meta['n_train']:,} training rows. ")
     if lg:
-        note += (f"Pre-registered rule: {esc(lg.get('rule'))}. Outcome: {esc(lg.get('selected'))} kept; the "
-                 f"Platt-calibrated weighting changes the cross-fitted cost by "
-                 f"{snum(100 * lg.get('weighted_cal_cost_change', 0), 2)}\\,\\%, below the 1\\,\\% rule, so it is not adopted. ")
-    note += "The test set is not read anywhere in this table."
+        _cost = dict(zip(ncv["variant"].astype(str), ncv["crossfit_cost5"].astype(float)))
+        _pc, _wc = _cost.get("plain"), _cost.get("weighted_cal")
+        if _pc and _wc:
+            _rel = 100 * (_wc - _pc) / _pc        # +0.43: the weighted + Platt model costs MORE
+            _word = "costlier" if _rel > 0 else "cheaper"
+            note += (f"Pre-registered rule: {esc(lg.get('rule'))}. Outcome: {esc(lg.get('selected'))} kept; the "
+                     f"Platt-calibrated weighting is {abs(_rel):.2f}\\,\\% {_word} ({_wc:,.0f} against {_pc:,.0f}), "
+                     f"so the rule (adopt only if $>1\\,\\%$ cheaper) is not met and it is not adopted. ")
+    oof_p = os.path.join(RESULTS, "logistic_p_oof.npy")
+    tr_p = os.path.join(ROOT, "data", "processed", "train.csv")
+    if os.path.exists(oof_p) and os.path.exists(tr_p):
+        import numpy as np
+        _p = np.load(oof_p)
+        _y = pd.read_csv(tr_p, usecols=["DEFAULT"])["DEFAULT"].to_numpy()
+        if len(_p) == len(_y):
+            def _c5(t):            # 5:1 cost with the p >= t convention of common.evaluate
+                f = _p >= t
+                return int(5 * int((~f & (_y == 1)).sum()) + int((f & (_y == 0)).sum()))
+            c15, c17 = _c5(0.15), _c5(0.17)
+            note += (f" For comparison, the plain 5-fold out-of-fold 5:1 cost of the frozen 16 September logit "
+                     f"({tt('results/logistic_p_oof.npy')} against the {len(_y):,} training labels) is {c15:,} at 0.15 "
+                     f"and {c17:,} at 0.17 ({100 * (c17 - c15) / c15:+.2f}\\,\\%): a different cross-fit from the nested one, "
+                     "which is why the two costs at 0.17 differ.")
+    note += " The test set is not read anywhere in this table."
     A(table("Nested cross-validation of the KNN and logistic families, RUAN Hangjing's second pass of 30 September "
-            "2026 (\\texttt{logistic\\_nested\\_cv\\_v2.csv}, \\texttt{knn\\_v2.json}). The 21 October reproduction "
-            "on the training rows (\\texttt{nested\\_cv\\_summary\\_repro.json}, \\texttt{logistic\\_nested\\_cv\\_repro.csv}) "
-            "matched every figure, and the pre-registered rules re-select the configurations frozen on 16 September.",
+            f"2026 ({tt('logistic_nested_cv_v2.csv')}, {tt('knn_v2.json')}). The 21 October reproduction "
+            f"on the training rows ({tt('nested_cv_summary_repro.json')}, {tt('logistic_nested_cv_repro.csv')}) "
+            "matched the nested AUCs and standard errors, the logistic rows and the selected configurations; "
+            "the KNN Brier and calibration-slope columns are RUAN's 30 September out-of-fold figures "
+            f"({tt('knn_v2.json')}), which the reproduction ({tt('nested_cv_knn_repro.json')}) puts at "
+            f"{num(((load_json('nested_cv_knn_repro.json') or {}).get('oof_calibration') or {}).get('brier'), 4)} and "
+            f"{num(((load_json('nested_cv_knn_repro.json') or {}).get('oof_calibration') or {}).get('cal_slope'), 3)}. "
+            "The pre-registered rules re-select the configurations frozen on 16 September.",
             "tab:a-nestedcv", "L{0.30\\linewidth}cccccc",
             ["Model", "Nested AUC", "Nested AP", "Brier", "Cal.\\ slope", "5:1 cut-off", "5:1 cost"],
             rows, note=note, tabcolsep="3pt", footnotesize=True))
@@ -500,7 +555,8 @@ if os.path.exists(comp_path):
     c = pd.read_csv(comp_path)
     sel = "select_auc" if "select_auc" in c.columns else "cv_auc"      # training-set selection score (see aggregate.py)
     c = c.sort_values(sel, ascending=False, na_position="last", kind="mergesort")
-    cols = [x for x in ("name", "slug", "cv_auc", "test_auc", "test_ap", "brier") if x in c.columns]
+    cols = [x for x in ("name", "slug", "cv_auc", "select_auc", "select_source", "test_auc", "test_ap", "brier")
+            if x in c.columns]
     # RUAN's 30 Sep second pass re-scored two configurations that were already frozen on 16 Sep
     # (knn / logistic). They are documented in the freeze-timeline and nested-CV tables, not listed
     # as separate models: aggregate.py excludes the *_v2 slugs, and this guard keeps it that way.
@@ -511,22 +567,35 @@ if os.path.exists(comp_path):
     # but the pre-registered rule of the 30 Sep / 21 Oct analysis did not adopt the cluster label.
     NAME_OVERRIDE = {"logistic_plus_clusters":
                      "Logistic + K-means segment dummies (round-1 scoring; not adopted by the pre-registered rule)"}
-    rows = []
+    rows, subsample_notes = [], []
     for r_ in c.itertuples():
         d = {k: getattr(r_, k, None) for k in cols}
         slug = str(d.get("slug"))
         label = NAME_OVERRIDE.get(slug) or str(d.get("name", slug))      # the column wraps; no truncation
-        rows.append([esc(label),
-                     num(d.get("cv_auc")), num(d.get("test_auc")), num(d.get("test_ap")),
+        # The printed score is the selection score the rows are sorted by: CV AUC, or the full-training
+        # out-of-fold AUC for the two SVMs tuned on a subsample (their subsample CV AUC is not comparable
+        # and goes to the footnote), so the table never shows one number and sorts by another.
+        sel_v = d.get("select_auc") if d.get("select_auc") is not None and not pd.isna(d.get("select_auc")) else d.get("cv_auc")
+        dag = ""
+        if str(d.get("select_source", "cv_auc")) != "cv_auc":
+            dag = "$^{\\dagger}$"
+            subsample_notes.append(f"{esc(label)} {num(d.get('cv_auc'))}")
+        rows.append([esc(label) + dag,
+                     num(sel_v), num(d.get("test_auc")), num(d.get("test_ap")),
                      num(d.get("brier"))])
+    note = None
+    if subsample_notes:
+        note = ("$^{\\dagger}$Tuned on a 6,000-row training subsample; the CV AUC shown is the out-of-fold AUC of the "
+                "chosen setting refitted on the full training partition (the same figure as Table~\\ref{tab:headline}). "
+                "The CV AUC on the tuning subsample, not comparable with the other rows, was " + "; ".join(subsample_notes) + ".")
     A(table(f"Every model variant fitted in this project ({len(c)} in total), ordered by CV AUC, the "
-            "training-set selection score (for the RBF SVM, tuned on a subsample, its out-of-fold AUC). "
-            "CV AUC is the mean 5-fold out-of-fold AUC on the training partition; the remaining "
+            "training-set selection score (for the two SVMs, tuned on a subsample, the out-of-fold AUC on the full "
+            "training partition). CV AUC is the mean 5-fold out-of-fold AUC on the training partition; the remaining "
             "columns are on the held-out test set, reported once and not used to rank. RUAN Hangjing's "
             "30 September re-scoring of the KNN and plain-logistic configurations (Table~\\ref{tab:a-freeze}) "
             "is not a separate model and is not listed.",
             "tab:a-allmodels", "L{0.40\\linewidth}cccc",
-            ["Model", "CV AUC", "Test AUC", "Test AP", "Brier"], rows))
+            ["Model", "CV AUC", "Test AUC", "Test AP", "Brier"], rows, note=note))
     A("")
 
 # ------------------------------------------------------------------ A4 operating points
@@ -536,17 +605,27 @@ if os.path.exists(agg_path):
     ct = agg.get("thresholds", {}).get("cost_test", {})
     thr = agg.get("thresholds", {}).get("cost_tuned", {})
     rec = agg.get("thresholds", {}).get("recall_1_at_cost", {})
+    # Readable model names (the name column of model_comparison.csv) rather than code slugs, so the
+    # rows can be matched against Table 1 of the body.
+    names, thr_f1 = {}, {}
+    if os.path.exists(comp_path):
+        _c = pd.read_csv(comp_path)
+        names = dict(zip(_c["slug"].astype(str), _c["name"].astype(str)))
+        if "thr_f1" in _c.columns:
+            thr_f1 = dict(zip(_c["slug"].astype(str), _c["thr_f1"]))
     rows = []
     for slug in ct:
-        rows.append([tt(slug), num(thr.get(slug), 2), num(rec.get(slug), 2),
+        rows.append([esc(names.get(slug, slug)), num(thr_f1.get(slug), 2), num(thr.get(slug), 2), num(rec.get(slug), 2),
                      num(ct[slug].get("at_0_5")), num(ct[slug].get("at_f1")),
                      num(ct[slug].get("at_cost"))])
     ca = agg.get("cost_assumption", {})
-    A(table("Operating points of the headline models. The threshold is chosen on training "
-            "out-of-fold probabilities; the cost columns are the expected test cost at a "
-            "5:1 false-negative to false-positive ratio.",
-            "tab:a-operating", "L{0.26\\linewidth}ccccc",
-            ["Model", "Cost thr.", "Recall", "Cost @0.5", "Cost @F1", "Cost @cost thr."], rows,
+    A(table(f"Operating points of the {len(ct)} headline configurations of \\texttt{{aggregate\\_summary.json}} "
+            "(ten model families: the lasso logit duplicates the plain logit to four decimals and is omitted from "
+            "Table~\\ref{tab:headline}). Both thresholds are chosen on training "
+            "out-of-fold probabilities (maximum $F_1$; minimum 5:1 cost); recall is at the cost threshold; "
+            "the cost columns are the expected test cost at a 5:1 false-negative to false-positive ratio.",
+            "tab:a-operating", "L{0.27\\linewidth}cccccc",
+            ["Model", "$F_1$ thr.", "Cost thr.", "Recall", "Cost @0.5", "Cost @$F_1$", "Cost @cost thr."], rows, tabcolsep="4pt",
             note=f"Trivial rules for reference: flagging every client costs "
                  f"{num(ca.get('flag_everybody_cost'))}, flagging none costs "
                  f"{num(ca.get('flag_nobody_cost'))}."))
@@ -593,7 +672,9 @@ if os.path.exists(sv_path):
     A(table("Threshold saving against model saving at nine false-negative to false-positive cost ratios $r$. "
             "Threshold saving: expected test cost of the frozen plain logistic at the 0.5 cut-off minus its cost at "
             "the cut-off chosen on training out-of-fold scores. Model saving: the logistic at its own cut-off minus "
-            "the frozen XGBoost at its own cut-off. Brackets are 95\\,\\% paired-bootstrap intervals.",
+            "the frozen XGBoost at its own cut-off. Brackets are 95\\,\\% paired-bootstrap intervals. "
+            f"Source: {tt('results/threshold_vs_model_saving.csv')} (Table~\\ref{{tab:saving}} in the body is the "
+            "six-ratio excerpt).",
             "tab:a-saving", "lcccccc",
             ["$r$", "$1/(1+r)$", "Logit cut-off", "XGB cut-off", "Logit cost @0.5", "Threshold saving", "Model saving"],
             rows, note=note, tabcolsep="3.5pt"))
@@ -645,9 +726,15 @@ if os.path.exists(ks_path) and us:
             "silhouette, chosen by the rule fixed in advance.",
             "tab:a-kselect", "ccccc",
             ["$K$", "Silhouette", "Bootstrap ARI (mean)", "ARI 5th pct.", "Min.\\ cluster Jaccard"], rows,
-            note=f"Stability of the chosen $K={k_final}$ over 100 bootstrap refits: ARI {num(ba.get('mean'), 3)} "
-                 f"[{num(ba.get('lo'), 3)}, {num(ba.get('hi'), 3)}]; agreement with Ward's hierarchical clustering at the same $K$: "
-                 f"ARI {num(min(ward), 2)}--{num(max(ward), 2)} over five bootstrap samples (moderate)."))
+            note=(f"Two bootstrap runs, not one. The three right-hand columns come from the selection sweep over $K$ "
+                  f"(for $K={k_final}$: ARI {num(ks.loc[ks.K == k_final, 'boot_ari_mean'].iloc[0], 3)}, minimum cluster "
+                  f"Jaccard {num(ks.loc[ks.K == k_final, 'min_cluster_jaccard'].iloc[0], 3)}). The stability figures quoted "
+                  f"in the body and in Table~\\ref{{tab:a-kprofiles}} come from the separate 100-refit stability run of the "
+                  f"chosen $K={k_final}$ ({tt('unsupervised_summary_v2.json')}): ARI {num(ba.get('mean'), 3)} "
+                  f"[{num(ba.get('lo'), 3)}, {num(ba.get('hi'), 3)}], per-cluster Jaccard "
+                  + "/".join(num(j, 3) for j in us.get("cluster_jaccard", [])) +
+                  f"; agreement with Ward's hierarchical clustering at the same $K$: ARI {num(min(ward), 2)}--{num(max(ward), 2)} "
+                  "over five bootstrap samples (moderate).")))
     A("")
 if os.path.exists(kp_path) and us:
     kp = pd.read_csv(kp_path)
@@ -689,13 +776,24 @@ if os.path.exists(shap_path):
              num(getattr(r_, "perm_auc_drop", None), 4), str(int(getattr(r_, "perm_rank", 0) or 0)),
              num(getattr(r_, "oob_perm_auc_drop", None), 4),
              str(int(getattr(r_, "oob_perm_rank", 0) or 0))] for r_ in s.itertuples()]
+    rf_sp = (load_json("random_forest.json") or {}).get("extra", {}).get("spearman", {})
+    sh_sp = (load_json("shap_summary.json") or {}).get("spearman_vs_other_measures", {})
+    sp_note = None
+    if rf_sp and sh_sp:
+        sp_note = ("Spearman rank correlation over the 29 predictors (\\texttt{random\\_forest.json} "
+                   "\\texttt{extra.spearman}, \\texttt{shap\\_summary.json} \\texttt{spearman\\_vs\\_other\\_measures}): "
+                   f"MDI vs out-of-bag permutation {num(rf_sp.get('mdi_vs_oob_permutation'), 3)}, "
+                   f"MDI vs training-set permutation {num(rf_sp.get('mdi_vs_train_permutation'), 3)}, "
+                   f"training-set vs out-of-bag permutation {num(rf_sp.get('train_vs_oob_permutation'), 3)}; "
+                   f"mean $|$SHAP$|$ vs MDI {num(sh_sp.get('mdi'), 3)}, vs training-set permutation "
+                   f"{num(sh_sp.get('perm_train'), 3)}, vs out-of-bag permutation {num(sh_sp.get('perm_oob'), 3)}.")
     A(table("Four ways to rank the same 29 predictors: mean $|$SHAP$|$ on the tuned XGBoost over the "
             "20,975 training clients, and "
             "the random forest's impurity decrease, training-set permutation and out-of-bag "
             "permutation importances. Ranks, not magnitudes, are comparable across columns.",
             "tab:a-importance", "L{0.20\\linewidth}" + "cc" * 4,
             ["Feature", "mean $|$SHAP$|$", "rank", "MDI", "rank", "perm.\\ (train)", "rank",
-             "perm.\\ (OOB)", "rank"], rows, tabcolsep="3.5pt"))
+             "perm.\\ (OOB)", "rank"], rows, tabcolsep="3.5pt", note=sp_note, note_ragged=True))
     A("")
 
 # ------------------------------------------------------------------ A7 refit without a column (OOB only)

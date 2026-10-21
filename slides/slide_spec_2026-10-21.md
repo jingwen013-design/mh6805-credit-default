@@ -130,11 +130,11 @@ Body:
 | Logistic, plain | 0.760 (0.010) | 0.764 | 0.523 | cannot bend the U or step |
 | Logistic L1 / L2 | 0.760 / 0.760 | 0.764 / 0.764 | 0.523 | no shrinkage needed at 20,975 rows |
 | Nested CV (30 Sep): KNN | 0.768 ± 0.007 | — | — | K = 101 uniform re-selected |
-| Nested CV (30 Sep): logistic family | 0.760 (five variants within 1 SE) | — | — | 1-SE keeps plain; weighting −0.4 % |
+| Nested CV (30 Sep): logistic family | 0.760 (five variants within 1 SE) | — | — | 1-SE keeps plain; weighting +0.4 % cost |
 Figure: figures/slides/s_knn_k.png — single panel, right of the table at 40 % width (1920 × 960 render of 21 Oct 16:46, checked: 5-fold CV AUC vs K for uniform and distance weights, K = 101 circled and labelled "CV AUC 0.770", K = 5 annotated 0.706, nothing clipped). Caption: "CV AUC climbs with K and plateaus at K = 101 (training folds)". The K = 5 row (CV 0.706, test 0.709; results/knn_k5.json) stays out of the table and is spoken in the notes ("best of 24 settings").
 Source line: results/knn.json, logistic.json, logistic_family_summary.csv, nested_cv_summary_repro.json; test n = 8,990
-Notes EN: KNN is the course benchmark; every model is placed against it. Best of 24 settings: K equals 101, uniform — CV 0.770, test 0.771, average precision 0.542; K equals 5 would score only 0.706. Plain logistic sits one point lower, CV 0.760, test 0.764; lasso and ridge change nothing, since 20,975 rows and 32 columns need no shrinkage — additive log-odds cannot bend the utilisation U or the two-months step. Nested CV gives KNN 0.768 and logistic 0.760 and re-selects both frozen choices; class weighting would cut cross-fitted cost by only 0.4 per cent, below our 1 per cent rule.
-Notes 中文: KNN 是课程基准，所有模型都和它比。24 个设置里最好的是 K = 101、等权重——CV 0.770，测试 0.771，平均精度 0.542；K = 5 只有 0.706。朴素逻辑回归低一个点，CV 0.760、测试 0.764；lasso 和 ridge 毫无变化，因为 20,975 行、32 列不需要收缩——可加的对数几率弯不出使用率的 U 形和逾期两个月的台阶。嵌套 CV 给出 KNN 0.768、逻辑回归 0.760，重新选中两个冻结配置；加类别权重只能把交叉拟合成本降 0.4%，低于预设的 1% 门槛。
+Notes EN: KNN is the course benchmark; every model is placed against it. Best of 24 settings: K equals 101, uniform — CV 0.770, test 0.771, average precision 0.542; K equals 5 would score only 0.706. Plain logistic sits one point lower, CV 0.760, test 0.764; lasso and ridge change nothing, since 20,975 rows and 32 columns need no shrinkage — additive log-odds cannot bend the utilisation U or the two-months step. Nested CV gives KNN 0.768 and logistic 0.760 and re-selects both frozen choices; class weighting raises cross-fitted cost by 0.4 per cent, so our 1 per cent rule rejects it.
+Notes 中文: KNN 是课程基准，所有模型都和它比。24 个设置里最好的是 K = 101、等权重——CV 0.770，测试 0.771，平均精度 0.542；K = 5 只有 0.706。朴素逻辑回归低一个点，CV 0.760、测试 0.764；lasso 和 ridge 毫无变化，因为 20,975 行、32 列不需要收缩——可加的对数几率弯不出使用率的 U 形和逾期两个月的台阶。嵌套 CV 给出 KNN 0.768、逻辑回归 0.760，重新选中两个冻结配置；加类别权重反而让交叉拟合成本高 0.4%，按预设的 1% 规则不采纳。
 Hand-over: "LU will now show what trees add on top of this linear ceiling."
 
 ---
@@ -336,7 +336,7 @@ Body:
 | Logistic, plain | 0.760 (0.005) | 0.17 | 12,195 | kept by the 1-SE rule |
 | Logistic, ridge / lasso | 0.760 / 0.760 (0.005) | 0.17 / 0.15 | 12,205 / 12,187 | within 1 SE |
 | Logistic, class-weighted | 0.761 (0.005) | 0.39 | 12,263 | mis-calibrated (mean p 0.44) |
-| Logistic, weighted + Platt | 0.761 (0.005) | 0.15 | 12,247 | −0.4 % cost < 1 % rule → not adopted |
+| Logistic, weighted + Platt | 0.761 (0.005) | 0.15 | 12,247 | +0.4 % cost (rule needs ≥ 1 % saving) → not adopted |
 Figure: figures/slides/s_calibration_platt.png — single panel (reliability of class-weighted XGBoost and logistic before/after Platt, training OOF). Caption: "Weighted models before and after Platt scaling, training out-of-fold deciles". If a second appendix panel is allowed, add figures/threshold_vs_model_saving.png with the full nine-ratio table from results/threshold_vs_model_saving.csv.
 Source line: results/nested_cv_summary_repro.json (21 Oct reproduction; all five cost cells from it — RUAN's 30 Sep logistic_nested_cv_v2.csv agrees to ±1 unit), knn_v2.json, recalibration.csv, threshold_vs_model_saving.csv
 Notes EN: Not spoken. If asked about the professor's comment: the nested layer chooses hyper-parameters inside each outer fold and reproduces the plain five-fold figures within one standard error — KNN 0.768 against 0.770, logistic 0.760 against 0.760 — and the pre-registered rules re-select the configurations frozen on 16 September, so nothing was re-scored. If asked about calibration: the Platt map is fitted on training out-of-fold scores only and applied once to the frozen test scores on 19 October.

@@ -1,15 +1,15 @@
 \section{Conclusion and limitations}
 
 \paragraph{(1) Complexity.}
-XGBoost [3] reaches test AUC 0.7887 / AP 0.5784 against 0.7636 / 0.5234 for the logistic
-scorecard and 0.7706 for the KNN benchmark; the field spans 0.05 AUC, the ensembles are tied
+XGBoost [3] reaches test AUC 0.789 / AP 0.578 against 0.764 / 0.523 for the logistic
+scorecard and 0.771 for the KNN benchmark; the field spans 0.05 AUC, the ensembles are tied
 (XGBoost over the forest, 0.0020 [$-0.0010$, $+0.0051$]) and nested cross-validation confirms
 the frozen choices: boosting gains only what step effects in arrears are worth.
 
 \paragraph{(2) Operating point.}
-The cut-off is worth more than the model at every cost ratio from 2:1 to 20:1: at 5:1,
-moving the logit from 0.5 to 0.15 saves 1,937 [1,604, 2,218] of 7,063 test cost units,
-switching to XGBoost a further 145 [$-$18, 299], an interval that includes zero.
+At every cost ratio from 2:1 to 20:1 the threshold saving exceeds the model saving (at 5:1,
+1,937 against 145 of the logit's 7,063 test cost units; Table~\ref{tab:saving}), and the model
+saving's interval includes zero at 5:1 and 20:1; the operating point, not the model, is the lever.
 
 \paragraph{(3) Imbalance.}
 Nothing improves ranking: weights, SMOTE and under-sampling inside the folds leave the
@@ -20,29 +20,28 @@ logit within 0.0012 AUC and cost the forest 0.0076; re-weighting moves the inter
 \paragraph{(4) Inference.}
 Recent and repeated arrears dominate --- mean $|$SHAP$|$ 0.298, 0.281 and 0.230 log-odds for
 PAY\_1, MAX\_DELAY and N\_MONTHS\_DELAYED, all pushing towards default --- and SHAP tracks
-out-of-bag permutation (Spearman 0.77) while impurity importance tracks neither (0.31).
+out-of-bag permutation (Spearman 0.77) while impurity importance tracks neither (0.31 and 0.43).
 Friedman's $H = 0.061$ for PAY\_1 $\times$ LIMIT\_BAL refutes the proposal's interaction
 hypothesis; monotone constraints cost 0.0016 AUC and remove every violation; the K-means
 segments add nothing to the logit and are descriptive only.
 
 \paragraph{Limitations.}
-One split of one 2005 Taiwanese portfolio: the figures are a point estimate for one economy
-and vintage, and the bootstrap prices test-row noise only. Six
+One split of one 2005 Taiwanese portfolio, and a bootstrap that prices test-row noise only. Six
 months of history caps what any model can learn, the likeliest reason no family passes 0.79
 AUC. SHAP and permutation describe the fitted model, not causation, and the
-PAY\_RATIO\_MEAN zero bucket conflates 936 imputed non-borrowers (37.0\% default in
-training) with genuine non-payers. The test set was read by 46 frozen scorings and by the
+imputed zero bucket of \S2 conflates dormant accounts with genuine non-payers. The test set was read by
+45 frozen scorings (46 manifest entries, one the leaky negative control) and by the
 reporting-only bootstrap and cost curves: a report card, not a fresh holdout.
 
 \paragraph{Future work.}
 Repeated splits and a fresh holdout for honest intervals, with an indicator separating the
 imputed zero bucket from genuine non-payment. Bureau, income and transaction data over a
-longer window, measured loss-given-default in place of 5:1, and isotonic in place of Platt
+longer window, measured loss-given-default in place of 5:1, and isotonic
 recalibration.
 
 \section*{References}
 
-\footnotesize\setlength{\parskip}{2pt}
+\footnotesize\setlength{\parskip}{1pt}
 
 [1] Breiman, L.\ (2001) Random forests. {\it Machine Learning} {\bf 45}(1):5--32.
 
@@ -50,8 +49,7 @@ recalibration.
 synthetic minority over-sampling technique. {\it J.\ Artificial Intelligence Research}
 {\bf 16}:321--357.
 
-[3] Chen, T.\ \& Guestrin, C.\ (2016) XGBoost: a scalable tree boosting system. {\it Proc.\ 22nd
-ACM SIGKDD}, pp.\ 785--794.
+[3] Chen, T.\ \& Guestrin, C.\ (2016) XGBoost: a scalable tree boosting system. {\it Proc.\ KDD}, pp.\ 785--794.
 
 [4] Friedman, J.\,H.\ (2001) Greedy function approximation: a gradient boosting machine.
 {\it Annals of Statistics} {\bf 29}(5):1189--1232.
