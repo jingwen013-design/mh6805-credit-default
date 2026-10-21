@@ -1,9 +1,11 @@
 \section{Appendix}
 
-Everything in this appendix is generated from \texttt{results/} by \texttt{code/make\_report\_appendix.py}, so the tables cannot drift from the artefacts submitted with the code. The course guideline exempts appendices from the seven-page limit on the body.
+Everything in this appendix is generated from \texttt{results/} by \texttt{code/make\_report\_appendix.py}, so the tables cannot drift from the artefacts submitted with the code. The course guideline exempts appendices from the seven-page limit on the body. Section~\ref{sec:a-main} documents the data, the protocol and the frozen models; Section~\ref{sec:a-postfreeze} collects post-freeze checks on the training rows, with their figures in Section~\ref{sec:a-postfreeze-figs}; \texttt{results/TEST\_SET\_LOG.md} dates every read of the test rows (Table~\ref{tab:a-testlog}); the figures of the data and the frozen models follow from Section~\ref{sec:a-figs}.
+
+\subsection{Data, protocol and frozen models}\label{sec:a-main}
 
 \begin{table}[!htbp]
-  \caption{Variables in the cleaned data set: 29 predictors and the target, 29,965 clients after removing 35 exact duplicate rows.}
+  \caption{Variables in the cleaned data set: 29 predictors and the target, 29,965 clients after removing 35 rows identical to another row on every column except the ID (the key included the label). The monthly variables are dated; the credit limit and the demographics are undated snapshots.}
   \label{tab:a-variables}
   \centering
   \small
@@ -12,18 +14,18 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
     Group & Variables & Type & Meaning \\
     \midrule
     Credit line & \texttt{LIMIT\_\allowbreak{}BAL} & numeric & credit limit granted (NT\$), individual plus family \\
-    Demographics & \texttt{SEX},\allowbreak\ \texttt{EDUCATION},\allowbreak\ \texttt{MARRIAGE},\allowbreak\ \texttt{AGE} & 3 categorical, 1 numeric & gender; graduate / university / high school / others; married / single / others; age in years \\
-    Repayment status & \texttt{PAY\_\allowbreak{}1},\allowbreak\ \dots,\allowbreak\ \texttt{PAY\_\allowbreak{}6} & ordinal ($-2 \dots 8$) & monthly status Sep $\rightarrow$ Apr 2005: $-2$ no consumption, $-1$ paid in full, $0$ revolving credit, $k \ge 1$ = $k$ months of delay \\
+    Demographics & \texttt{SEX},\allowbreak\ \texttt{EDUCATION},\allowbreak\ \texttt{MARRIAGE},\allowbreak\ \texttt{AGE} & 3 categorical, 1 numeric & gender; graduate / university / high school / others; married / single / others; age in years. EDUCATION and MARRIAGE: an a-priori mapping of codes the UCI dictionary does not list ($\{0, 5, 6\} \rightarrow$ others; $0 \rightarrow$ others) \\
+    Repayment status & \texttt{PAY\_\allowbreak{}1},\allowbreak\ \dots,\allowbreak\ \texttt{PAY\_\allowbreak{}6} & ordinal ($-2 \dots 8$) & monthly status Sep $\rightarrow$ Apr 2005: $-2$ no consumption$^{\dagger}$, $-1$ paid in full, $0$ revolving credit$^{\dagger}$, $k \ge 1$ = $k$ months late; $^{\dagger}$not defined in the UCI documentation (a widely used reading) \\
     Bill statements & \texttt{BILL\_\allowbreak{}AMT1},\allowbreak\ \dots,\allowbreak\ \texttt{BILL\_\allowbreak{}AMT6} & numeric & monthly bill amount Sep $\rightarrow$ Apr (NT\$); may be negative \\
     Payments & \texttt{PAY\_\allowbreak{}AMT1},\allowbreak\ \dots,\allowbreak\ \texttt{PAY\_\allowbreak{}AMT6} & numeric & amount paid in each month Sep $\rightarrow$ Apr (NT\$) \\
-    Engineered & \texttt{UTIL\_\allowbreak{}1},\allowbreak\ \texttt{UTIL\_\allowbreak{}MEAN},\allowbreak\ \texttt{PAY\_\allowbreak{}RATIO\_\allowbreak{}MEAN},\allowbreak\ \texttt{N\_\allowbreak{}MONTHS\_\allowbreak{}DELAYED},\allowbreak\ \texttt{MAX\_\allowbreak{}DELAY},\allowbreak\ \texttt{BILL\_\allowbreak{}TREND} & numeric & utilisation of the limit (latest, mean); mean payment-to-bill ratio; months in arrears; worst delay; six-month balance trend relative to the limit \\
+    Engineered & \texttt{UTIL\_\allowbreak{}1},\allowbreak\ \texttt{UTIL\_\allowbreak{}MEAN},\allowbreak\ \texttt{PAY\_\allowbreak{}RATIO\_\allowbreak{}MEAN},\allowbreak\ \texttt{N\_\allowbreak{}MONTHS\_\allowbreak{}DELAYED},\allowbreak\ \texttt{MAX\_\allowbreak{}DELAY},\allowbreak\ \texttt{BILL\_\allowbreak{}TREND} & numeric & utilisation = bill over limit (September; six-month mean); \texttt{PAY\_RATIO\_MEAN} = mean over months of the payment in month $k$ over the bill of the same month $k$ (bills $\le 0$ skipped), capped at 5, set to 0 when all six bills are non-positive (a payment usually settles the previous statement); months with status $\ge 1$; worst status, floored at 0; (September bill $-$ April bill) over the limit \\
     Target & \texttt{DEFAULT} & binary & 1 = default on the October 2005 payment (22.1\% in training) \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \begin{table}[!htbp]
-  \caption{Default rate along the two strongest credit-risk gradients, training partition only ($n = 20,975$; overall rate 22.1\%). Source: \texttt{results/eda\_summary.json}.}
+  \caption{Default rate along the two strongest credit-risk gradients, training partition only ($n = 20{,}975$; overall rate 22.1\%). Source: \texttt{results/eda\_summary.json}. A status is compared within a month, not across months: code 1 (one month late) is recorded almost only in September and mixes clients with no positive September bill and clients rolling back from two months late (Table~\ref{tab:a-paycodes-rates}).}
   \label{tab:a-gradients}
   \centering
   \small
@@ -31,18 +33,18 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
     \toprule
     September status & Clients & Default & Credit-limit quintile & Clients & Default \\
     \midrule
-    No consumption ($-2$) & 1,904 & 13.7\% & NT\$10k--50k & 5,429 & 32.0\% \\
+    No consumption ($-2$) & 1,904 & 13.7\% & NT\$10k--50k & 5,429 & 32.1\% \\
     Paid in full ($-1$) & 3,941 & 16.9\% & NT\$50k--100k & 3,370 & 25.5\% \\
     Revolving credit (0) & 10,380 & 12.9\% & NT\$100k--180k & 4,224 & 19.5\% \\
     1 month late & 2,540 & 33.9\% & NT\$180k--270k & 3,810 & 17.1\% \\
     2 months late & 1,871 & 67.6\% & NT\$270k--1M & 4,142 & 13.7\% \\
-    3 months late & 234 & 77.3\% &  &  &  \\
+    3 months late & 234 & 77.4\% &  &  &  \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \begin{table}[!htbp]
-  \caption{Data-quality checks run on the raw download before modelling, and what was done about each finding. Reproduced verbatim from \texttt{results/eda\_data\_quality.csv}; the three cleaning steps that precede the split (duplicate removal, the fixed recoding of undocumented codes, the row-wise engineered features) estimate nothing from the data, and everything else is left to the in-fold pipeline.}
+  \caption{Data-quality checks run on the raw download before modelling, and what was done about each finding. Reproduced verbatim from \texttt{results/eda\_data\_quality.csv}; the three cleaning steps that precede the split (duplicate removal, the fixed recoding of undocumented codes, the row-wise engineered features) estimate nothing from the data, and everything else is left to the in-fold pipeline. The counts are over the full file (30,000 raw or 29,965 cleaned rows, test partition included); labels are used only for the class balance, the split check and the default rates marked as training-partition.}
   \label{tab:a-quality}
   \centering
   \footnotesize
@@ -51,7 +53,7 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
     \toprule
     Check & Finding & Action \\
     \midrule
-    Missing values & 0 cells (all 24 columns complete) & None needed — no imputation step in the pipeline \\
+    Missing values & 0 cells (all 24 columns complete) & None needed for the 24 raw columns; the engineered PAY\_RATIO\_MEAN is undefined for the 936 cleaned rows whose six bills are all non-positive and is set to 0 (row: Zero bills in all six months) \\
     Exact duplicate rows & 35 of 30,000 (0.12\%) & Dropped in common.clean() → 29,965 rows \\
     Data types & All 24 columns integer; no strings, no dates & --- \\
     EDUCATION undocumented codes 0/5/6 & 0: 14, 5: 280, 6: 51 (total 345, 1.15\%) & Recoded to 4 = others/unknown \\
@@ -64,7 +66,7 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
     LIMIT\_BAL range & 10,000 – 1,000,000 NT\$ (median 140,000) & Plausible; heavy right tail → StandardScaler inside the pipeline, no trimming \\
     AGE range & 21 – 79 years (median 34) & Plausible; no outlier removal \\
     Class imbalance & 6,630 defaults of 29,965 = 22.1\% & Kept as is; addressed downstream by class\_weight / threshold tuning; AUC \& AP as metrics \\
-    Train / test split & 20,975 / 8,990 rows, stratified 70/30, seed 2607526; default rate 22.13\% / 22.12\% & Fixed once in data/processed; test set untouched in this EDA \\
+    Train / test split & 20,975 / 8,990 rows, stratified 70/30, seed 2607526; default rate 22.13\% / 22.12\% & Fixed once in data/processed. Scope of this table: counts are over the full download, test rows included (feature counts behind fixed rules; nothing is estimated from them); test labels enter only the class-imbalance row and this split check; the default rates by group are from the training partition only \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -104,13 +106,13 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
     PCA, K-means, hierarchical clustering (B2--B3) & Whether default risk lies along the directions of largest variance, and whether a segment label carries anything a supervised model has not already found. \\
     K-nearest neighbours (B4) & Benchmark: how much of the signal a scaled distance and a local default rate recover with no model of the risk at all. \\
     Class weights, SMOTE, under-sampling (B4) & Whether re-balancing changes the ordering of clients or only the prior behind it; and what resampling before the split fabricates. \\
-    Logistic regression: plain, ridge, lasso (B5--B6) & Whether the ceiling on this data is variance, which shrinkage can cut, or the bias of a model linear in the features, which it cannot. \\
+    Logistic regression: plain, ridge, lasso (B5--B6) & Whether the ceiling on this data is variance, which shrinkage can cut, or how the inputs are coded and shaped (the status codes read as one evenly spaced number), which it cannot. \\
     LDA, QDA, naive Bayes (B6) & The price of distributional assumptions: a shared covariance, class-specific covariances on skewed amounts, and independence among near-collinear balances. \\
     Decision tree, cost-complexity pruning (B7) & The bias--variance trade-off made readable: delay thresholds and their interactions, bought at the cost of very few distinct scores. \\
     Random forest and bagging (B7) & Whether de-correlating trees, not merely averaging them, is what removes variance; out-of-bag error and permutation importance come free. \\
     Gradient boosting and XGBoost (B7) & Whether sequential bias reduction beats variance reduction on a noisy target, and how much of that depends on shrinkage. \\
     Support-vector machines, linear and RBF (B8) & Whether a margin loss that ignores ordering beyond the margin can rank risk as well as a proper scoring rule. \\
-    Feed-forward neural network (B9) & Whether learned interactions help when the strongest predictors are ordinal delay codes with step-like effects. \\
+    Feed-forward neural network (B9) & Whether learned interactions help when the strongest predictors are repayment-status codes with step-like effects. \\
     \midrule
     TreeSHAP (beyond the syllabus) & Direction and size of each variable's push on each individual client, rather than one global ranking; additive by construction, so it can be checked. \\
     Monotonically constrained XGBoost (beyond the syllabus) & The cost, in ranking quality, of the scorecard requirement that more arrears may never lower predicted risk. \\
@@ -120,28 +122,29 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
 \end{table}
 
 \begin{table}[!htbp]
-  \caption{Hyper-parameter grids searched for the headline models and the setting chosen, read from \texttt{results/<slug>.json}. Every grid is scored by 5-fold stratified cross-validation on the training partition (seed 2607526); the test set plays no part. The last column is the training-set selection score of the chosen setting (CV AUC; out-of-fold AUC for the subsample-tuned RBF SVM).}
+  \caption{Hyper-parameter grids searched for the headline models and the setting chosen, read from \texttt{results/<slug>.json}. Every grid is scored by 5-fold stratified cross-validation on the training rows shown (seed 2607526); the test set plays no part. Rule: argmax of CV AUC, or the one-standard-error rule (1-SE). The last column is the training-set selection score of the chosen setting. The reported CV is the maximum over the grid on the same folds, an upper estimate for close winners. Gradient boosting was tuned on a training subsample, not fixed a priori; only the monotone constraint vector and bagging's inherited leaf size were fixed a priori.}
   \label{tab:a-tuning}
   \centering
-  \small
-  \setlength{\tabcolsep}{3pt}
-  \begin{tabular}{@{}L{0.15\linewidth}L{0.40\linewidth}L{0.29\linewidth}c@{}}
+  \footnotesize
+  \setlength{\tabcolsep}{2.5pt}
+  \begin{tabular}{@{}L{0.12\linewidth}L{0.30\linewidth}L{0.21\linewidth}cccc@{}}
     \toprule
-    Model & Grid searched & Chosen & Sel.\ AUC \\
+    Model & Grid searched & Chosen & Rows & Settings & Rule & Sel.\ AUC \\
     \midrule
-    XGBoost & \texttt{max\_\allowbreak{}depth} \{3, 4, 6\} $\times$ \texttt{learning\_\allowbreak{}rate} \{0.03, 0.1\} $\times$ \texttt{n\_\allowbreak{}estimators} \{300, 600\} $\times$ \texttt{min\_\allowbreak{}child\_\allowbreak{}weight} \{5, 1\} (24 settings); \texttt{subsample} = 0.8, \texttt{colsample\_\allowbreak{}bytree} = 0.8 fixed; rounds then checked on a learning curve to 1500 & \texttt{max\_\allowbreak{}depth} = 3, \texttt{learning\_\allowbreak{}rate} = 0.03, \texttt{n\_\allowbreak{}estimators} = 300, \texttt{min\_\allowbreak{}child\_\allowbreak{}weight} = 5 & 0.7863 \\
-    Gradient boosting (sklearn) & \texttt{learning\_\allowbreak{}rate} \{0.03, 0.1\} $\times$ \texttt{max\_\allowbreak{}depth} \{3, 2, 4\} $\times$ \texttt{n\_\allowbreak{}estimators} \{200, 500\} (12 settings) on a 10,487-row training subsample; staged CV curve on the full training set & \texttt{learning\_\allowbreak{}rate} = 0.03, \texttt{max\_\allowbreak{}depth} = 3, \texttt{n\_\allowbreak{}estimators} = 200, \texttt{subsample} = 0.8 & 0.7850 \\
-    Random forest & \texttt{max\_\allowbreak{}features} \{sqrt, 0.3, 0.5\} $\times$ \texttt{min\_\allowbreak{}samples\_\allowbreak{}leaf} \{20, 5, 1\} (9 settings) at 200 trees; top two re-run at 500 trees & \texttt{max\_\allowbreak{}features} = sqrt, \texttt{min\_\allowbreak{}samples\_\allowbreak{}leaf} = 20, \texttt{n\_\allowbreak{}estimators} = 500 & 0.7849 \\
-    MLP (feed-forward NN) & \texttt{hidden\_\allowbreak{}layer\_\allowbreak{}sizes} \{32, 64, 64x32, 128x64\} $\times$ \texttt{alpha} \{0.0001, 0.001, 0.01\} $\times$ \texttt{learning\_\allowbreak{}rate\_\allowbreak{}init} \{0.001, 0.003\} (24 settings); \texttt{relu}, \texttt{adam}, early stopping fixed & \texttt{hidden\_\allowbreak{}layer\_\allowbreak{}sizes} = 64x32, \texttt{alpha} = 0.001, \texttt{learning\_\allowbreak{}rate\_\allowbreak{}init} = 0.001 & 0.7762 \\
-    KNN & \texttt{K} \{5 \dots\ 151\} (12 values) $\times$ \texttt{weights} \{uniform, distance\} (24 settings) & \texttt{n\_\allowbreak{}neighbors} = 101, \texttt{weights} = uniform & 0.7700 \\
-    Decision tree (pruned) & \texttt{ccp\_\allowbreak{}alpha} \{0 \dots\ 0.02493\} (21 values) (cost-complexity path) $\times$ \texttt{max\_\allowbreak{}depth} \{None, 4, 6, 8\} & \texttt{criterion} = entropy, \texttt{ccp\_\allowbreak{}alpha} = 0.000663, \texttt{max\_\allowbreak{}depth} = 6 & 0.7689 \\
-    SVM (RBF kernel) & \texttt{C} \{0.1, 1, 10\} $\times$ \texttt{gamma} \{scale, 0.01, 0.1\} $\times$ \texttt{class\_\allowbreak{}weight} \{None, balanced\} on a 6,000-row training subsample; one-standard-error rule & \texttt{C} = 1, \texttt{gamma} = 0.01, \texttt{class\_\allowbreak{}weight} = balanced; Platt-scaled & 0.7606 \\
-    Logistic regression (plain) & none: unpenalised reference fit & \texttt{C} = inf (unpenalised), \texttt{solver} = lbfgs & 0.7602 \\
-    Logistic regression (L1 lasso, C tuned) & \texttt{C} \{0.001 \dots\ 100\} (11 values) & \texttt{C} = 100, \texttt{penalty} = l1 (l1\_ratio=1) & 0.7602 \\
-    LDA (linear discriminant analysis) & \texttt{shrinkage} \{None, auto, 0.05, 0.2, 0.5\} & \texttt{solver} = lsqr, \texttt{shrinkage} = None & 0.7572 \\
-    Gaussian naive Bayes & \texttt{var\_\allowbreak{}smoothing} \{1e-09 \dots\ 0.1\} (9 values) & \texttt{var\_\allowbreak{}smoothing} = 0.01 & 0.7356 \\
+    XGBoost & \texttt{max\_\allowbreak{}depth} \{3, 4, 6\} $\times$ \texttt{learning\_\allowbreak{}rate} \{0.03, 0.1\} $\times$ \texttt{n\_\allowbreak{}estimators} \{300, 600\} $\times$ \texttt{min\_\allowbreak{}child\_\allowbreak{}weight} \{5, 1\} (24 settings); \texttt{subsample} = 0.8, \texttt{colsample\_\allowbreak{}bytree} = 0.8 fixed; rounds then checked on a learning curve to 1500 & \texttt{max\_\allowbreak{}depth} = 3, \texttt{learning\_\allowbreak{}rate} = 0.03, \texttt{n\_\allowbreak{}estimators} = 300, \texttt{min\_\allowbreak{}child\_\allowbreak{}weight} = 5 & 20,975 & 24 & argmax & 0.7863 \\
+    Gradient boosting (sklearn) & \texttt{learning\_\allowbreak{}rate} \{0.03, 0.1\} $\times$ \texttt{max\_\allowbreak{}depth} \{3, 2, 4\} $\times$ \texttt{n\_\allowbreak{}estimators} \{200, 500\} (12 settings) on a 10,487-row training subsample; staged CV curve on the full training set & \texttt{learning\_\allowbreak{}rate} = 0.03, \texttt{max\_\allowbreak{}depth} = 3, \texttt{n\_\allowbreak{}estimators} = 200, \texttt{subsample} = 0.8 & 10,487 & 12 & argmax & 0.7850 \\
+    Random forest & \texttt{max\_\allowbreak{}features} \{sqrt, 0.3, 0.5\} $\times$ \texttt{min\_\allowbreak{}samples\_\allowbreak{}leaf} \{20, 5, 1\} (9 settings) at 200 trees; top two re-run at 500 trees & \texttt{max\_\allowbreak{}features} = sqrt, \texttt{min\_\allowbreak{}samples\_\allowbreak{}leaf} = 20, \texttt{n\_\allowbreak{}estimators} = 500 & 20,975 & 9 & argmax & 0.7849 \\
+    MLP (feed-forward NN) & \texttt{hidden\_\allowbreak{}layer\_\allowbreak{}sizes} \{32, 64, 64x32, 128x64\} $\times$ \texttt{alpha} \{0.0001, 0.001, 0.01\} $\times$ \texttt{learning\_\allowbreak{}rate\_\allowbreak{}init} \{0.001, 0.003\} (24 settings); \texttt{relu}, \texttt{adam}, early stopping fixed & \texttt{hidden\_\allowbreak{}layer\_\allowbreak{}sizes} = 64x32, \texttt{alpha} = 0.001, \texttt{learning\_\allowbreak{}rate\_\allowbreak{}init} = 0.001 & 20,975 & 24 & argmax & 0.7762 \\
+    KNN & \texttt{K} \{5 \dots\ 151\} (12 values) $\times$ \texttt{weights} \{uniform, distance\} (24 settings) & \texttt{n\_\allowbreak{}neighbors} = 101, \texttt{weights} = uniform & 20,975 & 24 & argmax & 0.7700 \\
+    Decision tree (pruned) & \texttt{ccp\_\allowbreak{}alpha} \{0 \dots\ 0.02493\} (21 values) (cost-complexity path) $\times$ \texttt{max\_\allowbreak{}depth} \{None, 4, 6, 8\} & \texttt{criterion} = entropy, \texttt{ccp\_\allowbreak{}alpha} = 0.000663, \texttt{max\_\allowbreak{}depth} = 6 & 20,975 & 84 & argmax & 0.7689 \\
+    SVM (RBF kernel) & \texttt{C} \{0.1, 1, 10\} $\times$ \texttt{gamma} \{scale, 0.01, 0.1\} $\times$ \texttt{class\_\allowbreak{}weight} \{None, balanced\} on a 6,000-row training subsample; one-standard-error rule & \texttt{C} = 1, \texttt{gamma} = 0.01, \texttt{class\_\allowbreak{}weight} = balanced; Platt-scaled & 6,000 & 18 & 1-SE & 0.7635$^{\dagger}$ \\
+    Logistic regression (plain) & none: unpenalised reference fit & \texttt{C} = inf (unpenalised), \texttt{solver} = lbfgs & 20,975 & 1 & none & 0.7602 \\
+    Logistic regression (L1 lasso, C tuned) & \texttt{C} \{0.001 \dots\ 100\} (11 values) & \texttt{C} = 100, \texttt{penalty} = l1 (l1\_ratio=1) & 20,975 & 11 & argmax & 0.7602 \\
+    LDA (linear discriminant analysis) & \texttt{shrinkage} \{None, auto, 0.05, 0.2, 0.5\} & \texttt{solver} = lsqr, \texttt{shrinkage} = None & 20,975 & 5 & argmax & 0.7572 \\
+    Gaussian naive Bayes & \texttt{var\_\allowbreak{}smoothing} \{1e-09 \dots\ 0.1\} (9 values) & \texttt{var\_\allowbreak{}smoothing} = 0.01 & 20,975 & 9 & argmax & 0.7356 \\
     \bottomrule
   \end{tabular}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize $^{\dagger}$Tuned on a 6,000-row training subsample; the score shown is the mean of the five shared-fold out-of-fold AUCs of the chosen setting refitted on the full training partition (pooled out-of-fold 0.761, subsample CV 0.768; \texttt{results/svm\_selection\_statistics.json}). Post-freeze checks of these grids: Table~\ref{tab:a-tuningchecks}.\end{minipage}
 \end{table}
 
 \begin{table}[!htbp]
@@ -183,11 +186,11 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
     $0$ (unconstrained) & \texttt{AGE},\allowbreak\ \texttt{BILL\_\allowbreak{}AMT1},\allowbreak\ \texttt{BILL\_\allowbreak{}AMT2},\allowbreak\ \texttt{BILL\_\allowbreak{}AMT3},\allowbreak\ \texttt{BILL\_\allowbreak{}AMT4},\allowbreak\ \texttt{BILL\_\allowbreak{}AMT5},\allowbreak\ \texttt{BILL\_\allowbreak{}AMT6},\allowbreak\ \texttt{PAY\_\allowbreak{}AMT1},\allowbreak\ \texttt{PAY\_\allowbreak{}AMT2},\allowbreak\ \texttt{PAY\_\allowbreak{}AMT3},\allowbreak\ \texttt{PAY\_\allowbreak{}AMT4},\allowbreak\ \texttt{PAY\_\allowbreak{}AMT5},\allowbreak\ \texttt{PAY\_\allowbreak{}AMT6},\allowbreak\ \texttt{SEX},\allowbreak\ \texttt{EDUCATION},\allowbreak\ \texttt{MARRIAGE} & 19 \\
     \bottomrule
   \end{tabular}
-  \\[3pt]\begin{minipage}{\linewidth}\footnotesize Sweeping each constrained variable with the others at their training median, the unconstrained booster moves against the required direction on 24 grid steps in total (3 of them on \texttt{PAY\_1}); over 200 random training profiles it violates monotonicity in \texttt{PAY\_1} on 576 of 2,000 steps (largest fall 0.036); the constrained booster on none. Price of the constraint: CV AUC $-0.0019$, test AUC $-0.0016$ (paired bootstrap, $B=500$: mean $-0.0017$, 95\,\% interval [$-0.0030$, $-0.0002$]).\end{minipage}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize The constraint imposes an order on the non-delinquent codes $-2$/$-1$/$0$ and a rising utilisation that the training data contradict (Table~\ref{tab:a-monotone-respec}, which also gives the wrong-direction steps of the unconstrained booster under a consistent sweep). Its price is $-0.0019$ CV AUC (0/5, [$-0.0025$, $-0.0013$]); test AUC $-0.0016$ as a check (paired bootstrap, $B=500$: mean $-0.0017$, 95\,\% interval [$-0.0030$, $-0.0002$]).\end{minipage}
 \end{table}
 
 \begin{table}[!htbp]
-  \caption{Freeze timeline: the 46 entries of \texttt{results/frozen\_manifest.json} grouped by round. A configuration is frozen the first time it is scored on the test set, and \texttt{common.evaluate()} refuses to score a changed configuration under a frozen slug (\texttt{code/freeze.py -{}-check} verifies every stored prediction vector).}
+  \caption{Freeze timeline: the 46 entries of \texttt{results/frozen\_manifest.json} grouped by round. A configuration is frozen the first time it is scored on the test set, and \texttt{common.evaluate()} refuses to score a changed configuration under a frozen slug (\texttt{code/freeze.py -{}-check} verifies every stored prediction vector). The manifest lists configurations only; every read of the test set, including descriptive reads outside it, is dated in \texttt{results/TEST\_SET\_LOG.md}.}
   \label{tab:a-freeze}
   \centering
   \small
@@ -196,16 +199,37 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
     \toprule
     Round & Scored & $n$ & What & Selection basis \\
     \midrule
-    1 & 16 Sep--18 Sep & 34 & every model variant of Table~\ref{tab:a-allmodels}: each configuration tuned on training CV, then scored on the test set once and frozen (before the professor's 30 September comment); none re-scored since & 5-fold CV AUC on the training partition; both thresholds on training out-of-fold probabilities \\
+    1 & 16 Sep--18 Sep & 34 & every model variant of Table~\ref{tab:a-allmodels}: each configuration tuned on training CV, then scored on the test set (before the professor's 30 September comment) and registered on 19 October; the forest and bagging were scored twice with the same configuration (16 and 18 September); dates are result-file times & 5-fold CV AUC on the training partition; both thresholds on training out-of-fold probabilities \\
     2 & 30 Sep & 2 & RUAN Hangjing's second pass under her freeze-before-test protocol (\texttt{frozen\_choices\_ruan\_v2.json}): the KNN ($K=101$, uniform) and plain-logistic configurations re-fitted and re-scored; adopted on 21 October unchanged; the headline tables keep the round-1 scoring (predictions differ by $\le 10^{-2}$, test AUC by $5\times10^{-5}$) & nested CV with the pre-registered 1-SE and 1\,\% cost rules (Table~\ref{tab:a-nestedcv}); training rows only \\
-    3 & 19 Oct & 9 & Platt-recalibrated versions of the nine class-weighted or resampled models (Table~\ref{tab:a-recal}), each scored once & Platt map fitted on training out-of-fold scores; thresholds re-chosen on cross-fitted training scores \\
-    --- & 17 Sep & 1 & negative control: SMOTE applied before the split (the leakage demonstration); its `test' rows are not the real test set and it is not a model result & none --- deliberately leaky \\
+    3 & 19 Oct & 9 & Platt-recalibrated versions of the nine class-weighted or resampled models (Table~\ref{tab:a-recal}), each registered before its 19 October scoring (a 6 October review had already applied the same maps to the test scores) & Platt map fitted on training out-of-fold scores; thresholds re-chosen on cross-fitted training scores \\
+    --- & 17 Sep & 1 & negative control: SMOTE applied before the split (the leakage demonstration); it pools the training and test rows, so its re-split `test' rows are not the real test set, and it is not a model result & none --- deliberately leaky \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \begin{table}[!htbp]
-  \caption{Nested cross-validation of the KNN and logistic families, RUAN Hangjing's second pass of 30 September 2026 (\texttt{logistic\_\allowbreak{}nested\_\allowbreak{}cv\_\allowbreak{}v2.csv}, \texttt{knn\_\allowbreak{}v2.json}). The 21 October reproduction on the training rows (\texttt{nested\_\allowbreak{}cv\_\allowbreak{}summary\_\allowbreak{}repro.json}, \texttt{logistic\_\allowbreak{}nested\_\allowbreak{}cv\_\allowbreak{}repro.csv}) matched the nested AUCs and standard errors, the logistic rows and the selected configurations; the KNN Brier and calibration-slope columns are RUAN's 30 September out-of-fold figures (\texttt{knn\_\allowbreak{}v2.json}), which the reproduction (\texttt{nested\_\allowbreak{}cv\_\allowbreak{}knn\_\allowbreak{}repro.json}) puts at 0.1395 and 0.966. The pre-registered rules re-select the configurations frozen on 16 September.}
+  \caption{Every read of the test rows, condensed from \texttt{results/TEST\_SET\_LOG.md} (section ids in the first column). Each configuration was frozen at its first scoring; the manifest of Table~\ref{tab:a-freeze} lists configurations, this log lists reads. The only choice made after a test read is the linear SVM's loss swap, whose stated basis is training CV; until 19 October test AUC set two presentation choices of the aggregation.}
+  \label{tab:a-testlog}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}L{0.08\linewidth}L{0.11\linewidth}L{0.46\linewidth}L{0.30\linewidth}@{}}
+    \toprule
+    Section & When & What & Influenced a choice? \\
+    \midrule
+    A1 & 16--18 Sep & Round 1: 34 configurations and 1 negative control (SMOTE before the split, which pools the real test rows), scored before any freeze existed and registered on 19 October; the forest and bagging were scored twice (16 and 18 September) with the same configuration & Modelling choices: no (hyper-parameters and cut-offs from training CV / out-of-fold scores). Until 19 October test AUC set two presentation choices of the aggregation: the bootstrap's reference model and the four models drawn in three figures \\
+    A2 & 30 Sep & RUAN Hangjing's second pass: 2 re-fits of frozen configurations (\texttt{knn\_v2}, \texttt{logistic\_plain\_v2}), with reporting reads (cost sensitivity, saving bootstrap) & No: selections by nested CV on training rows \\
+    A3 & 19 Oct & 9 Platt-recalibrated variants, each registered before its scoring; the same maps had been applied to the test scores in the 6 October review (B8) & No: Platt was pre-committed in the 30 September proposal \\
+    B1--B12 & 16 Sep--6 Oct & Reads outside the manifest: a plain-logit reference with $C = 1$ (B1); the hinge-loss linear SVM (B2); test AUC against the number of trees (B4); the monotone model's twin and bootstrap (B5); six drop-one-column forests and a third forest scoring (B6); RUAN's proposal-stage logit (B7); the 6 October review's recalibration maps and bootstraps (B8); descriptive reads in four scripts (B9--B12) & Once: the linear SVM's hinge-to-squared-hinge loss swap (B2) came after the hinge model's test score; its stated basis is training CV. Otherwise no \\
+    C & 16 Sep--21 Oct & Reporting reads of frozen predictions: aggregation (curves, bootstrap), threshold against model saving, cost sensitivity (re-run on the 0.01 cut-off grid on 21 October), the split check, slide figures and the 21 October fresh-clone reproduction & No: reporting only \\
+    D & 16 Sep--21 Oct & Test features without labels: reproduction checks of frozen predictions, feature counts in Table~\ref{tab:a-quality}, calls that open the test file and discard it & No \\
+    F & 21 Oct & Activity that did not read the test set: the post-freeze checks of Section~\ref{sec:a-postfreeze} and the R cross-check (Table~\ref{tab:a-rcheck}) & --- \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[!htbp]
+  \caption{Nested cross-validation of the KNN and logistic families, RUAN Hangjing's second pass of 30 September 2026 (\texttt{logistic\_\allowbreak{}nested\_\allowbreak{}cv\_\allowbreak{}v2.csv}, \texttt{knn\_\allowbreak{}v2.json}), plus the KNN re-tuned inside each outer fold over the same 24-setting grid as the frozen model (\texttt{nested\_\allowbreak{}cv\_\allowbreak{}knn\_\allowbreak{}frozen\_\allowbreak{}grid.json}, 21 October). The earlier 16-setting KNN run is RUAN's 30 September method, reproduced by \texttt{nested\_cv\_check.py}. The 21 October reproduction on the training rows (\texttt{nested\_\allowbreak{}cv\_\allowbreak{}summary\_\allowbreak{}repro.json}, \texttt{logistic\_\allowbreak{}nested\_\allowbreak{}cv\_\allowbreak{}repro.csv}) matched the nested AUCs and standard errors, the logistic rows and the selected configurations; the KNN Brier and calibration-slope columns are RUAN's 30 September out-of-fold figures (\texttt{knn\_\allowbreak{}v2.json}), which the reproduction (\texttt{nested\_\allowbreak{}cv\_\allowbreak{}knn\_\allowbreak{}repro.json}) puts at 0.1395 and 0.966. The pre-registered rules re-select the configurations frozen on 16 September. Only KNN and the logistic family were nested; the ensembles were tuned by plain 5-fold CV.}
   \label{tab:a-nestedcv}
   \centering
   \footnotesize
@@ -219,20 +243,21 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
     Logistic, lasso ($C$ tuned inside each fold) & 0.7602 $\pm$ 0.0050 & 0.5049 & 0.1410 & 0.982 & 0.15 & 12,188 \\
     Logistic, class-weighted & 0.7608 $\pm$ 0.0055 & 0.5020 & 0.1920 & 0.974 & 0.39 & 12,263 \\
     Logistic, class-weighted + Platt & 0.7608 $\pm$ 0.0055 & 0.5022 & 0.1412 & 1.004 & 0.15 & 12,247 \\
-    KNN ($K$, weights tuned in-fold; $K=101$ uniform chosen) & 0.7684 $\pm$ 0.0073 & --- & 0.1392 & 0.989 & --- & --- \\
+    KNN, RUAN's 16-setting grid ($K$, weights tuned in-fold; $K=101$ uniform on the full training set) & 0.7684 $\pm$ 0.0073 & --- & 0.1392 & 0.989 & --- & --- \\
+    KNN, the frozen 24-setting grid (outer-fold choices: $K = 101$ in 3; $K = 151$ in 2; distance weights in 2 of 5) & 0.7684 $\pm$ 0.0073 & --- & --- & --- & --- & --- \\
     \bottomrule
   \end{tabular}
-  \\[3pt]\begin{minipage}{\linewidth}\footnotesize Nested CV: outer loop = the project's five folds, inner loop = a 5-fold grid search inside each outer training fold, so the AUC is that of the whole tuning procedure. Columns: nested AUC $\pm$ its standard error over the outer folds (for KNN, the standard deviation), nested average precision, Brier score and calibration slope of the nested out-of-fold scores, the 5:1 cut-off chosen on those scores (closed form $1/6 = 0.167$) and the cross-fitted 5:1 cost on the 20,975 training rows. Pre-registered rule: 1-SE on nested AUC among plain > ridge > lasso; adopt Platt-calibrated class weighting only if its cross-fitted 5:1 cost is > 1\% lower. Outcome: plain kept; the Platt-calibrated weighting is 0.43\,\% costlier (12,247 against 12,195), so the rule (adopt only if $>1\,\%$ cheaper) is not met and it is not adopted.  For comparison, the plain 5-fold out-of-fold 5:1 cost of the frozen 16 September logit (\texttt{results/logistic\_\allowbreak{}p\_\allowbreak{}oof.npy} against the 20,975 training labels) is 12,054 at 0.15 and 12,064 at 0.17 (+0.08\,\%): a different cross-fit from the nested one, which is why the two costs at 0.17 differ. The test set is not read anywhere in this table.\end{minipage}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize Nested CV: outer loop = the project's five folds, inner loop = a 5-fold grid search inside each outer training fold, so the AUC is that of the whole tuning procedure. Columns: nested AUC $\pm$ its standard error over the outer folds (for KNN, the standard deviation over the outer folds, ddof 0; with ddof 1, as in Table~\ref{tab:headline}, the 24-setting run gives 0.0082), nested average precision, Brier score and calibration slope of the nested out-of-fold scores, the 5:1 cut-off chosen on those scores (closed form $1/6 = 0.167$) and the cross-fitted 5:1 cost on the 20,975 training rows. Pre-registered rule: 1-SE on nested AUC among plain > ridge > lasso; adopt Platt-calibrated class weighting only if its cross-fitted 5:1 cost is > 1\% lower. Outcome: plain kept; the Platt-calibrated weighting is 0.43\,\% costlier (12,247 against 12,195), so the rule (adopt only if $>1\,\%$ cheaper) is not met and it is not adopted.  For comparison, the plain 5-fold out-of-fold 5:1 cost of the frozen 16 September logit (\texttt{results/logistic\_\allowbreak{}p\_\allowbreak{}oof.npy} against the 20,975 training labels) is 12,054 at 0.15 and 12,064 at 0.17 (+0.08\,\%): a flat stretch of the cost curve, and a different cross-fit from the nested one, which is why the two costs at 0.17 differ. RUAN's 30 September refit of the same plain logit (\texttt{logistic\_\allowbreak{}plain\_\allowbreak{}v2.json}) gave a test cost of 7,065 at 0.5 and a training out-of-fold cut-off of 0.17 costing 5,141, against 7,063 / 0.15 / 5,126 for the 16 September scoring reported throughout; the proposal's saving table is that refit (note to Table~\ref{tab:a-saving}). The nested-CV columns use training rows only; the test costs in this note are those of the frozen 16 and 30 September scorings (Table~\ref{tab:a-testlog}, A1--A2).\end{minipage}
 \end{table}
 
 \begin{table}[!htbp]
-  \caption{Every model variant fitted in this project (34 in total), ordered by CV AUC, the training-set selection score (for the two SVMs, tuned on a subsample, the out-of-fold AUC on the full training partition). CV AUC is the mean 5-fold out-of-fold AUC on the training partition; the remaining columns are on the held-out test set, reported once and not used to rank. RUAN Hangjing's 30 September re-scoring of the KNN and plain-logistic configurations (Table~\ref{tab:a-freeze}) is not a separate model and is not listed.}
+  \caption{Every model variant fitted in this project (34 in total), ordered by CV AUC, the training-set selection score: the mean of the five 5-fold out-of-fold AUCs on the training partition. The remaining columns are the frozen configurations' test-set scores, reporting only and not used to rank (every read is dated in Table~\ref{tab:a-testlog}). The imbalance variants use fixed, untuned learners (logit $C = 1$, forest minimum leaf 5). Four round-1 variants (\texttt{knn\_\allowbreak{}k5}, \texttt{mlp\_\allowbreak{}overfit}, \texttt{naive\_\allowbreak{}bayes\_\allowbreak{}log}, \texttt{tree\_\allowbreak{}full}) sit at the 0.05 floor of \texttt{common.tune\_threshold}. RUAN Hangjing's 30 September re-scoring of the KNN and plain-logistic configurations (Table~\ref{tab:a-freeze}) is not a separate model and is not listed.}
   \label{tab:a-allmodels}
   \centering
   \small
-  \begin{tabular}{@{}L{0.40\linewidth}cccc@{}}
+  \begin{tabular}{@{}L{0.44\linewidth}cccc@{}}
     \toprule
-    Model & CV AUC & Test AUC & Test AP & Brier \\
+    Model & CV AUC & Test AUC & Test AP & Test Brier \\
     \midrule
     XGBoost & 0.786 & 0.789 & 0.578 & 0.131 \\
     XGBoost (class-weighted) & 0.786 & 0.789 & 0.579 & 0.177 \\
@@ -248,59 +273,60 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
     MLP (tuned, balanced sample weights) & 0.774 & 0.771 & 0.535 & 0.185 \\
     KNN & 0.770 & 0.771 & 0.542 & 0.136 \\
     Decision tree (pruned) & 0.769 & 0.776 & 0.535 & 0.133 \\
+    SVM (RBF kernel)$^{\dagger}$ & 0.764 & 0.762 & 0.494 & 0.145 \\
     LinearSVC + Platt calibration & 0.761 & 0.763 & 0.515 & 0.139 \\
     Logistic regression (plain, class\_weight=balanced) & 0.761 & 0.763 & 0.517 & 0.190 \\
     Logistic (C=1) - class\_weight='balanced' & 0.761 & 0.763 & 0.517 & 0.190 \\
-    SVM (RBF kernel)$^{\dagger}$ & 0.761 & 0.762 & 0.494 & 0.145 \\
     Logistic regression (L2 ridge, C tuned) & 0.760 & 0.764 & 0.523 & 0.138 \\
     Logistic regression (plain) & 0.760 & 0.764 & 0.523 & 0.138 \\
     Logistic regression (L1 lasso, C tuned) & 0.760 & 0.764 & 0.523 & 0.138 \\
     Logistic (C=1) - none & 0.760 & 0.764 & 0.523 & 0.138 \\
     Logistic (C=1) - SMOTE in folds & 0.760 & 0.762 & 0.516 & 0.191 \\
-    Logistic + K-means segment dummies (round-1 scoring; not adopted by the pre-registered rule) & 0.760 & 0.763 & 0.522 & 0.138 \\
+    Logistic + K-means segment dummies (round-1 scoring, $K = 4$ first pass; not adopted by the pre-registered rule; the $K = 5$ decision came from repeated CV and was never test-scored) & 0.760 & 0.763 & 0.522 & 0.138 \\
     Logistic (C=1) - under-sampling in folds & 0.760 & 0.763 & 0.515 & 0.190 \\
     LDA (linear discriminant analysis) & 0.757 & 0.759 & 0.525 & 0.139 \\
     Logistic regression on principal components only & 0.755 & 0.762 & 0.518 & 0.139 \\
     Gaussian naive Bayes (log1p amounts) & 0.754 & 0.756 & 0.508 & 0.193 \\
     QDA (quadratic discriminant analysis) & 0.751 & 0.755 & 0.516 & 0.166 \\
+    SVM (linear kernel)$^{\dagger}$ & 0.749 & 0.751 & 0.506 & 0.148 \\
     Gaussian naive Bayes & 0.736 & 0.740 & 0.504 & 0.203 \\
-    SVM (linear kernel)$^{\dagger}$ & 0.717 & 0.751 & 0.506 & 0.148 \\
     KNN (K=5) & 0.706 & 0.709 & 0.421 & 0.161 \\
     MLP over-parameterised (256,256) & 0.692 & 0.678 & 0.400 & 0.212 \\
     Decision tree (unpruned full tree) & 0.615 & 0.613 & 0.290 & 0.272 \\
     \bottomrule
   \end{tabular}
-  \\[3pt]\begin{minipage}{\linewidth}\footnotesize $^{\dagger}$Tuned on a 6,000-row training subsample; the CV AUC shown is the out-of-fold AUC of the chosen setting refitted on the full training partition (the same figure as Table~\ref{tab:headline}). The CV AUC on the tuning subsample, not comparable with the other rows, was SVM (RBF kernel) 0.768; SVM (linear kernel) 0.763.\end{minipage}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize $^{\dagger}$Tuned on a 6,000-row training subsample (changed on 21 October): the CV AUC shown is the mean of the five shared-fold out-of-fold AUCs of the chosen setting refitted on the full training partition, the same statistic as every other row (\texttt{results/svm\_selection\_statistics.json}); the earlier table showed the pooled out-of-fold AUC. SVM (RBF kernel): pooled out-of-fold 0.761, subsample CV 0.768; SVM (linear kernel): pooled out-of-fold 0.717, subsample CV 0.763.\end{minipage}
 \end{table}
 
 \begin{table}[!htbp]
-  \caption{Operating points of the 11 headline configurations of \texttt{aggregate\_summary.json} (ten model families: the lasso logit duplicates the plain logit to four decimals and is omitted from Table~\ref{tab:headline}). Both thresholds are chosen on training out-of-fold probabilities (maximum $F_1$; minimum 5:1 cost); recall is at the cost threshold; the cost columns are the expected test cost at a 5:1 false-negative to false-positive ratio.}
+  \caption{Operating points of the 11 headline configurations of \texttt{aggregate\_summary.json} (the lasso logit duplicates the plain logit to four decimals). Both thresholds are chosen on training out-of-fold probabilities (maximum $F_1$; minimum 5:1 cost); recall, precision and the share of test clients flagged are at the cost threshold (\texttt{at\_tuned\_cost} of each frozen \texttt{<slug>.json}); the cost columns are the expected test cost at a 5:1 false-negative to false-positive ratio. Frozen configurations only; reporting, nothing is selected here.}
   \label{tab:a-operating}
   \centering
-  \small
-  \setlength{\tabcolsep}{4pt}
-  \begin{tabular}{@{}L{0.27\linewidth}cccccc@{}}
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}L{0.22\linewidth}cccccccc@{}}
     \toprule
-    Model & $F_1$ thr. & Cost thr. & Recall & Cost @0.5 & Cost @$F_1$ & Cost @cost thr. \\
+    Model & \begin{tabular}[t]{@{}c@{}}$F_1$ \\ {}thr.\end{tabular} & \begin{tabular}[t]{@{}c@{}}Cost \\ {}thr.\end{tabular} & Recall & \begin{tabular}[t]{@{}c@{}}Preci- \\ {}sion\end{tabular} & \begin{tabular}[t]{@{}c@{}}Flagged \\ {}(\%)\end{tabular} & \begin{tabular}[t]{@{}c@{}}Cost \\ {}@0.5\end{tabular} & \begin{tabular}[t]{@{}c@{}}Cost \\ {}@$F_1$\end{tabular} & \begin{tabular}[t]{@{}c@{}}Cost @ \\ {}cost thr.\end{tabular} \\
     \midrule
-    KNN & 0.25 & 0.16 & 0.75 & 6,854 & 5,224 & 5,219 \\
-    Logistic regression (plain) & 0.30 & 0.15 & 0.74 & 7,063 & 5,417 & 5,126 \\
-    Logistic regression (L1 lasso, C tuned) & 0.30 & 0.15 & 0.74 & 7,064 & 5,417 & 5,125 \\
-    LDA (linear discriminant analysis) & 0.27 & 0.12 & 0.70 & 6,618 & 5,352 & 5,181 \\
-    Gaussian naive Bayes & 0.41 & 0.25 & 0.64 & 5,422 & 5,385 & 5,337 \\
-    Decision tree (pruned) & 0.28 & 0.16 & 0.76 & 6,933 & 5,308 & 5,085 \\
-    Random forest & 0.31 & 0.17 & 0.76 & 6,598 & 5,293 & 4,998 \\
-    Gradient boosting (sklearn) & 0.26 & 0.14 & 0.80 & 6,630 & 5,186 & 5,060 \\
-    XGBoost & 0.27 & 0.15 & 0.78 & 6,642 & 5,164 & 4,981 \\
-    SVM (RBF kernel) & 0.42 & 0.12 & 0.69 & 9,316 & 5,355 & 5,155 \\
-    MLP (feed-forward NN) & 0.27 & 0.19 & 0.71 & 6,625 & 5,282 & 5,136 \\
+    KNN & 0.25 & 0.16 & 0.75 & 0.35 & 46.7 & 6,854 & 5,224 & 5,219 \\
+    Logistic regression (plain) & 0.30 & 0.15 & 0.74 & 0.37 & 44.4 & 7,063 & 5,417 & 5,126 \\
+    Logistic regression (L1 lasso, C tuned) & 0.30 & 0.15 & 0.74 & 0.37 & 44.4 & 7,064 & 5,417 & 5,125 \\
+    LDA (linear discriminant analysis) & 0.27 & 0.12 & 0.70 & 0.39 & 40.0 & 6,618 & 5,352 & 5,181 \\
+    Gaussian naive Bayes & 0.41 & 0.25 & 0.64 & 0.42 & 33.9 & 5,422 & 5,385 & 5,337 \\
+    Decision tree (pruned) & 0.28 & 0.16 & 0.76 & 0.36 & 46.5 & 6,933 & 5,308 & 5,085 \\
+    Random forest & 0.31 & 0.17 & 0.76 & 0.37 & 45.4 & 6,598 & 5,293 & 4,998 \\
+    Gradient boosting (sklearn) & 0.26 & 0.14 & 0.80 & 0.34 & 52.2 & 6,630 & 5,186 & 5,060 \\
+    XGBoost & 0.27 & 0.15 & 0.78 & 0.36 & 48.8 & 6,642 & 5,164 & 4,981 \\
+    SVM (RBF kernel) & 0.42 & 0.12 & 0.69 & 0.40 & 38.2 & 9,316 & 5,355 & 5,155 \\
+    MLP (feed-forward NN) & 0.27 & 0.19 & 0.71 & 0.39 & 40.7 & 6,625 & 5,282 & 5,136 \\
     \bottomrule
   \end{tabular}
   \\[3pt]\begin{minipage}{\linewidth}\footnotesize Trivial rules for reference: flagging every client costs 7,001, flagging none costs 9,945.\end{minipage}
 \end{table}
+\clearpage
 
 \begin{table}[!htbp]
-  \caption{Cost-ratio sensitivity: expected test cost of each model at its own cost-minimising threshold, as the false-negative to false-positive ratio varies.}
+  \caption{Cost-ratio sensitivity: total test cost of each model at its own cut-off, chosen on training out-of-fold probabilities, as the false-negative to false-positive ratio varies (reporting only; nothing is selected on these numbers).}
   \label{tab:a-costsens}
   \centering
   \small
@@ -311,43 +337,44 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
     \midrule
     Gradient boosting & 1,566 & 2,617 & 3,562 & 5,060 & 5,910 & 6,278 & 6,856 \\
     KNN & 1,638 & 2,720 & 3,662 & 5,219 & 6,221 & 6,525 & 6,898 \\
-    Logistic regression & 1,659 & 2,772 & 3,677 & 5,126 & 6,381 & 6,697 & 6,976 \\
+    Logistic regression & 1,659 & 2,772 & 3,677 & 5,126 & 6,381 & 6,697 & 6,993 \\
     MLP & 1,594 & 2,711 & 3,664 & 5,136 & 6,121 & 6,468 & 6,998 \\
     Pruned tree & 1,573 & 2,685 & 3,582 & 5,085 & 6,027 & 6,359 & 7,001 \\
     Random forest & 1,573 & 2,671 & 3,559 & 4,998 & 5,992 & 6,257 & 6,850 \\
     SVM (RBF) & 1,684 & 2,726 & 3,637 & 5,155 & 6,364 & 6,702 & 7,088 \\
     XGBoost & 1,572 & 2,649 & 3,550 & 4,981 & 5,892 & 6,277 & 6,843 \\
+    \textit{Cheapest on training OOF} & GBM & RF & XGB & XGB & --- & RF & KNN \\
     \bottomrule
   \end{tabular}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize Pruned tree at 20:1: the cut-off flags every client, so its cost is the flag-everyone rule (7,001). Cost anchors for the ratio (\texttt{results/cost\_anchors.json}): a missed defaulter loses 50--70\% of the median defaulter's bill (NT\$19,868); a false alarm forgoes one to three months of a 1.5\% monthly margin on the median good client's bill (NT\$22,914.5), so the ratio runs from $0.5 \times 19{,}868 / (3 \times 0.015 \times 22{,}914.5) = 9.6$ to $0.7 \times 19{,}868 / (0.015 \times 22{,}914.5) = 40.5$: an upper bound, as the label is one missed payment and some defaulters later pay. Last row: the cheapest of the eleven headline models on pooled training out-of-fold scores at the same ratio (\texttt{results/preferred\_model\_by\_ratio\_oof.csv}; no test read; Table~\ref{tab:a-ratio-pref}; --- where that file has no such ratio); XGB = XGBoost, GBM = gradient boosting, RF = random forest.\end{minipage}
 \end{table}
-\clearpage
 
 \begin{table}[!htbp]
-  \caption{Threshold saving against model saving at nine false-negative to false-positive cost ratios $r$. Threshold saving: expected test cost of the frozen plain logistic at the 0.5 cut-off minus its cost at the cut-off chosen on training out-of-fold scores. Model saving: the logistic at its own cut-off minus the frozen XGBoost at its own cut-off. Brackets are 95\,\% paired-bootstrap intervals. Source: \texttt{results/threshold\_\allowbreak{}vs\_\allowbreak{}model\_\allowbreak{}saving.csv} (Table~\ref{tab:saving} in the body is the six-ratio excerpt).}
+  \caption{Threshold saving against model saving at nine false-negative to false-positive cost ratios $r$. Threshold saving: expected test cost of the frozen plain logistic at the 0.5 cut-off minus its cost at the cut-off chosen on training out-of-fold scores. Model saving: the logistic at its own cut-off minus the frozen XGBoost at its own cut-off. Brackets are 95\,\% paired-bootstrap intervals. Flagged: share of the test clients the logistic flags at its cut-off. Source: \texttt{results/threshold\_\allowbreak{}vs\_\allowbreak{}model\_\allowbreak{}saving.csv} (Table~\ref{tab:saving} in the body is the excerpt). Frozen configurations only; reporting, nothing is selected here.}
   \label{tab:a-saving}
   \centering
-  \small
-  \setlength{\tabcolsep}{3.5pt}
-  \begin{tabular}{@{}lcccccc@{}}
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}lcccccccc@{}}
     \toprule
-    $r$ & $1/(1+r)$ & Logit cut-off & XGB cut-off & Logit cost @0.5 & Threshold saving & Model saving \\
+    $r$ & $1/(1+r)$ & \begin{tabular}[t]{@{}c@{}}Logit \\ {}cut-off\end{tabular} & \begin{tabular}[t]{@{}c@{}}XGB \\ {}cut-off\end{tabular} & \begin{tabular}[t]{@{}c@{}}Logit cost \\ {}@0.5\end{tabular} & \begin{tabular}[t]{@{}c@{}}Flagged \\ {}(logit, \%)\end{tabular} & \begin{tabular}[t]{@{}c@{}}Threshold \\ {}saving\end{tabular} & \begin{tabular}[t]{@{}c@{}}Model \\ {}saving\end{tabular} & \begin{tabular}[t]{@{}c@{}}XGB saving vs \\ {}best blanket\end{tabular} \\
     \midrule
-    1:1 & 0.500 & 0.50 & 0.48 & 1,659 & 0 [0, 0] & 87 [44, 131] \\
-    2:1 & 0.333 & 0.33 & 0.32 & 3,010 & 238 [141, 338] & 123 [65, 185] \\
-    3:1 & 0.250 & 0.30 & 0.27 & 4,361 & 684 [541, 830] & 127 [47, 214] \\
-    4:1 & 0.200 & 0.19 & 0.19 & 5,712 & 1,228 [1,003, 1,450] & 167 [46, 287] \\
-    5:1 & 0.167 & 0.15 & 0.15 & 7,063 & 1,937 [1,604, 2,218] & 145 [$-$18, 299] \\
-    7:1 & 0.125 & 0.12 & 0.13 & 9,765 & 3,682 [3,186, 4,146] & 442 [218, 649] \\
-    10:1 & 0.091 & 0.10 & 0.09 & 13,818 & 7,121 [6,395, 7,791] & 420 [187, 646] \\
-    15:1 & 0.062 & 0.06 & 0.06 & 20,573 & 13,507 [12,415, 14,473] & 450 [243, 652] \\
-    20:1$^{\dagger}$ & 0.048 & 0.01 & 0.05 & 27,328 & 20,335 [18,909, 21,621] & 150 [$-$52, 333] \\
+    1:1 & 0.500 & 0.50 & 0.48 & 1,659 & 10.5 & \begin{tabular}[t]{@{}c@{}}0 \\ {}[0, 0]\end{tabular} & \begin{tabular}[t]{@{}c@{}}87 \\ {}[44, 131]\end{tabular} & \begin{tabular}[t]{@{}c@{}}417 \\ {}(21.0\,\%)\end{tabular} \\
+    2:1 & 0.333 & 0.33 & 0.32 & 3,010 & 22.2 & \begin{tabular}[t]{@{}c@{}}238 \\ {}[141, 338]\end{tabular} & \begin{tabular}[t]{@{}c@{}}123 \\ {}[65, 185]\end{tabular} & \begin{tabular}[t]{@{}c@{}}1,329 \\ {}(33.4\,\%)\end{tabular} \\
+    3:1 & 0.250 & 0.30 & 0.27 & 4,361 & 24.3 & \begin{tabular}[t]{@{}c@{}}684 \\ {}[541, 830]\end{tabular} & \begin{tabular}[t]{@{}c@{}}127 \\ {}[47, 214]\end{tabular} & \begin{tabular}[t]{@{}c@{}}2,417 \\ {}(40.5\,\%)\end{tabular} \\
+    4:1 & 0.200 & 0.19 & 0.19 & 5,712 & 33.4 & \begin{tabular}[t]{@{}c@{}}1,228 \\ {}[1,003, 1,450]\end{tabular} & \begin{tabular}[t]{@{}c@{}}167 \\ {}[46, 287]\end{tabular} & \begin{tabular}[t]{@{}c@{}}2,684 \\ {}(38.3\,\%)\end{tabular} \\
+    5:1 & 0.167 & 0.15 & 0.15 & 7,063 & 44.4 & \begin{tabular}[t]{@{}c@{}}1,937 \\ {}[1,604, 2,218]\end{tabular} & \begin{tabular}[t]{@{}c@{}}145 \\ {}[$-$18, 299]\end{tabular} & \begin{tabular}[t]{@{}c@{}}2,020 \\ {}(28.9\,\%)\end{tabular} \\
+    7:1 & 0.125 & 0.12 & 0.13 & 9,765 & 65.1 & \begin{tabular}[t]{@{}c@{}}3,682 \\ {}[3,186, 4,146]\end{tabular} & \begin{tabular}[t]{@{}c@{}}442 \\ {}[218, 649]\end{tabular} & \begin{tabular}[t]{@{}c@{}}1,360 \\ {}(19.4\,\%)\end{tabular} \\
+    10:1 & 0.091 & 0.10 & 0.09 & 13,818 & 79.9 & \begin{tabular}[t]{@{}c@{}}7,121 \\ {}[6,395, 7,791]\end{tabular} & \begin{tabular}[t]{@{}c@{}}420 \\ {}[187, 646]\end{tabular} & \begin{tabular}[t]{@{}c@{}}724 \\ {}(10.3\,\%)\end{tabular} \\
+    15:1 & 0.062 & 0.06 & 0.06 & 20,573 & 95.7 & \begin{tabular}[t]{@{}c@{}}13,507 \\ {}[12,415, 14,473]\end{tabular} & \begin{tabular}[t]{@{}c@{}}450 \\ {}[243, 652]\end{tabular} & \begin{tabular}[t]{@{}c@{}}385 \\ {}(5.5\,\%)\end{tabular} \\
+    20:1$^{\dagger}$ & 0.048 & 0.01 & 0.05 & 27,328 & 99.9 & \begin{tabular}[t]{@{}c@{}}20,335 \\ {}[18,909, 21,621]\end{tabular} & \begin{tabular}[t]{@{}c@{}}150 \\ {}[$-$52, 333]\end{tabular} & \begin{tabular}[t]{@{}c@{}}158 \\ {}(2.3\,\%)\end{tabular} \\
     \bottomrule
   \end{tabular}
-  \\[3pt]\begin{minipage}{\linewidth}\footnotesize Paired bootstrap of the 8,990 test rows, $B=1000$, seed 2607526; the test set is read for these intervals but selects nothing (both cut-offs are chosen on training out-of-fold scores; the closed form is $1/(1+r)$). The model-saving interval includes zero at 5:1, 20:1. $^{\dagger}$At 20:1 the logistic cut-off flags 99.9\,\% of clients, i.e.\ the trivial flag-everyone rule, so the threshold `saving' there is not a model result. Proposal-stage table (RUAN Hangjing's 30 September refit of the same plain logit, cut-off 0.17): threshold saving 1,924 [1,634, 2,193], model saving 160 [$-$8, 331] at 5:1.\end{minipage}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize Paired bootstrap of the 8,990 test rows, $B=1000$, seed 2607526; the test set is read for these intervals but selects nothing (both cut-offs are chosen on training out-of-fold scores; the closed form is $1/(1+r)$). The model-saving interval includes zero at 5:1, 20:1. $^{\dagger}$At 20:1 the logistic cut-off flags 99.9\,\% of clients, i.e.\ the trivial flag-everyone rule, so the threshold `saving' there is not a model result. Proposal-stage table (RUAN Hangjing's 30 September refit of the same plain logit, cut-off 0.17): threshold saving 1,924 [1,634, 2,193], model saving 160 [$-$8, 331] at 5:1. Last column: the cheaper blanket rule at each ratio (flag nobody up to 3:1, flag everybody above) minus the frozen XGBoost at its own cut-off, with the saving as a share of the blanket cost; the same frozen test predictions, nothing re-scored. Training-row version against no-parameter arrears rules: Table~\ref{tab:a-simplerules}.\end{minipage}
 \end{table}
 
 \begin{table}[!htbp]
-  \caption{Platt recalibration of the nine class-weighted or resampled models. The Platt map is fitted on each model's training out-of-fold scores; the 5:1 cut-off is re-chosen on cross-fitted training scores; each recalibrated version was then scored on the test set once (19 October) and frozen. Columns: mean predicted probability on test (prevalence 0.221); test Brier score, with the unweighted twin in brackets; 5:1 cut-off; test cost at the closed-form threshold 1/6.}
+  \caption{Platt recalibration of the nine class-weighted or resampled models. The Platt map is fitted on each model's training out-of-fold scores; the 5:1 cut-off is re-chosen on cross-fitted training scores; each recalibrated version was then registered, scored on the test set (19 October) and frozen; a 6 October review had already applied the same maps to the test scores, but Platt was the method committed in the 30 September proposal. Columns: mean predicted probability on test (prevalence 0.221); test Brier score, with the unweighted twin in brackets; 5:1 cut-off; test cost at the closed-form threshold 1/6.}
   \label{tab:a-recal}
   \centering
   \small
@@ -387,7 +414,7 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
     8 & 0.218 & 0.954 & 0.863 & 0.404 \\
     \bottomrule
   \end{tabular}
-  \\[3pt]\begin{minipage}{\linewidth}\footnotesize Two bootstrap runs, not one. The three right-hand columns come from the selection sweep over $K$ (for $K=5$: ARI 0.941, minimum cluster Jaccard 0.768). The stability figures quoted in the body and in Table~\ref{tab:a-kprofiles} come from the separate 100-refit stability run of the chosen $K=5$ (\texttt{unsupervised\_\allowbreak{}summary\_\allowbreak{}v2.json}): ARI 0.957 [0.745, 0.990], per-cluster Jaccard 0.972/0.974/0.791/0.970/0.953; agreement with Ward's hierarchical clustering at the same $K$: ARI 0.45--0.59 over five bootstrap samples (moderate).\end{minipage}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize Two bootstrap runs, not one. The three right-hand columns come from the selection sweep over $K$ (for $K=5$: ARI 0.941, minimum cluster Jaccard 0.768). The stability figures in Table~\ref{tab:a-kprofiles} come from the separate 100-refit stability run of the chosen $K=5$ (\texttt{unsupervised\_\allowbreak{}summary\_\allowbreak{}v2.json}): ARI 0.957 [0.745, 0.990] under bootstrap resampling, per-cluster Jaccard 0.972/0.974/0.791/0.970/0.953. Across random starts (single-start refits with other seeds on the same rows, against the reference partition) the groups shift more: ARI mean 0.81, minimum 0.58; agreement with Ward's hierarchical clustering at the same $K$: ARI 0.45--0.59 over five bootstrap samples (moderate).\end{minipage}
 \end{table}
 
 \begin{table}[!htbp]
@@ -451,8 +478,9 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
     \texttt{PAY\_\allowbreak{}6} & 0.0025 & 29 & 0.0175 & 26 & 0.0027 & 29 & 0.0000 & 21 \\
     \bottomrule
   \end{tabular}
-  \\[3pt]\begin{minipage}{\linewidth}\footnotesize \raggedright Spearman rank correlation over the 29 predictors (\texttt{random\_forest.json} \texttt{extra.spearman}, \texttt{shap\_summary.json} \texttt{spearman\_vs\_other\_measures}): MDI vs out-of-bag permutation 0.310, MDI vs training-set permutation 0.538, training-set vs out-of-bag permutation 0.719; mean $|$SHAP$|$ vs MDI 0.433, vs training-set permutation 0.756, vs out-of-bag permutation 0.772.\end{minipage}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize \raggedright Spearman rank correlation over the 29 predictors (\texttt{random\_forest.json} \texttt{extra.spearman}, \texttt{shap\_summary.json} \texttt{spearman\_vs\_other\_measures}): MDI vs out-of-bag permutation 0.310, MDI vs training-set permutation 0.538, training-set vs out-of-bag permutation 0.719; mean $|$SHAP$|$ vs MDI 0.433, vs training-set permutation 0.756, vs out-of-bag permutation 0.772. The Spearman values between SHAP (XGBoost) and MDI or permutation (random forest) are cross-model: they compare two different fitted models, not two measures of one model.\end{minipage}
 \end{table}
+\clearpage
 
 \begin{table}[!htbp]
   \caption{Refitting the tuned random forest without one column, for the six columns with the largest out-of-bag permutation drop. Permutation measures how much the fitted forest leans on a column; refitting measures what is lost if the column is never available. Out-of-bag AUC on the training rows; the test set is not used.}
@@ -473,10 +501,460 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
     \bottomrule
   \end{tabular}
 \end{table}
-\clearpage
 
 \clearpage
-\subsection{Exploratory analysis}
+\subsection{Post-freeze checks on the training rows (21 October 2026)}\label{sec:a-postfreeze}
+
+Every table in this subsection is a post-freeze sensitivity check: training five-fold CV on the shared folds (\texttt{data/processed/cv\_folds.csv}, seed 2607526), run on 21 October 2026 after all configurations were frozen. Nothing here was scored on the test set, and nothing here selects a model, feature or cut-off. Paired comparisons give the mean of the five fold differences, a Nadeau--Bengio corrected 95\,\% interval ($n_{\mathrm{test}}/n_{\mathrm{train}} = 1/4$) in brackets and the number of folds in which the difference is positive ($k$/5). Source: \texttt{results/POST\_REVIEW\_CHECKS.md}. The figures of these checks are in Section~\ref{sec:a-postfreeze-figs}.
+
+\begin{table}[!htbp]
+  \caption{What the repayment codes mean and how often they occur, training rows only ($n = 20{,}975$; \texttt{results/pay\_code\_default\_rates.csv}). Each cell counts the training clients with that code in that month; the September default rate is the share of them who defaulted on the October 2005 payment. A status is compared within a month, not across months: the same code does not carry the same risk in different months.}
+  \label{tab:a-paycodes-rates}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}cL{0.22\linewidth}rrrrrrr@{}}
+    \toprule
+     & & \multicolumn{2}{c}{September (\texttt{PAY\_1})} & \multicolumn{5}{c}{Clients with the code in earlier months} \\
+    \cmidrule(lr){3-4}\cmidrule(lr){5-9}
+    Code & Meaning & $n$ & Default (\%) & Aug & Jul & Jun & May & Apr \\
+    \midrule
+    $-2$ & no consumption$^{\dagger}$ & 1,904 & 13.7 & 2,590 & 2,777 & 2,995 & 3,138 & 3,378 \\
+    $-1$ & paid in full & 3,941 & 16.9 & 4,221 & 4,188 & 4,013 & 3,883 & 4,046 \\
+    $0$ & revolving credit$^{\dagger}$ & 10,380 & 12.9 & 11,063 & 11,042 & 11,491 & 11,877 & 11,393 \\
+    $1$ & 1 month late & 2,540 & 33.9 & 17 & 3 & 1 & --- & --- \\
+    $2$ & 2 months late & 1,871 & 67.6 & 2,750 & 2,706 & 2,218 & 1,828 & 1,933 \\
+    $3$ & 3 months late & 234 & 77.4 & 227 & 156 & 132 & 125 & 134 \\
+    $4$ & 4 months late & 57 & 66.7 & 63 & 48 & 45 & 65 & 30 \\
+    $5$ & 5 months late & 16 & 56.2 & 14 & 19 & 31 & 11 & 12 \\
+    $6$ & 6 months late & 6 & 33.3 & 12 & 21 & 4 & 3 & 13 \\
+    $7$ & 7 months late & 9 & 77.8 & 18 & 14 & 44 & 45 & 35 \\
+    $8$ & 8 months late & 17 & 58.8 & --- & 1 & 1 & --- & 1 \\
+    \bottomrule
+  \end{tabular}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize $^{\dagger}$Codes $-2$ and 0 are not defined in the UCI documentation; their readings are widely used, not documented. The delay counters (\texttt{MAX\_DELAY}, \texttt{N\_MONTHS\_DELAYED}) treat $-2$, $-1$ and 0 all as 0. Code 1 is recorded almost only in September: of its 2,540 September clients, 1,173 (46.2\,\%) had no positive September bill, 1,156 (45.5\,\%) were two months late in August, 353 had six zero bills (40.2\,\% default) and 422 followed five months of $-2$. Share of September $k$-months-late clients who were two months late in August (a backward share: where September's clients came from, not how many August clients moved on): code 2 59.1\,\% (arrears that persisted), code 3 85.9\,\% (arrears that deepened one step in a month).\end{minipage}
+\end{table}
+
+\begin{table}[!htbp]
+  \caption{Reading the repayment codes by meaning (post-freeze, training CV only, never test-scored). Five model families refitted with their frozen settings on three codings of \texttt{PAY\_1}--\texttt{PAY\_6}: the frozen single number per month; months late, $\max(\mathrm{code}, 0)$, plus indicators for $-2$ and $-1$; and one dummy per code and month. $\Delta$ = this coding minus the numeric coding of the same model, fold-paired. SD over the five fold AUCs, ddof 1. Sources: \texttt{results/pay\_coding\_cv.csv}, \texttt{pay\_coding\_summary.json}, \texttt{pay\_coding\_logit\_coefficients.csv}.}
+  \label{tab:a-paycoding}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{2.5pt}
+  \begin{tabular}{@{}L{0.20\linewidth}cccccc@{}}
+    \toprule
+    Model and coding & Inputs & CV AUC $\pm$ SD & $\Delta$AUC, $k$/5 [NB] & CV AP & $\Delta$AP, $k$/5 [NB] & Brier \\
+    \midrule
+    \multicolumn{7}{@{}l}{\textit{Logit (plain)}} \\
+    \quad numeric (as frozen) & 32 & 0.7602 $\pm$ 0.0112 & --- & 0.5067 & --- & 0.1410 \\
+    \quad months late + flags & 44 & 0.7684 $\pm$ 0.0086 & \begin{tabular}[t]{@{}c@{}}$+0.0082$, 5/5 \\ {}[$+0.0021$, $+0.0143$]\end{tabular} & 0.5275 & \begin{tabular}[t]{@{}c@{}}$+0.0208$, 5/5 \\ {}[$+0.0108$, $+0.0307$]\end{tabular} & 0.1380 \\
+    \quad one-hot$^{\dagger}$ & 81 & 0.7691 $\pm$ 0.0087 & \begin{tabular}[t]{@{}c@{}}$+0.0089$, 5/5 \\ {}[$+0.0031$, $+0.0146$]\end{tabular} & 0.5318 & \begin{tabular}[t]{@{}c@{}}$+0.0251$, 5/5 \\ {}[$+0.0094$, $+0.0408$]\end{tabular} & 0.1374 \\
+    \multicolumn{7}{@{}l}{\textit{Logit, L2 ($C = 31.6$)}} \\
+    \quad numeric (as frozen) & 32 & 0.7602 $\pm$ 0.0112 & --- & 0.5067 & --- & 0.1410 \\
+    \quad months late + flags & 44 & 0.7684 $\pm$ 0.0086 & \begin{tabular}[t]{@{}c@{}}$+0.0082$, 5/5 \\ {}[$+0.0021$, $+0.0143$]\end{tabular} & 0.5275 & \begin{tabular}[t]{@{}c@{}}$+0.0208$, 5/5 \\ {}[$+0.0108$, $+0.0307$]\end{tabular} & 0.1380 \\
+    \quad one-hot & 81 & 0.7695 $\pm$ 0.0088 & \begin{tabular}[t]{@{}c@{}}$+0.0092$, 5/5 \\ {}[$+0.0041$, $+0.0143$]\end{tabular} & 0.5320 & \begin{tabular}[t]{@{}c@{}}$+0.0253$, 5/5 \\ {}[$+0.0095$, $+0.0411$]\end{tabular} & 0.1373 \\
+    \multicolumn{7}{@{}l}{\textit{LDA}} \\
+    \quad numeric (as frozen) & 32 & 0.7572 $\pm$ 0.0122 & --- & 0.5065 & --- & 0.1431 \\
+    \quad months late + flags & 44 & 0.7651 $\pm$ 0.0095 & \begin{tabular}[t]{@{}c@{}}$+0.0079$, 5/5 \\ {}[$+0.0007$, $+0.0150$]\end{tabular} & 0.5265 & \begin{tabular}[t]{@{}c@{}}$+0.0200$, 5/5 \\ {}[$+0.0113$, $+0.0288$]\end{tabular} & 0.1404 \\
+    \quad one-hot & 81 & 0.7676 $\pm$ 0.0092 & \begin{tabular}[t]{@{}c@{}}$+0.0103$, 5/5 \\ {}[$+0.0032$, $+0.0175$]\end{tabular} & 0.5323 & \begin{tabular}[t]{@{}c@{}}$+0.0258$, 5/5 \\ {}[$+0.0113$, $+0.0404$]\end{tabular} & 0.1412 \\
+    \multicolumn{7}{@{}l}{\textit{KNN ($K = 101$)}} \\
+    \quad numeric (as frozen) & 32 & 0.7700 $\pm$ 0.0097 & --- & 0.5187 & --- & 0.1392 \\
+    \quad months late + flags & 44 & 0.7680 $\pm$ 0.0076 & \begin{tabular}[t]{@{}c@{}}$-0.0020$, 2/5 \\ {}[$-0.0065$, $+0.0025$]\end{tabular} & 0.5204 & \begin{tabular}[t]{@{}c@{}}$+0.0017$, 4/5 \\ {}[$-0.0022$, $+0.0056$]\end{tabular} & 0.1391 \\
+    \quad one-hot & 81 & 0.7705 $\pm$ 0.0112 & \begin{tabular}[t]{@{}c@{}}$+0.0004$, 3/5 \\ {}[$-0.0035$, $+0.0044$]\end{tabular} & 0.5189 & \begin{tabular}[t]{@{}c@{}}$+0.0002$, 3/5 \\ {}[$-0.0066$, $+0.0071$]\end{tabular} & 0.1392 \\
+    \multicolumn{7}{@{}l}{\textit{MLP (64--32)}} \\
+    \quad numeric (as frozen) & 32 & 0.7762 $\pm$ 0.0077 & --- & 0.5352 & --- & 0.1373 \\
+    \quad months late + flags & 44 & 0.7733 $\pm$ 0.0089 & \begin{tabular}[t]{@{}c@{}}$-0.0029$, 0/5 \\ {}[$-0.0079$, $+0.0021$]\end{tabular} & 0.5341 & \begin{tabular}[t]{@{}c@{}}$-0.0010$, 2/5 \\ {}[$-0.0095$, $+0.0075$]\end{tabular} & 0.1373 \\
+    \quad one-hot & 81 & 0.7753 $\pm$ 0.0107 & \begin{tabular}[t]{@{}c@{}}$-0.0010$, 2/5 \\ {}[$-0.0071$, $+0.0051$]\end{tabular} & 0.5352 & \begin{tabular}[t]{@{}c@{}}$-0.0000$, 3/5 \\ {}[$-0.0180$, $+0.0180$]\end{tabular} & 0.1373 \\
+    \bottomrule
+  \end{tabular}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize Numeric coding reproduces every frozen out-of-fold vector exactly. $^{\dagger}$The unpenalised one-hot logit stopped at \texttt{max\_iter} in every fold (rare codes, some held by a single training client, make the maximum-likelihood estimate infinite); the L2 one-hot row is the converged fit of the same coding. Cross-model, fold-paired: recoded logit $-$ KNN $-0.0016$ [$-0.0080$, $+0.0048$], 2/5; XGBoost $-$ logit (numeric) $+0.0261$ [$+0.0145$, $+0.0376$], 5/5; XGBoost $-$ recoded logit $+0.0179$ [$+0.0106$, $+0.0251$], 5/5; XGBoost $-$ one-hot logit $+0.0172$ [$+0.0095$, $+0.0249$], 5/5. The recoding closes 84\,\% of the KNN--logit gap but only 31\,\% of the XGBoost--logit gap. Recoded plain logit, per unit, against revolving credit in September: paid in full $+0.84$, no consumption $+0.61$ log-odds, each month late $+0.59$; one more month late in August \dots\ April $-0.42$ \dots\ $-0.11$ log-odds per month, conditional on the delay counters (all five folds agree in sign). These coefficients describe associations in this vintage, not causes.\end{minipage}
+\end{table}
+
+\begin{table}[!htbp]
+  \caption{Fold-by-fold stability of the eleven headline configurations: training out-of-fold scores of the frozen configurations on the five shared folds (\texttt{results/fold\_stability.csv}); nothing re-fitted, nothing test-scored. Top: AUC in each validation fold (4,195 clients), mean $\pm$ SD (ddof 1) and the rank in each fold. Bottom: pooled out-of-fold average precision (AP) with its lift over the base rate (0.221), Brier score and calibration slope, and the fold-paired difference XGBoost $-$ model with its Nadeau--Bengio interval and the Holm-adjusted $p$-value over the ten comparisons.}
+  \label{tab:a-foldstab}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}L{0.22\linewidth}cccccccc@{}}
+    \toprule
+    Model & Fold 1 & Fold 2 & Fold 3 & Fold 4 & Fold 5 & Mean $\pm$ SD & Ranks \\
+    \midrule
+    XGBoost & 0.7930 & 0.7786 & 0.7796 & 0.7953 & 0.7850 & 0.7863 $\pm$ 0.0076 & 1 1 1 1 2 \\
+    Gradient boosting & 0.7920 & 0.7756 & 0.7786 & 0.7946 & 0.7841 & 0.7850 $\pm$ 0.0082 & 3 2 2 2 3 \\
+    Random forest & 0.7929 & 0.7740 & 0.7785 & 0.7929 & 0.7862 & 0.7849 $\pm$ 0.0085 & 2 3 3 3 1 \\
+    MLP & 0.7850 & 0.7668 & 0.7724 & 0.7834 & 0.7734 & 0.7762 $\pm$ 0.0077 & 4 4 4 4 4 \\
+    KNN ($K = 101$) & 0.7832 & 0.7576 & 0.7694 & 0.7750 & 0.7650 & 0.7700 $\pm$ 0.0097 & 5 6 5 7 6 \\
+    Pruned tree (17 leaves) & 0.7805 & 0.7604 & 0.7637 & 0.7750 & 0.7651 & 0.7689 $\pm$ 0.0084 & 6 5 6 5 5 \\
+    SVM (RBF)$^{\dagger}$ & 0.7770 & 0.7463 & 0.7581 & 0.7750 & 0.7613 & 0.7635 $\pm$ 0.0127 & 7 7 7 6 7 \\
+    Logistic (plain) & 0.7752 & 0.7449 & 0.7573 & 0.7656 & 0.7581 & 0.7602 $\pm$ 0.0112 & 8 8 8 9 9 \\
+    Logistic L1 & 0.7752 & 0.7449 & 0.7573 & 0.7656 & 0.7581 & 0.7602 $\pm$ 0.0112 & 9 9 9 8 8 \\
+    LDA & 0.7718 & 0.7398 & 0.7543 & 0.7652 & 0.7549 & 0.7572 $\pm$ 0.0122 & 10 10 10 10 10 \\
+    Gaussian NB & 0.7549 & 0.7282 & 0.7267 & 0.7408 & 0.7276 & 0.7356 $\pm$ 0.0122 & 11 11 11 11 11 \\
+    \bottomrule
+  \end{tabular}
+  \\[6pt]
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}L{0.22\linewidth}cccccc@{}}
+    \toprule
+    Model & \begin{tabular}[t]{@{}c@{}}Pooled OOF AP \\ {}(lift)\end{tabular} & \begin{tabular}[t]{@{}c@{}}OOF \\ {}Brier\end{tabular} & \begin{tabular}[t]{@{}c@{}}Cal. \\ {}slope\end{tabular} & \begin{tabular}[t]{@{}c@{}}XGBoost $-$ model \\ {}mean, $k$/5\end{tabular} & \begin{tabular}[t]{@{}c@{}}NB 95\,\% \\ {}interval\end{tabular} & \begin{tabular}[t]{@{}c@{}}Holm \\ {}$p$\end{tabular} \\
+    \midrule
+    XGBoost & 0.552 (2.50$\times$) & 0.1344 & 1.01 & reference & --- & --- \\
+    Gradient boosting & 0.551 (2.49$\times$) & 0.1346 & 1.04 & $+0.0013$, 5/5 & [$-0.0005$, $+0.0031$] & 0.221 \\
+    Random forest & 0.551 (2.49$\times$) & 0.1348 & 1.03 & $+0.0014$, 4/5 & [$-0.0027$, $+0.0055$] & 0.401 \\
+    MLP & 0.532 (2.40$\times$) & 0.1373 & 0.94 & $+0.0101$, 5/5 & [$+0.0058$, $+0.0144$] & 0.022 \\
+    KNN ($K = 101$) & 0.517 (2.34$\times$) & 0.1392 & 0.99 & $+0.0163$, 5/5 & [$+0.0055$, $+0.0270$] & 0.041 \\
+    Pruned tree (17 leaves) & 0.519 (2.34$\times$) & 0.1373 & 0.93 & $+0.0174$, 5/5 & [$+0.0114$, $+0.0233$] & 0.011 \\
+    SVM (RBF)$^{\dagger}$ & 0.485 (2.19$\times$) & 0.1464 & 1.00 & $+0.0228$, 5/5 & [$+0.0115$, $+0.0340$] & 0.022 \\
+    Logistic (plain) & 0.505 (2.28$\times$) & 0.1410 & 0.98 & $+0.0261$, 5/5 & [$+0.0145$, $+0.0376$] & 0.022 \\
+    Logistic L1 & 0.505 (2.28$\times$) & 0.1410 & 0.98 & $+0.0261$, 5/5 & [$+0.0145$, $+0.0376$] & 0.022 \\
+    LDA & 0.505 (2.28$\times$) & 0.1431 & 0.75 & $+0.0291$, 5/5 & [$+0.0169$, $+0.0413$] & 0.022 \\
+    Gaussian NB & 0.487 (2.20$\times$) & 0.2088 & 0.14 & $+0.0507$, 5/5 & [$+0.0368$, $+0.0645$] & 0.005 \\
+    \bottomrule
+  \end{tabular}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize $^{\dagger}$SVM: mean of the five shared-fold out-of-fold AUCs (pooled 0.761; \texttt{svm\_selection\_statistics.json}). The frozen JSON \texttt{cv\_auc\_std} uses ddof 0; this table uses ddof 1. Blocks that hold in every fold: \{XGBoost, GBM, forest\} 1--3, MLP 4, \{KNN, tree, SVM\} 5--7, \{logits\} 8--9, LDA 10, naive Bayes 11. Other neighbours, fold-paired: MLP $-$ KNN $+0.0062$ [$-0.0003$, $+0.0127$], 5/5; pruned tree $-$ KNN $-0.0011$ [$-0.0072$, $+0.0050$], 3/5; SVM $-$ plain logit $+0.0033$ [$-0.0032$, $+0.0098$], 5/5 (stored in \texttt{svm\_selection\_statistics.json}).\end{minipage}
+\end{table}
+
+\begin{table}[!htbp]
+  \caption{Tuning-budget and grid checks (post-freeze, training CV only, never test-scored). Nothing was selected: every frozen configuration stays. The reported CV is the maximum over each grid on the same folds, so winners' gaps are upper estimates. Differences are against the frozen configuration of the same model. Sources: \texttt{results/gbm\_\allowbreak{}grid\_\allowbreak{}fulltrain.csv}, \texttt{tuning\_\allowbreak{}checks\_\allowbreak{}summary.json}, \texttt{nested\_\allowbreak{}cv\_\allowbreak{}knn\_\allowbreak{}frozen\_\allowbreak{}grid.json}, \texttt{knn\_\allowbreak{}dimensionality\_\allowbreak{}cv.csv}, \texttt{grid\_\allowbreak{}edge\_\allowbreak{}check.csv}, \texttt{svm\_\allowbreak{}selection\_\allowbreak{}statistics.json}.}
+  \label{tab:a-tuningchecks}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}L{0.15\linewidth}L{0.27\linewidth}L{0.10\linewidth}cL{0.22\linewidth}@{}}
+    \toprule
+    Check & Setting & CV AUC & \begin{tabular}[t]{@{}c@{}}Difference \\ {}$k$/5 [NB]\end{tabular} & Reading \\
+    \midrule
+    GBM grid re-scored on the full training set & 12 settings on 20,975 rows (frozen grid was scored on a subsample); winner depth 4, learning rate 0.03, 200 trees; the frozen setting ranks 3 (0.7850) & 0.7858 & \begin{tabular}[t]{@{}c@{}}$+0.0008$, 5/5 \\ {}[$-0.0003$, $+0.0019$]\end{tabular} & Spearman with the subsample order 0.88; XGBoost $-$ full-set winner $+0.0005$, 3/5; rule fixed beforehand: report only, keep the frozen GBM \\
+    \midrule
+    KNN nested CV over the frozen 24-setting grid & outer folds = the five shared folds; choices: $K = 101$ in 3; $K = 151$ in 2; distance weights in 2 & 0.7684 $\pm$ 0.0073 & \begin{tabular}[t]{@{}c@{}}$-0.0016$, 0/5 \\ {}[$-0.0050$, $+0.0018$]\end{tabular} & nested $-$ plain CV of the frozen $K = 101$ (2 folds tie) \\
+    \midrule
+    KNN in fewer dimensions & 32 columns: 26 standardised, 6 one-hot (frozen) & 0.7700 & --- &  \\
+     & 15 principal components (92\,\% of the variance) & 0.7678 & \begin{tabular}[t]{@{}c@{}}$-0.0022$, 1/5 \\ {}[$-0.0083$, $+0.0039$]\end{tabular} & PCA fitted inside each fold; \\
+     & 10 principal components (82\,\% of the variance) & 0.7644 & \begin{tabular}[t]{@{}c@{}}$-0.0056$, 0/5 \\ {}[$-0.0140$, $+0.0027$]\end{tabular} & $K = 101$ uniform, not re-tuned \\
+     & 5 principal components (65\,\% of the variance) & 0.7603 & \begin{tabular}[t]{@{}c@{}}$-0.0098$, 0/5 \\ {}[$-0.0141$, $-0.0055$]\end{tabular} &  \\
+     & top 8 mutual-information columns (about 888 distinct points) & 0.7295 & \begin{tabular}[t]{@{}c@{}}$-0.0405$, 0/5 \\ {}[$-0.0566$, $-0.0244$]\end{tabular} & selector fitted inside each fold; all eight columns are repayment-status codes or counters, so many clients coincide \\
+    \midrule
+    XGBoost grid extension & 60 settings: depth 2--3 $\times$ learning rate 0.01--0.03 $\times$ 150--600 rounds; best depth 3, rate 0.03, 350 rounds & 0.78637 & \begin{tabular}[t]{@{}c@{}}$+0.00008$, 3/5 \\ {}[$-0.0006$, $+0.0008$]\end{tabular} & no setting beats the frozen one by one fold SD (0.0068); best at depth 2: 0.7853; rate 0.01 at 1,100 rounds 0.78657 ($+0.0003$) \\
+    \midrule
+    Grid edges not probed & forest \texttt{max\_\allowbreak{}features} sqrt; forest \texttt{min\_\allowbreak{}samples\_\allowbreak{}leaf} 20 (CV still rising: 0.7666 / 0.7796 / 0.7843); GBM \texttt{learning\_\allowbreak{}rate} 0.03; XGBoost \texttt{min\_\allowbreak{}child\_\allowbreak{}weight} 5; MLP \texttt{learning\_\allowbreak{}rate\_\allowbreak{}init} 0.001; QDA \texttt{reg\_\allowbreak{}param} 0.5 (upper edge; CV 0.7394 / 0.7429 / 0.7495 / 0.7511) & --- & --- & the chosen value sits on the edge of its grid and nothing beyond it was tried \\
+    \midrule
+    SVM selection statistic & RBF: subsample CV 0.768, pooled OOF 0.761, mean of fold AUCs 0.764; linear: 0.763, 0.717, 0.749 & 0.7635 & --- & rank 7 of 11 under each statistic \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[!htbp]
+  \caption{Interaction depth (post-freeze, training CV only, never test-scored): CV AUC of XGBoost with the frozen settings and only the tree depth changed (in the re-tuned columns also the number of rounds), against the plain logit, on the frozen 29 predictors and on the 23 raw ones. Depth 3 was selected on these folds without nesting, so its gain over depth 1 is if anything an upper estimate; rounds re-tuned by inner 3-fold CV inside each outer fold (rounds per fold under the AUC). Source: \texttt{results/ablation\_depth.csv}.}
+  \label{tab:a-ablation-depth}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}L{0.20\linewidth}cccc@{}}
+    \toprule
+     & \multicolumn{2}{c}{29 predictors (23 raw + 6 engineered)} & \multicolumn{2}{c}{23 raw predictors} \\
+    \cmidrule(lr){2-3}\cmidrule(lr){4-5}
+    Model & 300 rounds & \begin{tabular}[t]{@{}c@{}}Rounds re-tuned \\ {}(rounds per fold)\end{tabular} & 300 rounds & \begin{tabular}[t]{@{}c@{}}Rounds re-tuned \\ {}(rounds per fold)\end{tabular} \\
+    \midrule
+    Plain logit & \multicolumn{2}{c}{0.7602} & \multicolumn{2}{c}{0.7230} \\
+    XGBoost depth 1 (additive) & 0.7756 & \begin{tabular}[t]{@{}c@{}}0.7827 \\ {}\scriptsize 1,200/1,200/2,400/1,200/1,200\end{tabular} & 0.7705 & \begin{tabular}[t]{@{}c@{}}0.7766 \\ {}\scriptsize 1,200/1,200/2,400/2,400/1,200\end{tabular} \\
+    XGBoost depth 2 & 0.7840 & \begin{tabular}[t]{@{}c@{}}0.7851 \\ {}\scriptsize 600/600/600/600/600\end{tabular} & 0.7787 & \begin{tabular}[t]{@{}c@{}}0.7806 \\ {}\scriptsize 600/600/600/600/600\end{tabular} \\
+    XGBoost depth 3 (frozen) & 0.7863 & \begin{tabular}[t]{@{}c@{}}0.7863 \\ {}\scriptsize 300/300/300/300/300\end{tabular} & 0.7819 & \begin{tabular}[t]{@{}c@{}}0.7819 \\ {}\scriptsize 300/300/300/300/300\end{tabular} \\
+    XGBoost depth 4 & 0.7859 & \begin{tabular}[t]{@{}c@{}}0.7859 \\ {}\scriptsize 300/300/300/300/300\end{tabular} & 0.7828 & \begin{tabular}[t]{@{}c@{}}0.7828 \\ {}\scriptsize 300/300/300/300/300\end{tabular} \\
+    \bottomrule
+  \end{tabular}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize Fold-paired differences in CV AUC (29 predictors unless stated): total gap, depth 3 $-$ logit $+0.0261$ [$+0.0145$, $+0.0376$], 5/5; additive booster, depth 1 (re-tuned) $-$ logit $+0.0225$ [$+0.0111$, $+0.0338$], 5/5; interactions, depth 3 $-$ depth 1, both re-tuned $+0.0036$ [$+0.0022$, $+0.0050$], 5/5; the same at 300 rounds $+0.0107$ [$+0.0071$, $+0.0144$], 5/5 (depth 1 is under-fitted at 300 rounds); on the 23 raw columns, depth 3 $-$ depth 1 re-tuned $+0.0053$ [$+0.0031$, $+0.0075$], 5/5; difference-in-differences (raw minus engineered interaction gain) $+0.0017$ [$-0.0014$, $+0.0048$], 5/5. Value of the six engineered features: to the logit $+0.0372$ [$+0.0309$, $+0.0434$], 5/5, to XGBoost at depth 3 $+0.0044$ [$+0.0011$, $+0.0077$], 5/5. The additive booster recovers 86\,\% of the gap; the partial-dependence curves show where its one-variable shape lies, but no share per variable was measured.\end{minipage}
+\end{table}
+\clearpage
+
+\begin{table}[!htbp]
+  \caption{Recent versus older repayment history (post-freeze, training CV only, never test-scored): CV AUC of XGBoost (frozen settings) and the plain logit as months of history are added, number of predictors in brackets. Raw months: the monthly status, bill and payment of each month in the window. Six-month summaries: \texttt{UTIL\_\allowbreak{}1}, \texttt{UTIL\_\allowbreak{}MEAN}, \texttt{PAY\_\allowbreak{}RATIO\_\allowbreak{}MEAN}, \texttt{N\_\allowbreak{}MONTHS\_\allowbreak{}DELAYED}, \texttt{MAX\_\allowbreak{}DELAY}, \texttt{BILL\_\allowbreak{}TREND}, always computed over all six months; window summaries recompute them over the months in the window only. H6 with either kind of summary is the frozen 29-predictor model. Source: \texttt{results/ablation\_history.csv}.}
+  \label{tab:a-ablation-history}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}L{0.22\linewidth}cccccc@{}}
+    \toprule
+     & \multicolumn{3}{c}{XGBoost} & \multicolumn{3}{c}{Plain logit} \\
+    \cmidrule(lr){2-4}\cmidrule(lr){5-7}
+    History window & Raw months & \begin{tabular}[t]{@{}c@{}}+ six-month \\ {}summaries\end{tabular} & \begin{tabular}[t]{@{}c@{}}+ window \\ {}summaries\end{tabular} & Raw months & \begin{tabular}[t]{@{}c@{}}+ six-month \\ {}summaries\end{tabular} & \begin{tabular}[t]{@{}c@{}}+ window \\ {}summaries\end{tabular} \\
+    \midrule
+    H0: limit + demographics & 0.6299 (5) & 0.7742 (11) & --- & 0.6277 (5) & 0.7492 (11) & --- \\
+    H1: + September & 0.7688 (8) & 0.7866 (14) & 0.7691 (12) & 0.7165 (8) & 0.7463 (14) & 0.7478 (12) \\
+    H3: + July--September & 0.7795 (14) & 0.7864 (20) & 0.7840 (20) & 0.7241 (14) & 0.7558 (20) & 0.7551 (20) \\
+    H6: + April--September & 0.7819 (23) & 0.7863 (29) & 0.7863 (29) & 0.7230 (23) & 0.7602 (29) & 0.7602 (29) \\
+    \bottomrule
+  \end{tabular}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize Fold-paired differences, XGBoost, raw months: H1 $-$ H0 $+0.1389$ [$+0.1090$, $+0.1689$], 5/5; H3 $-$ H1 $+0.0108$ [$+0.0076$, $+0.0139$], 5/5; H6 $-$ H3 $+0.0024$ [$-0.0004$, $+0.0052$], 5/5; all older months together, H6 $-$ H1 $+0.0131$ [$+0.0075$, $+0.0188$], 5/5. With the six-month summaries, H6 $-$ H1 $-0.0003$ [$-0.0028$, $+0.0022$], 2/5: once the summaries are in, the older raw months add nothing measurable for XGBoost (for the logit they still add $+0.0140$ [$+0.0088$, $+0.0192$], 5/5). Six-month minus September-window summaries at H1 $+0.0175$ [$+0.0128$, $+0.0221$], 5/5: the older history enters through the summaries. H1 adds September's status, bill and payment together, not the status alone. Code 1 occurs almost only in September (Table~\ref{tab:a-paycodes-rates}), so part of what H1 adds is that month's coding.\end{minipage}
+\end{table}
+
+\begin{table}[!htbp]
+  \caption{Incremental value of SEX, AGE, MARRIAGE and EDUCATION (post-freeze, training CV only, never test-scored): the frozen XGBoost and plain logit refitted without the four columns on identical folds and settings. Each difference is with minus without (mean, $k$/5 with the difference positive, Nadeau--Bengio interval); for Brier and cost a negative difference favours the model with the demographics. The 5:1 cut-off is chosen on the other four folds (cross-fitted); a fold holds about 4,195 clients. Source: \texttt{results/ablation\_demographics.csv}.}
+  \label{tab:a-ablation-demo}
+  \centering
+  \footnotesize
+  \begin{tabular}{@{}L{0.46\linewidth}cc@{}}
+    \toprule
+    Quantity & XGBoost & Plain logit \\
+    \midrule
+    CV AUC with SEX, EDUCATION, MARRIAGE, AGE (29 predictors) & 0.7863 & 0.7602 \\
+    CV AUC without them (25 predictors) & 0.7842 & 0.7565 \\
+    $\Delta$AUC, with $-$ without & \begin{tabular}[t]{@{}c@{}}$+0.0021$, 5/5 \\ {}[$+0.0002$, $+0.0041$]\end{tabular} & \begin{tabular}[t]{@{}c@{}}$+0.0037$, 5/5 \\ {}[$-0.0004$, $+0.0079$]\end{tabular} \\
+    \quad pooled-OOF bootstrap 95\,\% interval & [$+0.0009$, $+0.0034$] & [$+0.0016$, $+0.0060$] \\
+    $\Delta$AP & \begin{tabular}[t]{@{}c@{}}$+0.0011$, 2/5 \\ {}[$-0.0051$, $+0.0074$]\end{tabular} & \begin{tabular}[t]{@{}c@{}}$+0.0028$, 4/5 \\ {}[$-0.0022$, $+0.0079$]\end{tabular} \\
+    $\Delta$Brier & \begin{tabular}[t]{@{}c@{}}$-0.0004$, 1/5 \\ {}[$-0.0010$, $+0.0002$]\end{tabular} & \begin{tabular}[t]{@{}c@{}}$-0.0005$, 0/5 \\ {}[$-0.0010$, $+0.0000$]\end{tabular} \\
+    $\Delta$ cross-fitted 5:1 cost per fold & \begin{tabular}[t]{@{}c@{}}$-62.2$, 0/5 \\ {}[$-103.2$, $-21.2$]\end{tabular} & \begin{tabular}[t]{@{}c@{}}$-9.8$, 2/5 \\ {}[$-59.5$, $+39.9$]\end{tabular} \\
+    $\Delta$ recall at the 5:1 cut-off & \begin{tabular}[t]{@{}c@{}}$+0.036$, 4/5 \\ {}[$-0.044$, $+0.115$]\end{tabular} & \begin{tabular}[t]{@{}c@{}}$-0.051$, 0/5 \\ {}[$-0.117$, $+0.014$]\end{tabular} \\
+    \bottomrule
+  \end{tabular}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize The no-demographics out-of-fold vectors (\texttt{ablation\_oof\_*\_nodemo.npy}) are identical to those of the fairness check (Table~\ref{tab:a-fairness}).\end{minipage}
+\end{table}
+
+\begin{table}[!htbp]
+  \caption{Group outcomes at the 5:1 cut-off (training out-of-fold scores, post-freeze diagnostic, never test-scored). This is a diagnostic on training out-of-fold scores, not a compliance assessment. PD $-$ obs.: mean predicted probability of default minus the observed default rate, in percentage points; flagged: share of the group at or above the cut-off; FPR: false-alarm rate, the share of the group's non-defaulters flagged. `No demogr.': XGBoost refitted without SEX, AGE, MARRIAGE and EDUCATION (Table~\ref{tab:a-ablation-demo}). `Others/unknown' education pools documented `others' with the undocumented codes 0, 5 and 6 --- a coding artefact, not an education effect. Sources: \texttt{results/fairness\_groups.csv}, \texttt{fairness\_summary.json}, \texttt{fairness\_proxies.csv}.}
+  \label{tab:a-fairness}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{2.5pt}
+  \begin{tabular}{@{}L{0.20\linewidth}ccccccccc@{}}
+    \toprule
+     & & & \multicolumn{3}{c}{XGBoost (frozen)} & \multicolumn{2}{c}{Logit (frozen)} & \multicolumn{2}{c}{XGBoost, no demogr.} \\
+    \cmidrule(lr){4-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}
+    Group & $n$ & \begin{tabular}[t]{@{}c@{}}Default \\ {}(\%)\end{tabular} & \begin{tabular}[t]{@{}c@{}}PD $-$ obs. \\ {}(pp)\end{tabular} & \begin{tabular}[t]{@{}c@{}}Flagged \\ {}(\%)\end{tabular} & \begin{tabular}[t]{@{}c@{}}FPR \\ {}(\%)\end{tabular} & \begin{tabular}[t]{@{}c@{}}Flagged \\ {}(\%)\end{tabular} & \begin{tabular}[t]{@{}c@{}}FPR \\ {}(\%)\end{tabular} & \begin{tabular}[t]{@{}c@{}}Flagged \\ {}(\%)\end{tabular} & \begin{tabular}[t]{@{}c@{}}PD $-$ obs. \\ {}(pp)\end{tabular} \\
+    \midrule
+    All training clients & 20,975 & 22.1 & $-0.03$ & 49.8 & 41.1 & 45.2 & 37.0 & 49.9 & $-0.00$ \\
+    \midrule
+    \multicolumn{10}{@{}l}{\textit{Sex}} \\
+    \quad male & 8,342 & 24.5 & $-0.48$ & 54.7 & 45.7 & 53.8 & 45.5 & 52.8 & $-1.12$ \\
+    \quad female (ref.) & 12,633 & 20.6 & $+0.27$ & 46.5 & 38.2 & 39.5 & 31.6 & 48.0 & $+0.73$ \\
+    \multicolumn{10}{@{}l}{\textit{Age band}} \\
+    \quad <30 & 6,676 & 22.8 & $+0.04$ & 51.2 & 42.2 & 43.8 & 34.7 & 54.0 & $+0.88$ \\
+    \quad 30--39 (ref.) & 7,926 & 20.5 & $+0.03$ & 46.0 & 37.7 & 41.8 & 34.1 & 46.0 & $+0.07$ \\
+    \quad 40--49 & 4,490 & 22.9 & $-0.33$ & 51.4 & 42.6 & 48.9 & 40.9 & 49.2 & $-1.07$ \\
+    \quad 50+ & 1,883 & 25.0 & $+0.22$ & 57.0 & 49.0 & 55.5 & 48.4 & 53.5 & $-0.89$ \\
+    \multicolumn{10}{@{}l}{\textit{Marital status}} \\
+    \quad married & 9,536 & 23.7 & $-0.50$ & 52.6 & 43.8 & 52.1 & 44.1 & 49.4 & $-1.39$ \\
+    \quad single (ref.) & 11,173 & 20.8 & $+0.33$ & 47.0 & 38.6 & 39.2 & 31.0 & 50.1 & $+1.15$ \\
+    \quad others & 266 & 23.3 & $+1.96$ & 64.3 & 56.4 & 48.5 & 41.7 & 59.0 & $+1.18$ \\
+    \multicolumn{10}{@{}l}{\textit{Education (recoded)}} \\
+    \quad graduate school & 7,321 & 19.0 & $+0.16$ & 43.4 & 35.5 & 36.3 & 28.9 & 44.7 & $+0.41$ \\
+    \quad university (ref.) & 9,831 & 23.9 & $-0.34$ & 53.3 & 44.5 & 50.1 & 41.7 & 52.0 & $-0.61$ \\
+    \quad high school & 3,480 & 25.2 & $+0.22$ & 57.2 & 48.0 & 53.3 & 45.1 & 56.3 & $-0.05$ \\
+    \quad others/unknown & 343 & 6.7 & $+2.36$ & 10.8 & 10.0 & 10.8 & 10.0 & 35.9 & $+8.97$ \\
+    \bottomrule
+  \end{tabular}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize Cut-offs: the frozen 5:1 cut-off 0.15 for both frozen models (chosen on their own training out-of-fold scores); the demographics-free refits use the same cost rule on their own out-of-fold scores (0.15 XGBoost, 0.14 logit). Flag-rate ratios to the reference group: XGBoost men/women 1.18 against a default-rate ratio of 1.19; plain logit 1.36 (false-alarm ratio 1.44) and married/single 1.33. Scoring every client with the reference values of the four attributes (`neutralised') gives 1.08\,/\,1.00 (sex\,/\,married) for the logit and 1.09\,/\,0.99 for XGBoost; the demographics-free XGBoost gives 1.10\,/\,0.99, but its under-30 ratio rises from 1.11 to 1.17. Proxies: the 25 non-demographic predictors recover female 0.60, age under 30 0.65, single 0.56, graduate school 0.69 (out-of-fold AUC), with \texttt{LIMIT\_\allowbreak{}BAL} the leading proxy each time. PD density near the cut-off: 5.1\,\% of clients per 0.01 of PD for the logit against 3.5\,\% for XGBoost. Largest $|$mean PD $-$ observed$|$ of the frozen XGBoost in groups of 1,000 or more clients: 0.50 pp.\end{minipage}
+\end{table}
+
+\begin{table}[!htbp]
+  \caption{Monotone constraints re-specified (post-freeze, training CV only). The respecified model is a training-CV check only and was never scored on the test set; its guarantee holds from revolving credit upwards. Part A: XGBoost with the frozen settings under six constraint sets, on the numeric coding of the repayment codes or recoded (months late plus indicators for $-2$ and $-1$, as in Table~\ref{tab:a-paycoding}); $+$\,/\,$-$ = number of columns constrained to raise\,/\,lower the risk; `utilisation freed' keeps the frozen signs except on the two utilisation columns; SD over the five folds, ddof 1. Part B: wrong-direction steps of the predicted probability. Source: \texttt{results/monotone\_respec\_cv.json}, \texttt{monotone\_check\_consistent.csv}.}
+  \label{tab:a-monotone-respec}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{2.5pt}
+  \begin{tabular}{@{}L{0.20\linewidth}cccccc@{}}
+    \toprule
+    Variant & $+$ / $-$ & CV AUC $\pm$ SD & CV AP & Brier & \begin{tabular}[t]{@{}c@{}}$\Delta$ vs free \\ {}(frozen)\end{tabular} & \begin{tabular}[t]{@{}c@{}}$\Delta$ vs monotone \\ {}(frozen)\end{tabular} \\
+    \midrule
+    \multicolumn{7}{@{}l}{\textit{Numeric coding (as frozen)}} \\
+    \quad Free (as frozen) & --- & 0.7863 $\pm$ 0.0076 & 0.5540 & 0.1344 & --- & \begin{tabular}[t]{@{}c@{}}$+0.0019$, 5/5 \\ {}[$+0.0013$, $+0.0025$]\end{tabular} \\
+    \quad Monotone (frozen) & 11 / 2 & 0.7844 $\pm$ 0.0077 & 0.5459 & 0.1351 & \begin{tabular}[t]{@{}c@{}}$-0.0019$, 0/5 \\ {}[$-0.0025$, $-0.0013$]\end{tabular} & --- \\
+    \multicolumn{7}{@{}l}{\textit{Recoded: months late + flags for $-2$, $-1$}} \\
+    \quad Free & --- & 0.7866 $\pm$ 0.0074 & 0.5542 & 0.1344 & \begin{tabular}[t]{@{}c@{}}$+0.0003$, 4/5 \\ {}[$-0.0003$, $+0.0009$]\end{tabular} & \begin{tabular}[t]{@{}c@{}}$+0.0023$, 5/5 \\ {}[$+0.0014$, $+0.0031$]\end{tabular} \\
+    \quad Frozen signs & 11 / 2 & 0.7850 $\pm$ 0.0074 & 0.5464 & 0.1349 & \begin{tabular}[t]{@{}c@{}}$-0.0013$, 0/5 \\ {}[$-0.0026$, $+0.0000$]\end{tabular} & \begin{tabular}[t]{@{}c@{}}$+0.0006$, 4/5 \\ {}[$-0.0005$, $+0.0018$]\end{tabular} \\
+    \quad Utilisation freed & 9 / 2 & 0.7854 $\pm$ 0.0072 & 0.5512 & 0.1347 & \begin{tabular}[t]{@{}c@{}}$-0.0009$, 1/5 \\ {}[$-0.0021$, $+0.0003$]\end{tabular} & \begin{tabular}[t]{@{}c@{}}$+0.0010$, 5/5 \\ {}[$-0.0003$, $+0.0023$]\end{tabular} \\
+    \quad Respecified & 8 / 1 & 0.7858 $\pm$ 0.0075 & 0.5526 & 0.1346 & \begin{tabular}[t]{@{}c@{}}$-0.0005$, 1/5 \\ {}[$-0.0015$, $+0.0005$]\end{tabular} & \begin{tabular}[t]{@{}c@{}}$+0.0014$, 5/5 \\ {}[$+0.0007$, $+0.0021$]\end{tabular} \\
+    \bottomrule
+  \end{tabular}
+  \\[6pt]{\itshape Part B: wrong-direction steps over 200 random training profiles, consistent sweep unless stated}\\[2pt]
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}L{0.20\linewidth}cccccc@{}}
+    \toprule
+    Variant & \begin{tabular}[t]{@{}c@{}}All steps, \\ {}as frozen\end{tabular} & \begin{tabular}[t]{@{}c@{}}All steps, \\ {}consistent\end{tabular} & \begin{tabular}[t]{@{}c@{}}Non- \\ {}delinquent\end{tabular} & \begin{tabular}[t]{@{}c@{}}Entry into \\ {}arrears\end{tabular} & \begin{tabular}[t]{@{}c@{}}Between delay \\ {}levels (thin)\end{tabular} & \begin{tabular}[t]{@{}c@{}}Cross-state pairs \\ {}(largest fall)\end{tabular} \\
+    \midrule
+    Free (as frozen) & 576 & 573 & 213 & 3 $\to$ 0 & 360 (360) & 413 (0.062) \\
+    Monotone (frozen) & 0 & 0 & 0 & 0 $\to$ 0 & 0 (0) & 0 (0.000) \\
+    Free & 577 & 564 & 199 & 13 $\to$ 1 & 364 (364) & 538 (0.076) \\
+    Respecified & 199 & 199 & 199 & 0 $\to$ 0 & 0 (0) & 35 (0.024) \\
+    \bottomrule
+  \end{tabular}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize Respecified constraints: $+$ on \texttt{PAY\_\allowbreak{}1\_\allowbreak{}DEL}, \texttt{PAY\_\allowbreak{}2\_\allowbreak{}DEL}, \texttt{PAY\_\allowbreak{}3\_\allowbreak{}DEL}, \texttt{PAY\_\allowbreak{}4\_\allowbreak{}DEL}, \texttt{PAY\_\allowbreak{}5\_\allowbreak{}DEL}, \texttt{PAY\_\allowbreak{}6\_\allowbreak{}DEL}, \texttt{N\_\allowbreak{}MONTHS\_\allowbreak{}DELAYED}, \texttt{MAX\_\allowbreak{}DELAY}; $-$ on \texttt{LIMIT\_\allowbreak{}BAL}; free: the $-2$\,/\,$-1$ indicators and \texttt{BILL\_\allowbreak{}TREND}, \texttt{PAY\_\allowbreak{}RATIO\_\allowbreak{}MEAN}, \texttt{UTIL\_\allowbreak{}1}, \texttt{UTIL\_\allowbreak{}MEAN}. Ladder, fold-paired AUC: price of the frozen constraint $-0.0019$ [$-0.0025$, $-0.0013$], 0/5; price of the respecified one against the free recoded booster $-0.0008$ [$-0.0016$, $-0.0000$], 0/5; respecified $-$ frozen monotone $+0.0014$ [$+0.0007$, $+0.0021$], 5/5. Part B: each profile's \texttt{PAY\_1} is swept over the codes seen in training, 2,000 adjacent steps in all (400 between non-delinquent codes, 200 entries into arrears, 1,400 between delay levels of which 1,000 in thin cells, where either code has fewer than 100 training clients in that month; thin-cell violations in brackets). `As frozen' holds \texttt{MAX\_DELAY} and \texttt{N\_MONTHS\_DELAYED} fixed while \texttt{PAY\_1} moves, as in Figure~\ref{fig:monotone-pay1}; `consistent' recomputes them. The respecified constraint leaves the non-delinquent steps free by design. Cross-state pairs: for every month, each code $-2$ or $-1$ against each observed $k \ge 1$, 17,600 pairs; a pair violates when the probability at $k$ is lower. Other variants: frozen signs 56 (largest 0.020); utilisation freed 64 (largest 0.028).\end{minipage}
+\end{table}
+
+\begin{table}[!htbp]
+  \caption{No-parameter arrears rules against the models on the training rows at a 5:1 cost ratio (post-freeze, never test-scored). Cost is $5\,\mathrm{FN} + \mathrm{FP}$ per 1,000 training clients; for the two models it is cross-fitted (the cut-off chosen on the other four folds). Savings are rule minus model per 1,000 clients over the five folds ($k$/5 = folds in which the model is cheaper). The last two columns give the recall of XGBoost and of the logit when they flag the same share of clients as the rule. Source: \texttt{results/simple\_rule\_benchmark.csv}.}
+  \label{tab:a-simplerules}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{2.5pt}
+  \begin{tabular}{@{}L{0.18\linewidth}ccccccccc@{}}
+    \toprule
+     & & & & & & & & \multicolumn{2}{c}{Recall at the} \\
+     & & & & & & & & \multicolumn{2}{c}{same share} \\
+    \cmidrule(lr){9-10}
+    Rule or model & \begin{tabular}[t]{@{}c@{}}Flagged \\ {}(\%)\end{tabular} & Recall & \begin{tabular}[t]{@{}c@{}}Preci- \\ {}sion\end{tabular} & \begin{tabular}[t]{@{}c@{}}False \\ {}alarms \\ {}per catch\end{tabular} & \begin{tabular}[t]{@{}c@{}}Cost \\ {}per \\ {}1,000\end{tabular} & \begin{tabular}[t]{@{}c@{}}XGBoost \\ {}saving \\ {}$k$/5 [NB]\end{tabular} & \begin{tabular}[t]{@{}c@{}}Logit \\ {}saving \\ {}$k$/5 [NB]\end{tabular} & XGB & Logit \\
+    \midrule
+    \texttt{PAY\_\allowbreak{}1} $\ge 1$ & 22.6 & 0.512 & 0.500 & 1.00 & 653.7 & \begin{tabular}[t]{@{}c@{}}$+113$, 5/5 \\ {}[$+85$, $+142$]\end{tabular} & \begin{tabular}[t]{@{}c@{}}$+73$, 5/5 \\ {}[$+43$, $+103$]\end{tabular} & 0.550 & 0.534 \\
+    \texttt{PAY\_\allowbreak{}1} $\ge 2$ & 10.5 & 0.326 & 0.684 & 0.46 & 779.2 & \begin{tabular}[t]{@{}c@{}}$+239$, 5/5 \\ {}[$+216$, $+262$]\end{tabular} & \begin{tabular}[t]{@{}c@{}}$+199$, 5/5 \\ {}[$+160$, $+237$]\end{tabular} & 0.327 & 0.300 \\
+    \texttt{MAX\_\allowbreak{}DELAY} $\ge 2$ & 28.0 & 0.583 & 0.461 & 1.17 & 612.0 & \begin{tabular}[t]{@{}c@{}}$+72$, 5/5 \\ {}[$+42$, $+102$]\end{tabular} & \begin{tabular}[t]{@{}c@{}}$+31$, 5/5 \\ {}[$+14$, $+49$]\end{tabular} & 0.616 & 0.598 \\
+    \texttt{N\_\allowbreak{}MONTHS\_\allowbreak{}DELAYED} $\ge 1$ (any delay in six months) & 33.6 & 0.645 & 0.425 & 1.35 & 585.6 & \begin{tabular}[t]{@{}c@{}}$+45$, 5/5 \\ {}[$+25$, $+66$]\end{tabular} & \begin{tabular}[t]{@{}c@{}}$+5$, 4/5 \\ {}[$-4$, $+14$]\end{tabular} & 0.667 & 0.650 \\
+    Flag everybody & 100.0 & 1.000 & 0.221 & 3.52 & 778.7 & \begin{tabular}[t]{@{}c@{}}$+238$, 5/5 \\ {}[$+217$, $+260$]\end{tabular} & \begin{tabular}[t]{@{}c@{}}$+198$, 5/5 \\ {}[$+160$, $+236$]\end{tabular} & --- & --- \\
+    Flag nobody & 0.0 & 0.000 & --- & --- & 1106.3 & \begin{tabular}[t]{@{}c@{}}$+566$, 5/5 \\ {}[$+545$, $+587$]\end{tabular} & \begin{tabular}[t]{@{}c@{}}$+526$, 5/5 \\ {}[$+488$, $+564$]\end{tabular} & --- & --- \\
+    Logistic (plain) at 0.15 & 45.2 & 0.741 & 0.363 & 1.76 & 580.5 & --- & --- & 0.766 & 0.741 \\
+    XGBoost at 0.15 & 49.8 & 0.802 & 0.357 & 1.80 & 540.3 & --- & --- & 0.802 & 0.770 \\
+    \bottomrule
+  \end{tabular}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize The rules have no fitted parameter, so the training rows are a fair test for them; they were not scored on the test set. Any payment delay in the six months (\texttt{N\_\allowbreak{}MONTHS\_\allowbreak{}DELAYED} $\ge 1$) was the cheapest of the four candidate rules on these same rows, a mild selection effect in its favour; XGBoost still costs 7.7\,\% less than it. The models' cut-off (0.15) was chosen on pooled training out-of-fold scores.\end{minipage}
+\end{table}
+
+\begin{table}[!htbp]
+  \caption{Cheapest of the eleven headline models at each false-negative to false-positive cost ratio $r$ on pooled training out-of-fold scores (reporting only; no cost winner is named, and nothing here was scored on the test set). Top: the cheapest model with its cut-off (chosen on the same scores), the share of clients it flags, its recall and cost per 1,000 clients, the runner-up with its cost margin in per cent, and the cost spread of the top three in per cent. Bottom: the cheapest model when every fold's cut-off is chosen on the other four (cross-fitted), the runner-up minus cheapest cost per 1,000 over the folds with the folds in which the cheapest is cheaper, the ranks of the plain logit and the pruned tree (gap to the cheapest, \%), and the best blanket rule with the cheapest model's saving against it (\%). Source: \texttt{results/preferred\_model\_by\_ratio\_oof.csv}.}
+  \label{tab:a-ratio-pref}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}cccccccc@{}}
+    \toprule
+    $r$ & $1/(1+r)$ & \begin{tabular}[t]{@{}c@{}}Cheapest \\ {}(cut-off)\end{tabular} & \begin{tabular}[t]{@{}c@{}}Flagged \\ {}(\%)\end{tabular} & Recall & \begin{tabular}[t]{@{}c@{}}Cost per \\ {}1,000\end{tabular} & \begin{tabular}[t]{@{}c@{}}Runner-up \\ {}(margin, \%)\end{tabular} & \begin{tabular}[t]{@{}c@{}}Top-3 \\ {}spread (\%)\end{tabular} \\
+    \midrule
+    1:1 & 0.500 & GBM (0.49) & 12.0 & 0.367 & 179.5 & XGB (0.66) & 0.69 \\
+    2:1 & 0.333 & RF (0.33) & 21.6 & 0.537 & 302.4 & XGB (0.60) & 0.98 \\
+    3:1 & 0.250 & XGB (0.27) & 25.7 & 0.591 & 397.8 & GBM (0.22) & 0.80 \\
+    5:1 & 0.167 & XGB (0.15) & 49.8 & 0.802 & 538.8 & GBM (0.70) & 1.03 \\
+    7:1 & 0.125 & XGB (0.13) & 57.2 & 0.852 & 613.0 & RF (0.35) & 0.87 \\
+    10:1 & 0.091 & RF (0.09) & 74.9 & 0.938 & 679.9 & GBM (0.55) & 0.90 \\
+    15:1 & 0.062 & RF (0.06) & 86.1 & 0.973 & 735.7 & GBM (0.58) & 0.62 \\
+    20:1 & 0.048 & KNN (0.03) & 96.0 & 0.996 & 759.1 & XGB (0.13) & 0.64 \\
+    \bottomrule
+  \end{tabular}
+  \\[6pt]
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}ccccccc@{}}
+    \toprule
+    $r$ & \begin{tabular}[t]{@{}c@{}}Cheapest, \\ {}cross-fitted\end{tabular} & \begin{tabular}[t]{@{}c@{}}Runner-up $-$ cheapest \\ {}per 1,000 [NB]\end{tabular} & \begin{tabular}[t]{@{}c@{}}Cheapest in \\ {}$k$/5 folds\end{tabular} & \begin{tabular}[t]{@{}c@{}}Logit rank \\ {}(gap, \%)\end{tabular} & \begin{tabular}[t]{@{}c@{}}Tree rank \\ {}(gap, \%)\end{tabular} & \begin{tabular}[t]{@{}c@{}}Best blanket rule \\ {}(saving, \%)\end{tabular} \\
+    \midrule
+    1:1 & GBM & \begin{tabular}[t]{@{}c@{}}$+3.0$ \\ {}[$-1.0$, $+6.9$]\end{tabular} & 5/5 & 9 (7.8) & 4 (1.3) & flag nobody (18.9) \\
+    2:1 & RF & \begin{tabular}[t]{@{}c@{}}$+1.0$ \\ {}[$-7.8$, $+9.8$]\end{tabular} & 2/5 & 8 (3.9) & 4 (2.6) & flag nobody (31.7) \\
+    3:1 & GBM (differs) & \begin{tabular}[t]{@{}c@{}}$-0.6$ \\ {}[$-6.7$, $+5.5$]\end{tabular} & 3/5 & 10 (4.0) & 5 (3.7) & flag nobody (40.1) \\
+    5:1 & XGB & \begin{tabular}[t]{@{}c@{}}$+2.3$ \\ {}[$-12.6$, $+17.2$]\end{tabular} & 3/5 & 7 (6.7) & 6 (6.3) & flag everybody (30.8) \\
+    7:1 & XGB & \begin{tabular}[t]{@{}c@{}}$+2.1$ \\ {}[$-16.5$, $+20.8$]\end{tabular} & 3/5 & 7 (9.4) & 6 (4.8) & flag everybody (21.3) \\
+    10:1 & RF & \begin{tabular}[t]{@{}c@{}}$+5.1$ \\ {}[$-10.6$, $+20.7$]\end{tabular} & 4/5 & 8 (7.6) & 4 (1.9) & flag everybody (12.7) \\
+    15:1 & RF & \begin{tabular}[t]{@{}c@{}}$+2.7$ \\ {}[$-21.6$, $+26.9$]\end{tabular} & 3/5 & 8 (5.1) & 6 (3.6) & flag everybody (5.5) \\
+    20:1 & KNN & \begin{tabular}[t]{@{}c@{}}$+5.6$ \\ {}[$-33.8$, $+45.1$]\end{tabular} & 2/5 & 9 (2.9) & 6 (2.4) & flag everybody (2.5) \\
+    \bottomrule
+  \end{tabular}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize XGB = XGBoost, GBM = gradient boosting, RF = random forest, KNN = $K$-nearest neighbours ($K = 101$).\end{minipage}
+\end{table}
+\clearpage
+
+\begin{table}[!htbp]
+  \caption{Who is caught in the riskiest 10, 20 and 30\,\% of the training clients (training out-of-fold scores of the frozen configurations; post-freeze, never test-scored): the share of all defaulters captured and the precision of the list, for the eleven models, three arrears counts used as scores and a random list. XGB $-$ row: XGBoost's capture minus the row's at 10\,\%, in percentage points, over the five folds. Source: \texttt{results/topk\_capture\_oof.csv}.}
+  \label{tab:a-topk}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}L{0.25\linewidth}ccccccc@{}}
+    \toprule
+     & \multicolumn{3}{c}{Riskiest 10\,\%} & \multicolumn{2}{c}{Riskiest 20\,\%} & \multicolumn{2}{c}{Riskiest 30\,\%} \\
+    \cmidrule(lr){2-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}
+    List ranked by & \begin{tabular}[t]{@{}c@{}}Captured \\ {}(\%)\end{tabular} & \begin{tabular}[t]{@{}c@{}}Precision \\ {}(\%)\end{tabular} & \begin{tabular}[t]{@{}c@{}}XGB $-$ row \\ {}$k$/5 [NB]\end{tabular} & \begin{tabular}[t]{@{}c@{}}Captured \\ {}(\%)\end{tabular} & \begin{tabular}[t]{@{}c@{}}Precision \\ {}(\%)\end{tabular} & \begin{tabular}[t]{@{}c@{}}Captured \\ {}(\%)\end{tabular} & \begin{tabular}[t]{@{}c@{}}Precision \\ {}(\%)\end{tabular} \\
+    \midrule
+    XGBoost & 31.5 & 69.6 & --- & 50.7 & 56.1 & 63.3 & 46.7 \\
+    Gradient boosting & 31.5 & 69.6 & \begin{tabular}[t]{@{}c@{}}$-0.1$, 1/5 \\ {}[$-0.3$, $+0.2$]\end{tabular} & 50.8 & 56.2 & 63.1 & 46.5 \\
+    Random forest & 31.0 & 68.6 & \begin{tabular}[t]{@{}c@{}}$+0.4$, 5/5 \\ {}[$-0.2$, $+1.1$]\end{tabular} & 51.1 & 56.5 & 63.3 & 46.7 \\
+    MLP & 30.8 & 68.1 & \begin{tabular}[t]{@{}c@{}}$+0.8$, 5/5 \\ {}[$-0.8$, $+2.5$]\end{tabular} & 49.7 & 55.0 & 62.1 & 45.8 \\
+    KNN ($K = 101$) & 29.2 & 64.7 & \begin{tabular}[t]{@{}c@{}}$+2.3$, 5/5 \\ {}[$+0.7$, $+3.8$]\end{tabular} & 49.4 & 54.6 & 61.9 & 45.7 \\
+    Pruned tree (17 leaves) & 31.5 & 69.6 & \begin{tabular}[t]{@{}c@{}}$+0.2$, 4/5 \\ {}[$-0.3$, $+0.8$]\end{tabular} & 49.7 & 55.0 & 61.3 & 45.2 \\
+    SVM (RBF) & 27.4 & 60.5 & \begin{tabular}[t]{@{}c@{}}$+4.1$, 5/5 \\ {}[$+1.8$, $+6.5$]\end{tabular} & 49.5 & 54.8 & 61.5 & 45.3 \\
+    Logistic (plain) & 28.7 & 63.4 & \begin{tabular}[t]{@{}c@{}}$+2.8$, 5/5 \\ {}[$+0.8$, $+4.8$]\end{tabular} & 49.4 & 54.6 & 61.7 & 45.5 \\
+    Logistic L1 & 28.7 & 63.4 & \begin{tabular}[t]{@{}c@{}}$+2.8$, 5/5 \\ {}[$+0.8$, $+4.8$]\end{tabular} & 49.4 & 54.6 & 61.7 & 45.5 \\
+    LDA & 28.8 & 63.7 & \begin{tabular}[t]{@{}c@{}}$+2.6$, 5/5 \\ {}[$+0.7$, $+4.5$]\end{tabular} & 49.0 & 54.3 & 61.5 & 45.3 \\
+    Gaussian NB & 28.2 & 62.4 & \begin{tabular}[t]{@{}c@{}}$+3.3$, 5/5 \\ {}[$+1.4$, $+5.3$]\end{tabular} & 47.2 & 52.2 & 60.5 & 44.6 \\
+    \midrule
+    Rule score: \texttt{N\_MONTHS\_DELAYED} & 27.8 & 61.5 & \begin{tabular}[t]{@{}c@{}}$+3.7$, 5/5 \\ {}[$+1.9$, $+5.5$]\end{tabular} & 46.3 & 51.2 & 59.7 & 44.0 \\
+    Rule score: \texttt{MAX\_DELAY} & 23.1 & 51.2 & \begin{tabular}[t]{@{}c@{}}$+8.4$, 5/5 \\ {}[$+6.5$, $+10.3$]\end{tabular} & 42.7 & 47.2 & 60.5 & 44.6 \\
+    Rule score: \texttt{PAY\_1} & 30.9 & 68.5 & \begin{tabular}[t]{@{}c@{}}$+0.6$, 5/5 \\ {}[$+0.0$, $+1.2$]\end{tabular} & 47.1 & 52.1 & 55.4 & 40.9 \\
+    \midrule
+    Random list & 10.0 & 22.1 & --- & 20.0 & 22.1 & 30.0 & 22.1 \\
+    \bottomrule
+  \end{tabular}
+  \\[3pt]\begin{minipage}{\linewidth}\footnotesize Scores with ties at the list boundary (the rule scores, KNN and the tree) are counted at their expected value over the tied clients; tied clients at the boundary for the rule scores, 10/20/30\,\%: \texttt{MAX\_\allowbreak{}DELAY} 5,046/5,046/1,162; \texttt{N\_\allowbreak{}MONTHS\_\allowbreak{}DELAYED} 808/3,081/3,081; \texttt{PAY\_\allowbreak{}1} 1,871/2,540/10,380. A perfect list would capture 45.2, 90.4 and 100.0\,\% of the defaulters.\end{minipage}
+\end{table}
+
+\begin{table}[!htbp]
+  \caption{R cross-check on the same five training folds: the course's R models refitted on \texttt{data/processed/cv\_folds.csv} with the frozen settings; 13 of 15 mirrors within 0.005 of the Python CV AUC, Spearman 0.99 between the two columns over the mirrors (\texttt{code/r\_\allowbreak{}crosscheck/README.md}); the test file is never opened. $^{d}$Diagnostic refit with the Python setting; $^{c}$contrast with the lab defaults (neither counts as a mirror). Source: \texttt{results/r\_crosscheck.csv}, whose \texttt{notes} column gives each explanation in full.}
+  \label{tab:a-rcheck}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}L{0.23\linewidth}ccccL{0.28\linewidth}@{}}
+    \toprule
+    R model & R CV AUC $\pm$ SD & \begin{tabular}[t]{@{}c@{}}Python \\ {}CV AUC\end{tabular} & \begin{tabular}[t]{@{}c@{}}R $-$ \\ {}Python\end{tabular} & \begin{tabular}[t]{@{}c@{}}Folds \\ {}R higher\end{tabular} & Note \\
+    \midrule
+    glm (logistic) & 0.7602 $\pm$ 0.0112 & 0.7602 & $+0.0000$ & 0/5 & same likelihood; IRLS against lbfgs \\
+    cv.glmnet ridge & 0.7597 $\pm$ 0.0113 & 0.7602 & $-0.0006$ & 1/5 & $\lambda$ by inner 10-fold deviance; glmnet also scales the dummies \\
+    cv.glmnet lasso & 0.7595 $\pm$ 0.0112 & 0.7602 & $-0.0007$ & 1/5 & as ridge; both penalties end up tiny \\
+    MASS::lda & 0.7572 $\pm$ 0.0122 & 0.7572 & $+0.0000$ & 0/5 & same model \\
+    MASS::qda & 0.7394 $\pm$ 0.0108 & 0.7511 & $-0.0118$ & 0/5 & no regularisation: reproduces the Python \texttt{reg\_param} = 0 grid point \\
+    \textit{QDA reg 0.5 (by hand)}$^{d}$ & 0.7511 $\pm$ 0.0104 & 0.7511 & $+0.0000$ & 4/5 & QDA with $r = 0.5$ written by hand: matches the frozen Python model \\
+    e1071::naiveBayes & 0.7353 $\pm$ 0.0125 & 0.7356 & $-0.0003$ & 1/5 & Python adds \texttt{var\_smoothing} to every variance \\
+    class::knn K=101 & 0.7700 $\pm$ 0.0097 & 0.7700 & $-0.0000$ & 3/5 & same $K$ and inputs; \texttt{class::knn} keeps all distance ties \\
+    class::knn K=5 & 0.7061 $\pm$ 0.0072 & 0.7061 & $-0.0001$ & 1/5 & mirrors the round-1 $K = 5$ variant \\
+    tree + CV pruning & 0.7669 $\pm$ 0.0068 & 0.7689 & $-0.0020$ & 2/5 & deviance tree, pruned by inner CV; Python prunes by \texttt{ccp\_alpha} \\
+    tree lab defaults (prune.misclass)$^{c}$ & 0.7347 $\pm$ 0.0073 & 0.7689 & $-0.0342$ & 0/5 & lab defaults stop at a few leaves \\
+    randomForest & 0.7743 $\pm$ 0.0090 & 0.7849 & $-0.0106$ & 0/5 & hard votes and smaller leaves than scikit-learn's soft votes, leaf $\ge 20$ \\
+    \textit{randomForest soft votes}$^{d}$ & 0.7781 $\pm$ 0.0083 & 0.7849 & $-0.0068$ & 0/5 & the same R trees averaged as leaf shares \\
+    \textit{randomForest soft votes, nodesize 80}$^{d}$ & 0.7828 $\pm$ 0.0087 & 0.7849 & $-0.0021$ & 0/5 & soft votes with leaves about as large as scikit-learn's \\
+    gbm 200 trees & 0.7831 $\pm$ 0.0091 & 0.7850 & $-0.0018$ & 1/5 & \texttt{interaction.depth} 3 = 4 leaves; scikit-learn depth 3 allows 8 \\
+    gbm 300 trees & 0.7844 $\pm$ 0.0088 & 0.7850 & $-0.0005$ & 2/5 & as above, read at 300 trees \\
+    xgboost & 0.7862 $\pm$ 0.0080 & 0.7863 & $-0.0001$ & 3/5 & same library and parameters; only the subsampling draws differ \\
+    e1071::svm radial & 0.7635 $\pm$ 0.0127 & 0.7635 & $+0.0000$ & 3/5 & libsvm in both, same $C$, $\gamma$ and weights \\
+    nnet & 0.7776 $\pm$ 0.0065 & 0.7762 & $+0.0014$ & 3/5 & one sigmoid layer (BFGS) against two ReLU layers (Adam) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\clearpage
+\subsection{Post-freeze checks (training rows only)}\label{sec:a-postfreeze-figs}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=1.0\linewidth]{fold_stability.png}
+  \caption{Fold stability of the eleven headline configurations (post-freeze check on the training out-of-fold scores of the frozen configurations; nothing re-fitted, nothing test-scored). Left: AUC in each of the five validation folds (dots), the mean (bar) and the rank in each fold. Right: XGBoost minus each model in the same fold (grey dots), mean and Nadeau--Bengio 95\,\% interval, with the number of folds XGBoost is ahead (Table~\ref{tab:a-foldstab}).}
+  \label{fig:a-foldstab}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=1.0\linewidth]{ablation_summary.png}
+  \caption{Where XGBoost's gain over the plain logit comes from: post-freeze ablations, training five-fold CV with the frozen settings, never test-scored. (a) Interaction depth (Table~\ref{tab:a-ablation-depth}); (b) recent against older repayment history (Table~\ref{tab:a-ablation-history}); (c) the incremental value of SEX, EDUCATION, MARRIAGE and AGE (Table~\ref{tab:a-ablation-demo}).}
+  \label{fig:a-ablation}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=1.0\linewidth]{fairness_flag_rates.png}
+  \caption{Share of each group flagged at the 5:1 cut-off by the frozen XGBoost and by its demographics-free refit, with the observed default rate (diamonds). Training out-of-fold scores; a post-freeze diagnostic, not a compliance assessment (Table~\ref{tab:a-fairness}).}
+  \label{fig:a-fairness}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.92\linewidth]{roc_pr_oof.png}
+  \caption{ROC and precision--recall curves on the training out-of-fold scores of four frozen configurations, with each model's 5:1 cut-off (dots) and the four no-parameter arrears rules A--D (squares; Table~\ref{tab:a-simplerules}). Training rows only; the test-set curves of the frozen configurations are Figures~\ref{fig:all-roc} and~\ref{fig:all-pr}.}
+  \label{fig:a-rocpr-oof}
+\end{figure}
+\clearpage
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.92\linewidth]{r_crosscheck.png}
+  \caption{R cross-check on the same five training folds: (a) R against Python CV AUC, one dot per model, band = 45-degree line $\pm$ 0.005; (b) R minus Python, mean and range over the five folds; open circles are diagnostic R refits with the Python setting (Table~\ref{tab:a-rcheck}). The test file is never opened.}
+  \label{fig:a-rcheck}
+\end{figure}
+
+\clearpage
+\subsection{Exploratory analysis}\label{sec:a-figs}
 
 \begin{figure}[htbp]
   \centering
@@ -512,6 +990,7 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
   \caption{Correlation heat-map of the 29 predictors and the target.}
   \label{fig:eda-correlation-heatmap}
 \end{figure}
+\clearpage
 
 \begin{figure}[htbp]
   \centering
@@ -519,7 +998,6 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
   \caption{Univariate strength of every predictor, as an oriented AUC.}
   \label{fig:eda-univariate-strength}
 \end{figure}
-\clearpage
 
 \begin{figure}[htbp]
   \centering
@@ -534,14 +1012,14 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.92\linewidth]{all_roc.png}
-  \caption{Test-set ROC curves of the headline models.}
+  \caption{ROC curves of the headline models. Test set, frozen configurations; reporting only.}
   \label{fig:all-roc}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.92\linewidth]{all_pr.png}
-  \caption{Test-set precision--recall curves; the horizontal line is the prevalence.}
+  \caption{Precision--recall curves of the headline models; the horizontal line is the prevalence. Test set, frozen configurations; reporting only.}
   \label{fig:all-pr}
 \end{figure}
 
@@ -558,6 +1036,7 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
   \caption{Calibration curves of the four models with the highest CV AUC: predicted against observed default rate by decile of score.}
   \label{fig:calibration}
 \end{figure}
+\clearpage
 
 \begin{figure}[htbp]
   \centering
@@ -565,7 +1044,6 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
   \caption{Recall, precision and F1 against the decision threshold.}
   \label{fig:threshold-curves}
 \end{figure}
-\clearpage
 
 \begin{figure}[htbp]
   \centering
@@ -594,24 +1072,24 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.92\linewidth]{rf_importance.png}
-  \caption{Random forest importances: impurity decrease, training-set permutation and out-of-bag permutation, side by side.}
+  \caption{Random forest importances: impurity decrease (MDI), training-set permutation and out-of-bag permutation, side by side. MDI favours columns with many split points.}
   \label{fig:rf-importance}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.92\linewidth]{shap_beeswarm.png}
-  \caption{TreeSHAP beeswarm for the tuned XGBoost over training clients.}
+  \caption{TreeSHAP beeswarm for the tuned XGBoost over training clients. TreeSHAP divides the credit among the collinear \texttt{PAY\_1}, \texttt{MAX\_DELAY} and \texttt{N\_MONTHS\_DELAYED}; read them as a block.}
   \label{fig:shap-beeswarm}
 \end{figure}
+\clearpage
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.92\linewidth]{shap_dependence_pay1.png}
-  \caption{TreeSHAP dependence plot for the most recent repayment status.}
+  \caption{TreeSHAP dependence plot for the most recent repayment status. TreeSHAP divides the credit among the collinear \texttt{PAY\_1}, \texttt{MAX\_DELAY} and \texttt{N\_MONTHS\_DELAYED}; read them as a block.}
   \label{fig:shap-dependence-pay1}
 \end{figure}
-\clearpage
 
 \begin{figure}[htbp]
   \centering
@@ -630,31 +1108,31 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
 \begin{figure}[p]
   \centering
   \includegraphics[width=1.0\linewidth]{pdp_main.png}
-  \caption{Partial dependence with ICE curves for the four features that matter.}
+  \caption{Partial dependence with ICE curves for the four features that matter. The partial dependence holds the derived delay and utilisation features fixed while one column moves, so some swept rows cannot exist in the data. The partial dependence of \texttt{PAY\_1} rises far less than its raw default rate (Table~\ref{tab:a-paycodes-rates}).}
   \label{fig:pdp-main}
 \end{figure}
 
 \begin{figure}[p]
   \centering
   \includegraphics[width=1.0\linewidth]{pdp_interaction.png}
-  \caption{Two-way partial dependence; cells with no training client are crossed.}
+  \caption{Two-way partial dependence; cells with no training client are crossed (25\,\% of the \texttt{PAY\_1} $\times$ \texttt{LIMIT\_BAL} cells contain no training client). The partial dependence holds the derived delay and utilisation features fixed while one column moves, so some swept rows cannot exist in the data.}
   \label{fig:pdp-interaction}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.92\linewidth]{monotone_pay1.png}
-  \caption{Predicted probability against the most recent repayment status, with and without monotone constraints.}
+  \caption{Predicted probability against the most recent repayment status, with and without monotone constraints. The sweep holds \texttt{MAX\_DELAY} and \texttt{N\_MONTHS\_DELAYED} fixed (`as frozen'); Table~\ref{tab:a-monotone-respec} gives the consistent sweep.}
   \label{fig:monotone-pay1}
 \end{figure}
+\clearpage
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.92\linewidth]{logistic_coefficients.png}
-  \caption{Standardised logistic coefficients.}
+  \caption{Standardised logistic coefficients: dummy coefficients are per level, numeric ones per standard deviation. Read the bill and utilisation block, and \texttt{PAY\_2}--\texttt{PAY\_6} (conditional on the delay counters), as blocks; CV chose almost no shrinkage. The `others' education coefficient reflects a coding artefact (documented `others' merged with the undocumented codes 0, 5 and 6), not an education effect.}
   \label{fig:logistic-coefficients}
 \end{figure}
-\clearpage
 
 \begin{figure}[htbp]
   \centering
@@ -693,6 +1171,7 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
   \caption{Where each resampling strategy puts the tuned threshold.}
   \label{fig:imbalance-threshold-shift}
 \end{figure}
+\clearpage
 
 \begin{figure}[htbp]
   \centering
@@ -700,7 +1179,6 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
   \caption{Negative control: SMOTE applied before the split inflates the apparent test AUC.}
   \label{fig:imbalance-leakage-demo}
 \end{figure}
-\clearpage
 
 \clearpage
 \subsection{Model selection diagnostics}
@@ -722,7 +1200,7 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.92\linewidth]{rf_auc_vs_ntrees.png}
-  \caption{Random forest: out-of-bag and test AUC against the number of trees.}
+  \caption{Random forest and bagging: out-of-bag AUC on the training rows against the number of trees (the tree count, 500, was fixed in advance).}
   \label{fig:rf-auc-vs-ntrees}
 \end{figure}
 
@@ -739,6 +1217,7 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
   \caption{XGBoost learning curves at two learning rates.}
   \label{fig:xgb-learning-curve}
 \end{figure}
+\clearpage
 
 \begin{figure}[htbp]
   \centering
@@ -746,7 +1225,6 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
   \caption{RBF support-vector machine: cross-validated AUC over $C$ and $\gamma$.}
   \label{fig:svm-rbf-cv-heatmap}
 \end{figure}
-\clearpage
 
 \begin{figure}[htbp]
   \centering
@@ -782,4 +1260,5 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
   \caption{K-means on the first 10 principal components: silhouette, bootstrap ARI and minimum cluster Jaccard against $K$ (Table~\ref{tab:a-kselect}); reproduction on 21 October of RUAN Hangjing's 30 September analysis, training partition only.}
   \label{fig:kmeans-selection-repro}
 \end{figure}
+\clearpage
 

@@ -1,75 +1,54 @@
 \section{Conclusion and limitations}
 
-\paragraph{(1) Complexity.}
-XGBoost [3] reaches test AUC 0.789 / AP 0.578 against 0.764 / 0.523 for the logistic
-scorecard and 0.771 for the KNN benchmark; the field spans 0.05 AUC, the ensembles are tied
-(XGBoost over the forest, 0.0020 [$-0.0010$, $+0.0051$]) and nested cross-validation confirms
-the frozen choices: boosting gains only what step effects in arrears are worth.
-
-\paragraph{(2) Operating point.}
-At every cost ratio from 2:1 to 20:1 the threshold saving exceeds the model saving (at 5:1,
-1,937 against 145 of the logit's 7,063 test cost units; Table~\ref{tab:saving}), and the model
-saving's interval includes zero at 5:1 and 20:1; the operating point, not the model, is the lever.
-
-\paragraph{(3) Imbalance.}
-Nothing improves ranking: weights, SMOTE and under-sampling inside the folds leave the
-logit within 0.0012 AUC and cost the forest 0.0076; re-weighting moves the intercept
-($+1.24$), buying recall with calibration (Brier 0.138 to 0.190) that Platt scaling restores
-(0.139). Resampling before the split fabricates 0.914.
-
-\paragraph{(4) Inference.}
-Recent and repeated arrears dominate --- mean $|$SHAP$|$ 0.298, 0.281 and 0.230 log-odds for
-PAY\_1, MAX\_DELAY and N\_MONTHS\_DELAYED, all pushing towards default --- and SHAP tracks
-out-of-bag permutation (Spearman 0.77) while impurity importance tracks neither (0.31 and 0.43).
-Friedman's $H = 0.061$ for PAY\_1 $\times$ LIMIT\_BAL refutes the proposal's interaction
-hypothesis; monotone constraints cost 0.0016 AUC and remove every violation; the K-means
-segments add nothing to the logit and are descriptive only.
+\paragraph{Answers.}
+(1)~\emph{Complexity}: the three ensembles tie, 0.025--0.026 CV AUC above the logit (XGBoost on test: $+0.0250$ [$+0.0183$, $+0.0314$]); a third of the gap is status coding, most of the rest one-variable shape, interactions small (training CV). (2)~\emph{Operating point}: from 2:1 to 20:1 the threshold saving exceeds the model saving: the cut-off, not the model, is the lever. (3)~\emph{Imbalance}: in-fold weighting and under-sampling move the intercept, not the ranking, and SMOTE costs the forest 0.0055 CV AUC; resampling before splitting fakes a 0.914 test AUC. (4)~\emph{Inference}: recent status dominates, as default continues a delinquency process; demographics add 0.002 training-CV AUC at a fairness cost; constraining only the arrears direction is almost free.
 
 \paragraph{Limitations.}
-One split of one 2005 Taiwanese portfolio, and a bootstrap that prices test-row noise only. Six
-months of history caps what any model can learn, the likeliest reason no family passes 0.79
-AUC. SHAP and permutation describe the fitted model, not causation, and the
-imputed zero bucket of \S2 conflates dormant accounts with genuine non-payers. The test set was read by
-45 frozen scorings (46 manifest entries, one the leaky negative control) and by the
-reporting-only bootstrap and cost curves: a report card, not a fresh holdout.
-
-\paragraph{Future work.}
-Repeated splits and a fresh holdout for honest intervals, with an indicator separating the
-imputed zero bucket from genuine non-payment. Bureau, income and transaction data over a
-longer window, measured loss-given-default in place of 5:1, and isotonic
-recalibration.
+(i)~\emph{Retrospective test use} (\S3): until 19 October test AUC chose the bootstrap's reference model and the four models in the figures, and nine Platt variants were scored on 19 October after a 6 October review had applied their maps to test scores (Platt was pre-committed on 30 September); the test set is a dated report card, not a fresh holdout. (ii)~\emph{Illustrative cost ratio} (\S6). (iii)~\emph{Vintage and drift}: one Taiwanese bank at the onset of a card-debt crisis; base rates move several-fold over a cycle (US card delinquency 6.77\% in 2009Q2, 1.53\% in 2021Q3 [2], an analogy), so reuse needs PDs re-based to the new default rate, a re-estimated cost ratio and out-of-time validation. (iv)~\emph{Design}: a cross-section and one split; the ensembles were not nested, so their internal order cannot be separated from selection optimism; some grids end where CV might still rise (Table~\ref{tab:a-tuningchecks}; clearly so only at the forest's largest leaf size, 20); single seeds for the MLP, forest and XGBoost. (v)~\emph{Attributes and causality}: fairness numbers are a training-OOF diagnostic, not a compliance assessment, and SHAP, PDPs and coefficients describe fitted models, not causes. \emph{Future work}: an out-of-time holdout, bureau and income data, measured losses, an additive scorecard and nested multi-seed ensembles.
 
 \section*{References}
 
-\footnotesize\setlength{\parskip}{1pt}
+{\footnotesize\setlength{\parskip}{1pt}\sloppy
+\renewcommand{\UrlFont}{\ttfamily\footnotesize}%
+\def\UrlBreaks{\do\/\do-\do.\do=\do_\do?\do&\do+}%
+Web sources accessed 21 October 2026.
 
-[1] Breiman, L.\ (2001) Random forests. {\it Machine Learning} {\bf 45}(1):5--32.
+[1] Bank of England \& Financial Conduct Authority (2024) {\it Artificial intelligence in UK financial services -- 2024}, 21 Nov.
+\url{https://www.bankofengland.co.uk/report/2024/artificial-intelligence-in-uk-financial-services-2024}
 
-[2] Chawla, N.\,V., Bowyer, K.\,W., Hall, L.\,O.\ \& Kegelmeyer, W.\,P.\ (2002) SMOTE:
-synthetic minority over-sampling technique. {\it J.\ Artificial Intelligence Research}
-{\bf 16}:321--357.
+[2] Board of Governors of the Federal Reserve System (2026) {\it Charge-off and delinquency rates on loans and leases at commercial banks} (credit cards, all banks, seasonally adjusted). \url{https://www.federalreserve.gov/releases/chargeoff/delallsa.htm}
 
-[3] Chen, T.\ \& Guestrin, C.\ (2016) XGBoost: a scalable tree boosting system. {\it Proc.\ KDD}, pp.\ 785--794.
+[3] Breiman, L.\ (2001) Random forests. {\it Machine Learning} {\bf 45}(1):5--32.
 
-[4] Friedman, J.\,H.\ (2001) Greedy function approximation: a gradient boosting machine.
-{\it Annals of Statistics} {\bf 29}(5):1189--1232.
+[4] Central Bank of the Republic of China (Taiwan) (2008) {\it Financial Stability Report}, June 2008, Box 2. \url{https://www.cbc.gov.tw/en/public/Attachment/931716211071.pdf}
 
-[5] Hofmann, H.\ (1994) {\it Statlog (German Credit Data)}. UCI Machine Learning Repository,
-dataset 144.
+[5] Chawla, N.\,V., Bowyer, K.\,W., Hall, L.\,O.\ \& Kegelmeyer, W.\,P.\ (2002) SMOTE: synthetic minority over-sampling technique. {\it J.\ Artificial Intelligence Research} {\bf 16}:321--357.
 
-[6] James, G., Witten, D., Hastie, T.\ \& Tibshirani, R.\ (2021) {\it An Introduction to
-Statistical Learning}, 2nd ed. Springer.
+[6] Chen, T.\ \& Guestrin, C.\ (2016) XGBoost: a scalable tree boosting system. {\it Proc.\ KDD}, pp.\ 785--794.
 
-[7] Lundberg, S.\,M.\ \& Lee, S.-I.\ (2017) A unified approach to interpreting model
-predictions. {\it Advances in Neural Information Processing Systems} {\bf 30}:4765--4774.
+[7] Chouldechova, A.\ (2017) Fair prediction with disparate impact: a study of bias in recidivism prediction instruments. {\it Big Data} {\bf 5}(2):153--163.
 
-[8] Nadeau, C.\ \& Bengio, Y.\ (2003) Inference for the generalization error. {\it Machine
-Learning} {\bf 52}(3):239--281.
+[8] European Union (2024) Regulation (EU) 2024/1689 (Artificial Intelligence Act), Annex III, point 5(b). {\it Official Journal} L, 12.7.2024. \url{https://eur-lex.europa.eu/eli/reg/2024/1689/oj}
 
-[9] Platt, J.\,C.\ (1999) Probabilistic outputs for support vector machines and comparisons
-to regularized likelihood methods. In {\it Advances in Large Margin Classifiers}, MIT Press,
-pp.\ 61--74.
+[9] Financial Supervisory Commission (Taiwan), Banking Bureau, {\it Credit-card business statistics}, monthly time series (index-7.xlsx), Open Government Data Licence v1.0. \url{https://www.banking.gov.tw/webdowndoc?file=/stat/cc/index-7.xlsx}
 
-[10] Yeh, I.-C.\ \& Lien, C.-H.\ (2009) The comparisons of data mining techniques for the
-predictive accuracy of probability of default of credit card clients. {\it Expert Systems
-with Applications} {\bf 36}(2):2473--2480.
+[10] Friedman, J.\,H.\ (2001) Greedy function approximation: a gradient boosting machine. {\it Annals of Statistics} {\bf 29}(5):1189--1232.
+
+[11] Hofmann, H.\ (1994) {\it Statlog (German Credit Data)}. UCI Machine Learning Repository, doi:10.24432/C5NC77.
+
+[12] James, G., Witten, D., Hastie, T.\ \& Tibshirani, R.\ (2021) {\it An Introduction to Statistical Learning}. Springer.
+
+[13] Kleinberg, J., Mullainathan, S.\ \& Raghavan, M.\ (2017) Inherent trade-offs in the fair determination of risk scores. {\it Proc.\ ITCS}.
+
+[14] Lundberg, S.\,M.\ \& Lee, S.-I.\ (2017) A unified approach to interpreting model predictions. {\it Advances in NeurIPS} {\bf 30}:4765--4774.
+
+[15] Monetary Authority of Singapore (2018) {\it Principles to promote fairness, ethics, accountability and transparency (FEAT) in the use of artificial intelligence and data analytics in Singapore's financial sector}. \url{https://www.mas.gov.sg/publications/monographs-or-information-paper/2018/feat}
+
+[16] Nadeau, C.\ \& Bengio, Y.\ (2003) Inference for the generalization error. {\it Machine Learning} {\bf 52}(3):239--281.
+
+[17] Platt, J.\,C.\ (1999) Probabilistic outputs for support vector machines and comparisons to regularized likelihood methods. In {\it Advances in Large Margin Classifiers}, MIT Press, pp.\ 61--74.
+
+[18] Yeh, I.-C.\ (2009) {\it Default of Credit Card Clients} [Dataset]. UCI Machine Learning Repository, doi:10.24432/C55S3H.
+
+[19] Yeh, I.-C.\ \& Lien, C.-H.\ (2009) The comparisons of data mining techniques for the predictive accuracy of probability of default of credit card clients. {\it Expert Syst.\ Appl.} {\bf 36}(2):2473--2480, doi:10.1016/j.eswa.2007.12.020.
+\par}

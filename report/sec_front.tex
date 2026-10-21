@@ -1,16 +1,18 @@
 \begin{abstract}
-  Because a missed defaulter costs several times a false alarm, a default model
-  must be judged at an operating point, not by ranking alone. We compare ten
-  classifiers, including a $K$-nearest-neighbour benchmark and a logistic
-  baseline, on the UCI credit-card default data (29,965 clients, 22.1\%
-  defaulters), all choices made on training rows, each configuration frozen at
-  its first scoring on a 30\% test set. Tree ensembles rank best on training CV
-  (XGBoost: CV AUC 0.786; test 0.789, AP 0.578) but gain only 0.025 AUC
-  over the logit, the forest is indistinguishable from XGBoost, and six months
-  of repayment status carry nearly all the signal, additively. Class weights,
-  SMOTE and under-sampling inside the folds move the intercept, not the ranking.
-  At 5:1, moving the logit's cut-off from 0.5 to 0.15 saves 1,937 [1,604, 2,218]
-  of 7,063 test cost units; switching to XGBoost saves a further 145 [$-$18, 299].
+  Banks use default models as cut-offs, so we judge ranking and
+  operating point. On the UCI credit-card data (29,965 cardholders, 22.1\%
+  defaulters, drawn as the 2005 card-debt crisis began) we compare ten
+  classifiers, choosing everything by training cross-validation (CV) and
+  freezing each configuration at its first test scoring. XGBoost, gradient
+  boosting and the random forest tie (CV AUC 0.785--0.786; XGBoost test 0.789),
+  0.025--0.026 above the logit. Post-freeze training-CV checks show where
+  the signal lies: adding September's record to limit and demographics lifts
+  XGBoost's AUC from 0.63 to 0.77; a third of the logit's gap is reading
+  repayment codes as evenly spaced numbers, most of the rest one-variable curves;
+  interactions are small; demographics add 0.002 CV AUC but raise fairness
+  issues. Resampling before the split fakes a 0.914 AUC. At 5:1, moving the
+  logit's cut-off saves 1,937 test cost units; switching to XGBoost saves 145
+  more [$-$18, 299].
 \end{abstract}
 
 \paragraph{Contribution statement.}
@@ -30,25 +32,11 @@ recalibration, and the freeze and aggregation code. Shares per section (RUAN/LU/
 
 \section{Introduction}
 
-Unsecured revolving credit is one of the largest sources of loss for a retail
-bank: a defaulter's balance is written off, while the upside on a good customer
-is a thin monthly margin, so a model that merely ranks clients well is not yet a
-decision; the question is which model, at which cut-off.
+\paragraph{A default model in a crisis vintage.}
+Every probability of default (PD) here belongs to a crisis vintage. The data come from Taiwan's 2005--06 card-debt crisis [19]: the central bank dates the first repayment problems to September 2005, our last feature month [4]. Revolving balances peaked at NT\$495.3 bn in November 2005 and fell 48.8\% by December 2008 [9]. Our 22.1\% default rate is consistent with a stressed book or an undocumented, defaulter-heavy sample (\S7, iii). Errors cost unequally: a missed defaulter's balance is lost; a wrongly flagged good client risks a thin margin.
 
-The study is comparative in the sense of the course [6] rather than a hunt for
-a winner. Two models are the reference points --- a $K$-nearest-neighbour
-classifier, the non-parametric benchmark, and a logistic regression, the
-scorecard a credit department could defend to a regulator --- and every other
-family is read against them, each gap explained by a mechanism rather than a
-rank. Three methods beyond the syllabus --- TreeSHAP [7], a monotonically constrained
-XGBoost and partial dependence [4] --- carry the inference.
+\paragraph{Why explanations matter.}
+Lenders are now expected to explain a credit score, so we pair accuracy with Shapley additive explanations (SHAP), monotone constraints and a logistic scorecard. The EU AI Act classes creditworthiness scoring of individuals as high-risk (Annex~III, 5(b)) [8]. Singapore's FEAT principles ask that customers can learn which data were used and how they affected a decision (Principle~13) [15]; these are present-day benchmarks, and we claim no compliance. In the 2024 Bank of England--FCA survey, gradient boosting was the most common model type (32\% of use cases) and SHAP (64\%) among the most popular explainability methods [1].
 
-\paragraph{Objectives.}
-Four questions organise what follows. (1)~\emph{Value of complexity}: how much ranking quality do
-non-linear and ensemble methods add over the two reference models, beyond
-test-set noise? (2)~\emph{Operating point}: cut at 0.5, at maximum $F_1$, or at
-the threshold implied by an asymmetric cost --- and does that choice outweigh the
-model's? (3)~\emph{Class imbalance}: do class weights, SMOTE and under-sampling
-inside the folds help, and what does resampling before the split fabricate?
-(4)~\emph{Inference}: which characteristics drive default, in which direction, and
-do the coefficient, impurity, permutation and Shapley accounts agree?
+\paragraph{Design and objectives.}
+The study is comparative [12]: a $K$-nearest-neighbour (KNN) benchmark and a logistic scorecard are the references, each other family is explained by how it learns, and TreeSHAP [14], monotone XGBoost [6] and partial dependence [10] go beyond the syllabus. We ask (1)~\emph{complexity}: what flexible models add beyond noise; (2)~\emph{operating point}: whether the cut-off matters more than the model; (3)~\emph{imbalance}: what weighting and resampling do inside the folds and before the split; (4)~\emph{inference}: which characteristics predict default, in which direction, what personal attributes add at what fairness cost, and whether the importance measures agree.

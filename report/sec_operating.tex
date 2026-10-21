@@ -1,57 +1,35 @@
 \section{Choosing the operating point}
 
-A credit model is deployed as a cut-off, and 0.5 is optimal only when both errors cost the same. On the test set the logit at 0.5
-is 81.5\% accurate (majority rule 77.9\%) yet recovers only 32\% of defaulters,
-and at 5:1 it costs 7{,}063 units against 7{,}001 for flagging \emph{every} customer (the $F_1$-optimal cut-offs, 0.25--0.42, and their costs: Table~\ref{tab:a-operating}).
+\paragraph{Why 0.5 is the wrong cut-off, and 5:1 a scenario, not a fact.}
+A cut-off of 0.5 is optimal only when both errors cost the same. With 22\% defaulters few clients reach a PD of 0.5: on the test set the frozen logit at 0.5 catches only 32\% of defaulters and, at 5:1, costs more than flagging everyone (Table~\ref{tab:a-operating}). The 5:1 ratio is borrowed from the German credit data (Statlog cost matrix [11]), not measured for this issuer. Our rough cost anchors point higher. If a missed defaulter loses 50--70\% of the median defaulter's bill, and a false alarm forgoes one to three months of a 1.5\% monthly margin on the median good client's bill, the ratio is 9.6:1 to 40.5:1. That is an upper bound, as some defaulters later pay (Table~\ref{tab:a-costsens}). A bank should read its own ratio off the 1:1--20:1 sweep (Table~\ref{tab:saving}) and set the cut-off on training OOF scores.
 
 \begin{table}[t]
-\caption{Threshold saving versus model saving at six cost ratios $r$ (FN\,:\,FP), test set $n = 8{,}990$; all nine ratios in Table~\ref{tab:a-saving}. Threshold saving: the frozen logit moved from 0.5 to its training out-of-fold cut-off $t_{\mathrm{log}}$; model saving: the further reduction from XGBoost at its own training cut-off; ``Flagged'': share of the test book the logit flags at $t_{\mathrm{log}}$; brackets: 95\% paired-bootstrap intervals over test rows ($B = 1{,}000$).}
+\caption{How the decision moves with the cost ratio $r$. Left (training OOF, frozen models): cheapest model (cut-off), top-3 cost spread, saving against the best blanket rule (flag nobody for $r \le 3$, all for $r \ge 5$). Right (test set, frozen models; 95\% paired bootstrap, $B = 1{,}000$): threshold saving = logit at 0.5 minus at its training-OOF cut-off $t_{\mathrm{log}}$; model saving = XGBoost's further reduction at its own cut-off. $^a$GBM (gradient boosting) if cross-fitted. $^b$Flags 96\% (cheapest) and 99.9\% (logit). Fold intervals of the cheapest's lead (all include zero), all ratios: Tables~\ref{tab:a-saving}, \ref{tab:a-ratio-pref}.}
 \label{tab:saving}
 \centering
 \footnotesize
-\setlength{\tabcolsep}{5pt}
-\begin{tabular}{@{}rccrrrr@{}}
+\setlength{\tabcolsep}{2.6pt}
+\begin{tabular}{@{}rclrrcrr@{}}
 \toprule
-$r$ & $1/(1+r)$ & $t_{\mathrm{log}}$ & Logit cost at 0.5 & Threshold saving [95\% CI] & Model saving [95\% CI] & Flagged \\
+ & & \multicolumn{3}{c}{Training OOF (selects nothing)} & \multicolumn{3}{c}{Test set, frozen models} \\
+\cmidrule(lr){3-5}\cmidrule(l){6-8}
+$r$ & $1/(1+r)$ & Cheapest (cut-off) & Top-3 spread & vs blanket & $t_{\mathrm{log}}$ & Threshold saving & Model saving \\
 \midrule
-1  & 0.500 & 0.50 & 1{,}659  & 0                               & 87 [44, 131]      & 10.5\% \\
-2  & 0.333 & 0.33 & 3{,}010  & 238 [141, 338]                  & 123 [65, 185]     & 22.2\% \\
-3  & 0.250 & 0.30 & 4{,}361  & 684 [541, 830]                  & 127 [47, 214]     & 24.3\% \\
-5  & 0.167 & 0.15 & 7{,}063  & 1{,}937 [1{,}604, 2{,}218]      & 145 [$-$18, 299]  & 44.4\% \\
-10 & 0.091 & 0.10 & 13{,}818 & 7{,}121 [6{,}395, 7{,}791]      & 420 [187, 646]    & 79.9\% \\
-20 & 0.048 & 0.01 & 27{,}328 & 20{,}335 [18{,}909, 21{,}621]   & 150 [$-$52, 333]  & 99.9\% \\
+1  & 0.500 & GBM (0.49)            & 0.69\% & 18.9\% & 0.50     & 0                             & 87 [44, 131]     \\
+2  & 0.333 & Forest (0.33)         & 0.98\% & 31.7\% & 0.33     & 238 [141, 338]                & 123 [65, 185]    \\
+3  & 0.250 & XGBoost (0.27)$^a$    & 0.80\% & 40.1\% & 0.30     & 684 [541, 830]                & 127 [47, 214]    \\
+5  & 0.167 & XGBoost (0.15)        & 1.03\% & 30.8\% & 0.15     & 1{,}937 [1{,}604, 2{,}218]    & 145 [$-$18, 299] \\
+10 & 0.091 & Forest (0.09)         & 0.90\% & 12.7\% & 0.10     & 7{,}121 [6{,}395, 7{,}791]    & 420 [187, 646]   \\
+20 & 0.048 & KNN (0.03)$^b$        & 0.64\% & 2.5\%  & 0.01$^b$ & 20{,}335 [18{,}909, 21{,}621] & 150 [$-$52, 333] \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\paragraph{Why 5:1, and why a range.} The ratio is an assumption with anchors: 5:1 is the
-Statlog German Credit cost matrix [5]; our own training rows imply more --- a defaulter's median
-bill is NT\$19{,}868, so at 50--70\% loss given default a missed default
-destroys NT\$10--14k, while a false alarm forgoes about NT\$340 a month of margin
-(1.5\% of the median good bill, NT\$22,915) for 1--3 months, an implied 10:1 to
-40:1 --- so 5:1 is one point of a 1:1--20:1 sweep (Table~\ref{tab:saving}; every ratio and
-model: Table~\ref{tab:a-costsens}).
+\paragraph{The cut-off, not the ensemble, is the lever.}
+Moving the cut-off saves far more than changing the model. At $r$:1 one caught defaulter is worth $r$ false alarms, so the cheapest cut-off is where only one in $r + 1$ of the next clients flagged would default. For a calibrated model that is a PD of $1/(1+r)$, 0.167 at 5:1, close to the searched 0.15 for the logit and XGBoost (badly calibrated naive Bayes needs a higher one; training OOF; Figures~\ref{fig:a-rocpr-oof}, \ref{fig:all-pr}). At 5:1 on the test set, moving the logit's cut-off saves 1,937 cost units (false-alarm equivalents); switching to XGBoost saves a further 145, but its interval includes zero. At 10:1, nearer our anchors, both savings are clearly positive (Table~\ref{tab:saving}). The 5:1 flag is broad: XGBoost flags about half the test clients, 1.8 false alarms per defaulter caught (Table~\ref{tab:a-operating}), so it suits only a cheap action such as a reminder.
 
-\paragraph{The cut-off is worth more than the model.}
-At 5:1 (Table~\ref{tab:saving}), moving the logit's cut-off from 0.5 to the
-training out-of-fold optimum 0.15 saves 1,937 [1,604, 2,218] of its 7,063 test
-cost units (27\%); replacing it by XGBoost at its own cut-off saves a further 145 [$-$18, 299], an interval that includes zero. At
-every ratio above 1:1 the threshold saving grows with the ratio while the model
-saving stays between 123 and 450 units, its interval including zero at 5:1 and again at
-20:1 --- where the exercise degenerates: the cut-off is 0.01, flagging 99.9\% of the book, the
-trivial flag-everyone rule. The ratio is an operational dial, not a model-selection criterion: the two indistinguishable ensembles are 17 units apart at 5:1 and 20 the other way at 10:1
-(Table~\ref{tab:a-costsens}), within noise.
+\paragraph{The best ranker need not be the cheapest.}
+AUC averages over all cut-offs, while a bank works at one, where ROC curves can cross: KNN, with a higher AUC than the logit, costs more at 5:1 on test (5,219 against 5,126; Table~\ref{tab:headline}). Among the tied ensembles the cheapest rotates as the ratio moves from 1:1 to 15:1 (training OOF; Table~\ref{tab:a-ratio-pref}), so we name no cost winner. Choose the model for ranking, the cut-off from the bank's costs, and calibrate; above about 15:1 most are flagged, so a model's value lies in ordering a graded action (reminders for most, calls for the riskiest).
 
-\paragraph{Theory and search agree --- if the scores are probabilities.}
-Minimising expected cost gives the closed form $t = C_{FP}/(C_{FN}+C_{FP}) =
-1/(1+r)$, 0.167 at 5:1; the search over training out-of-fold probabilities
-returns 0.15 for both the logit and XGBoost (Tables~\ref{tab:headline} and \ref{tab:saving}). The agreement is a calibration test passed (XGBoost: Brier 0.131); naive Bayes, Brier 0.203,
-fails it: its
-searched cut-off is 0.25, and 0.15 costs more (5{,}473 against 5{,}337 on the frozen test scores).
-
-\paragraph{Different objectives point to different models.} XGBoost, the CV winner,
-serves ranking (test AUC 0.789, AP 0.578; at its training cut-off 0.15 its test cost is 4{,}981, recall
-0.784, 25\% below its 6{,}642 at 0.5); the monotone XGBoost serves
-governance, where nine cost units (4{,}990 at 0.14, 0.2\%) buy a score that can
-never fall when a borrower delays another month; and the 17-leaf tree serves where every rule
-must be readable to a customer or an auditor (CV 0.769, test 0.776).
+\paragraph{A one-line rule, and who is on the first call list.}
+``Flag anyone with any payment delay in six months'' has no fitted parameter yet gets most of the way to the models' cost; it misses the 35.5\% of defaulters never late, where balances, limit and utilisation earn their place. At 5:1 in training CV XGBoost costs 7.7\% less than the rule (5/5 folds), the logit almost nothing (post-freeze; Table~\ref{tab:a-simplerules}; the rule was the cheapest of four candidates on these rows, a mild selection effect). A team that can call only the riskiest 10\% gains little from a model. On training OOF scores, XGBoost's top 10\% catches 31.5\% of defaulters and September status alone 30.9\%, because the top of any ranking is filled with clients already two or more months late (Table~\ref{tab:a-topk}). A model's value over the one-line rule is real but modest and lies further down the list: size the action to capacity.

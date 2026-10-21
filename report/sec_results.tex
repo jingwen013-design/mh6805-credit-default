@@ -1,49 +1,48 @@
 \section{Results}
 \label{sec:results}
 
-\paragraph{Reading the table.}
-Table~\ref{tab:headline} is ordered by training CV AUC, the selection score, and grouped against the two simple models this study set out to beat; test metrics stand beside it and rank nothing. The KNN benchmark reaches CV AUC 0.770 (test 0.771), the logistic baseline 0.760 (0.764; ridge and lasso logits reproduce it to four decimals), and the whole field spans 0.05 test AUC (0.740 to 0.789) because every family re-discovers the recent repayment-status codes (\texttt{PAY\_1} alone has univariate AUC 0.686); what separates them is what else they do with that signal.
+\paragraph{Four tiers, and a tie at the top.}
+The four tiers of Table~\ref{tab:headline} hold in every fold (Figure~\ref{fig:a-foldstab}). The forest averages 500 de-correlated trees on bootstrap samples [3]; boosting adds small trees in turn, each fitting the errors left [6]. Both learn steps and curves unaided and tie: XGBoost leads the other two by 0.0013--0.0014 training-CV AUC, both intervals including zero (Table~\ref{tab:a-foldstab}). A bank may pick any on cost or explainability; XGBoost leads only by the preset highest-CV rule.
 
 \begin{table}[t]
-  \caption{Headline model per family, ordered and grouped by training CV AUC (5-fold, 20{,}975 training rows; the selection score). Every other column is on the fixed test set ($n = 8{,}990$, prevalence 0.2212) and ranks nothing; brackets: 95\% bootstrap intervals over test rows ($B = 500$; paired differences in the text). $t$ minimises 5:1 expected cost on training out-of-fold probabilities. All 34 round-1 variants: Table~\ref{tab:a-allmodels}; operating points: Table~\ref{tab:a-operating}. $^\dagger$Tuned on a 6{,}000-row subsample (subsample CV AUC 0.768); shown is its full-training out-of-fold AUC.}
+  \caption{Headline model per family by training CV AUC (mean of five fold AUCs $\pm$ sample SD; the selection score; ranks among 11; lasso logit not shown). Test columns ($n = 8{,}990$; frozen, ranking nothing): point estimates, 95\% paired-bootstrap intervals ($B = 500$); $t$: 5:1 cut-off (training OOF). $^\dagger$Mean of shared-fold OOF AUCs (pooled 0.761; 0.768 on its tuning subsample).}
   \label{tab:headline}
   \centering
   \footnotesize
-  \setlength{\tabcolsep}{4pt}
-  \begin{tabular}{@{}lcccccrr@{}}
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}lccccccr@{}}
     \toprule
-    Model & CV AUC & Test AUC [95\% CI] & Test AP & Brier & $t$ & Cost at 0.5 & Cost at $t$ \\
+    Model & CV AUC $\pm$ SD & Ranks & Test AUC [95\% CI] & Test AP & Brier & $t$ & Cost at $t$ \\
     \midrule
-    \multicolumn{8}{@{}l}{\emph{Reference models}}\\
-    KNN ($K = 101$)            & 0.770 & 0.771 [0.758, 0.782] & 0.542 & 0.136 & 0.16 & 6{,}854 & 5{,}219 \\
-    Logistic regression        & 0.760 & 0.764 [0.751, 0.776] & 0.523 & 0.138 & 0.15 & 7{,}063 & 5{,}126 \\
-    \midrule
-    \multicolumn{8}{@{}l}{\emph{Above the benchmark on CV}}\\
-    XGBoost                    & 0.786 & 0.789 [0.776, 0.800] & 0.578 & 0.131 & 0.15 & 6{,}642 & 4{,}981 \\
-    Gradient boosting          & 0.785 & 0.787 [0.775, 0.798] & 0.576 & 0.131 & 0.14 & 6{,}630 & 5{,}060 \\
-    Random forest (500 trees)  & 0.785 & 0.787 [0.774, 0.798] & 0.576 & 0.132 & 0.17 & 6{,}598 & 4{,}998 \\
-    MLP (64--32)               & 0.776 & 0.773 [0.760, 0.785] & 0.551 & 0.135 & 0.19 & 6{,}625 & 5{,}136 \\
-    \midrule
-    \multicolumn{8}{@{}l}{\emph{Not above the benchmark on CV (the tree ties it)}}\\
-    Pruned tree (17 leaves)    & 0.769 & 0.776 [0.763, 0.787] & 0.535 & 0.133 & 0.16 & 6{,}933 & 5{,}085 \\
-    SVM (RBF, balanced)        & 0.761$^\dagger$ & 0.762 [0.749, 0.774] & 0.494 & 0.145 & 0.12 & 9{,}316 & 5{,}155 \\
-    LDA                        & 0.757 & 0.759 [0.746, 0.772] & 0.525 & 0.139 & 0.12 & 6{,}618 & 5{,}181 \\
-    Gaussian naive Bayes       & 0.736 & 0.740 [0.726, 0.753] & 0.504 & 0.203 & 0.25 & 5{,}422 & 5{,}337 \\
+    \multicolumn{8}{@{}l}{\emph{Tree ensembles --- tied (ranks 1--3 in every fold)}}\\
+    XGBoost [6]                & 0.786 $\pm$ 0.008 & 1--2 & 0.789 [0.776, 0.800] & 0.578 & 0.131 & 0.15 & 4{,}981 \\
+    Gradient boosting          & 0.785 $\pm$ 0.008 & 2--3 & 0.787 [0.775, 0.798] & 0.576 & 0.131 & 0.14 & 5{,}060 \\
+    Random forest, 500 trees   & 0.785 $\pm$ 0.009 & 1--3 & 0.787 [0.774, 0.798] & 0.576 & 0.132 & 0.17 & 4{,}998 \\
+    \multicolumn{8}{@{}l}{\emph{Neural network (4th in every fold)}}\\
+    MLP (64--32)               & 0.776 $\pm$ 0.008 & 4    & 0.773 [0.760, 0.785] & 0.551 & 0.135 & 0.19 & 5{,}136 \\
+    \multicolumn{8}{@{}l}{\emph{Benchmark tier (ranks 5--7)}}\\
+    KNN ($K = 101$), benchmark & 0.770 $\pm$ 0.010 & 5--7 & 0.771 [0.758, 0.782] & 0.542 & 0.136 & 0.16 & 5{,}219 \\
+    Pruned tree (17 leaves)    & 0.769 $\pm$ 0.008 & 5--6 & 0.776 [0.763, 0.787] & 0.535 & 0.133 & 0.16 & 5{,}085 \\
+    SVM (RBF)                  & 0.764$^\dagger$ $\pm$ 0.013 & 6--7 & 0.762 [0.749, 0.774] & 0.494 & 0.145 & 0.12 & 5{,}155 \\
+    \multicolumn{8}{@{}l}{\emph{Linear and generative (ranks 8--11)}}\\
+    Logistic, baseline         & 0.760 $\pm$ 0.011 & 8--9 & 0.764 [0.751, 0.776] & 0.523 & 0.138 & 0.15 & 5{,}126 \\
+    LDA                        & 0.757 $\pm$ 0.012 & 10   & 0.759 [0.746, 0.772] & 0.525 & 0.139 & 0.12 & 5{,}181 \\
+    Gaussian naive Bayes       & 0.736 $\pm$ 0.012 & 11   & 0.740 [0.726, 0.753] & 0.504 & 0.203 & 0.25 & 5{,}337 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\paragraph{What the ensembles buy.}
-Measured against the best simple model, not the weakest, the gain is smaller than it looks: XGBoost is 0.018 test AUC above KNN, not the 0.025 above the logit. A pruned tree with 17 leaves ties the benchmark on CV (0.769 against 0.770) and beats it on test (0.776 against 0.771): the repayment signal is a step function --- the root splits on the worst delay on file (\texttt{MAX\_DELAY} $\le 1.5$) and the arrears branch next on the current status (\texttt{PAY\_1} $\le 1.5$) --- and smooth models pay for smoothing it. KNN smooths most, averaging a step over $K = 101$ neighbours in 32 scaled and one-hot dimensions (without the scaler its CV AUC falls to 0.659); the logit cannot bend at all, pricing every missed payment alike and averaging the U in utilisation into one slope (odds ratio 1.33 per SD). The forest and the two boosted ensembles turn the step into a graded score, and their margin over the single tree is concentrated in average precision (+0.041 to +0.044 AP against +0.011 to +0.013 AUC). The network clears the benchmark on CV (0.776) but stops below the ensembles: step-like delay effects cost a tree one split and a network several units.
+\paragraph{Local and step-wise models: KNN and the tree.}
+The KNN benchmark and the pruned tree tie because both, in effect, group clients by their repayment codes. KNN scores a client by the default share among its 101 nearest neighbours in 32 columns. As the status codes are discrete, a neighbourhood is in effect ``clients with the same recent record'', and compressing the columns to 15 principal components does not help (training CV, post-freeze; Table~\ref{tab:a-tuningchecks}). The pruned tree, 17 rules splitting first on the worst delay, ties KNN on CV (0.769 against 0.770, ahead in 3 of 5 folds); its higher test AUC is reported, not used to rank. An auditable tree matches the benchmark.
 
-\paragraph{What falls below the benchmark, and why.}
-Three mechanisms. The RBF SVM was tuned on a 6,000-row subsample and there beat a logit fitted on the same rows (CV AUC 0.768 against 0.765), but refitted on all 20,975 rows its out-of-fold AUC is 0.761: the tuning set was not the fitting set, and hinge loss is not a proper scoring rule, so ordering away from the margin is not what it optimises. LDA shares the logit's linear form (cosine 0.93 between the coefficient vectors) but estimates it from a pooled Gaussian covariance on bill and payment columns with skewness 2.7--32.6, so tail noise enters the discriminant; QDA, with a covariance per class, lets it in twice. Naive Bayes is last because independence fails where the data are richest: the six bill columns correlate at 0.80--0.95, so one balance is counted six times, and 35.8\% of its test probabilities land below 0.01 or above 0.99.
+\paragraph{Why the logit trails: coding first, shape second.}
+The logit reads each status code as one evenly spaced number, forcing $-2 < -1 < 0 < 1 < \dots$ onto a line. Coded by meaning (months late plus flags for $-2$ and $-1$), ``no consumption'' and ``paid in full'' get their own risk. This lifts the logit from 0.760 to 0.768 ($+0.0082$ [$+0.0021$, $+0.0143$], 5/5), within noise of KNN; KNN and the MLP, which already let each code act alone, gain nothing (training CV, post-freeze; Table~\ref{tab:a-paycoding}). Recoding closes most of the gap to KNN but only a third of the gap to XGBoost: even a one-hot logit, free to give each code any risk, still trails XGBoost by 0.017 (5/5 folds). Bills and utilisation move together, so their coefficients take opposite signs: read them as a block (Figure~\ref{fig:logistic-coefficients}). For a bank, recoding cheaply lifts a transparent scorecard to the benchmark.
 
-\paragraph{Which differences are real.}
-In a paired bootstrap over the 8,990 test rows ($B = 500$), XGBoost's margin over the KNN benchmark, +0.0181 [+0.0125, +0.0237] AUC, excludes zero, as do its margins over the logit (+0.0249 [+0.0183, +0.0314]), the network and the pruned tree. Inside the ensemble group it does not: the random forest sits 0.0020 [$-$0.0010, +0.0051] behind, so the two are indistinguishable and we claim no winner between them; gradient boosting is borderline (+0.0015 [+0.0001, +0.0030] on AUC, nothing on AP); XGBoost's own interval is wider than every gap within that group. Calibration: for the ensembles and the logit, Brier 0.131 (XGBoost), 0.131 (gradient boosting), 0.132 (forest) and 0.138 (logit), with XGBoost's mean probability 0.220 against prevalence 0.221, so the outputs can be read as PDs (Figure~\ref{fig:calibration}); naive Bayes (0.203) and QDA (0.166) cannot, their assumption failures pushing probability mass to the extremes.
+\paragraph{Smooth and generative models: close in ranking, not in probabilities.}
+Smooth models add little ranking; wrong assumptions about the data distort the PDs. The MLP is fourth in every fold, $+0.006$ over KNN in all five: suggestive, not decisive (one seed; CV AUC chose its grid). The radial-basis-function (RBF) SVM maximises a margin, so its scores become probabilities only after Platt scaling, a logistic map from score to PD fitted on held-out scores [17]. Linear discriminant analysis (LDA) assumes bell-shaped amounts with one shared covariance, though bills are heavily skewed, and naive Bayes counts one balance six times, as the bills are highly correlated. Their training OOF calibration slopes (post-freeze; 1 = calibrated, lower = PDs too extreme) are 0.749 and 0.141 against 1.015 for XGBoost (Table~\ref{tab:a-foldstab}, Figure~\ref{fig:calibration}): such PDs must not price or provision.
 
-\paragraph{Imbalance moves the threshold, not the ranking.}
-With the samplers inside the folds [2], class weighting, SMOTE and 1:1 under-sampling move test AUC by at most 0.0012 for the logit and 0.0076 for the forest (0.7744--0.7820), never upwards by more than noise (on CV the weighted logit is +0.0007 above the plain one). What moves is the intercept ($+1.24$ log-odds for the weighted logit): balanced-at-0.5 agrees with plain-at-0.22 on 99.4\% of test rows, so the apparent recall gain, 0.32 to 0.63, is a relabelled threshold bought with calibration (Brier 0.138 to 0.190), which Platt scaling on training scores buys back (0.139, 5:1 cut-off 0.15; Table~\ref{tab:a-recal}). As a negative control we ran SMOTE on all 29,965 rows \emph{before} the split: the forest's ``test'' AUC reaches 0.914, +0.140 over the honest 0.774, because 72.6\% of the leaky test defaulters are synthetic points interpolated from training neighbours, while the logit moves only to 0.770 --- a leak inflates \emph{and} re-orders, and cross-validation cannot catch it once it precedes the split.
+\paragraph{Class imbalance: weight the decision, not the data.}
+Class weighting tells the logit there are more defaulters than exist. It mostly shifts the intercept ($+1.24$ log-odds), which moves the cut-off and spoils calibration until Platt scaling undoes it (Table~\ref{tab:a-recal}). Run inside the folds with fixed, untuned learners, SMOTE (synthetic defaulters interpolated between real neighbours [5]) costs the forest 0.0055 training-CV AUC, while weighting and under-sampling move it by under 0.001 (Figure~\ref{fig:imbalance-comparison}). Applied after one-hot encoding, SMOTE also invents impossible clients, with fractional dummies and status codes. Run before the split, SMOTE lifts the forest's ``test'' AUC to 0.914 against an honest 0.774, as synthetic ``test'' defaulters interpolate training ones. Set the cut-off from costs or recalibrate; never resample before splitting.
 
-\paragraph{Segmentation, kept secondary.}
-RUAN Hangjing's 30 September configuration (reproduced 21 October; Tables~\ref{tab:a-kselect}--\ref{tab:a-kprofiles}, Figure~\ref{fig:kmeans-selection-repro}) runs PCA on the 32 preprocessed columns (10 components carry 81.8\% of the variance) and K-means on them. $K = 5$ has the highest silhouette, 0.269 (weak to moderate; $K = 2$--$8$: 0.260/0.267/0.257/0.269/0.209/0.215/0.218), is stable over 100 bootstrap refits (ARI 0.96 [0.75, 0.99]; per-cluster Jaccard 0.97/0.97/0.79/0.97/0.95), and Ward linkage agrees with it only moderately (ARI 0.45--0.59). As an extra predictor the one-hot label changes the logit's AUC by $+0.0001$ [$-0.0004$, $+0.0007$] and AP by $-0.0003$ [$-0.0016$, $+0.0010$] in $5 \times 5$ repeated CV on the training set with the Nadeau--Bengio interval [8], so by the rule fixed in advance it is not used and the test set is not consulted for it. Cluster default rates range from 6.9\% to 58.5\% only because the inputs contain the delay and limit variables --- the label as a score has AUC 0.648 against 0.724 for months in arrears alone --- so the segments are descriptive, not economically distinct.
+\paragraph{Segmentation stays descriptive.}
+K-means on 10 principal components picks five segments, but they overlap (silhouette 0.27: weak to moderate separation) and shift across random starts (Table~\ref{tab:a-kselect}). A segment label is a coarse summary of columns the logit already sees, so in training CV it moves the logit's AUC by $+0.0001$ [$-0.0004$, $+0.0007$]. Not adopted, it was never test-scored (a round-1 $K = 4$ version was; Table~\ref{tab:a-allmodels}). Segment default rates differ largely because the inputs include delay and limit: segments describe the book; they do not price risk (Table~\ref{tab:a-kprofiles}).

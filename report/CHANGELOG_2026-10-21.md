@@ -268,3 +268,295 @@ Final build (`zsh build_report_tex.sh`): `正文页数：7 · 附录从第 8 页
 - **Abstract: spend freed words on an inference clause** — not done; the abstract is at 148 words and the spec's ceiling is 150, with no room for a clause that would survive the next verifier's count.
 - **4-dp endpoints "0.7887 to 0.7870"** — not adopted (see sec_interpretation above): 3-dp levels + 4-dp differences avoids the subtraction mismatch that round 2 fixed.
 - **"Different objectives" paragraph fully on one page** — partially: Table 3 no longer cuts across it (now `[t]`), but the paragraph still spans the 6→7 page break as ordinary running text; pulling it onto page 7 would need the three freed lines spent on new content, which no verified finding asks for.
+
+# Round 4 (22 Oct): appendix for post-review checks
+
+Scope: `code/make_report_appendix.py` only, following `REPORT_SPEC_v3.md` §4; `report/sec_appendix.tex` regenerated with `cd code && python3 make_report_appendix.py` (never edited by hand). No body `sec_*.tex`, no file under `results/` or `figures/` touched; nothing scored on the test set; nothing committed. Every new value is read from the named result file at build time (no typed numbers except labels).
+
+**Build check** (scratch copy of `report/` with the body as it stood on 22 Oct, `build_report_tex.sh`): 0 LaTeX errors, 0 overfull boxes, 0 underfull boxes inside the appendix, 0 undefined references, no `??` in the PDF, no `MISSING FIGURE`. Appendix = 51 pages (Tables A1–A33, Figures A1–A46). The body was mid-edit in that copy (8 pages, owned by the body agent). `report/MH6805_Group_Project_Report.pdf` was not rebuilt in place, to avoid racing the body agent's build.
+
+## Kept from the interrupted first attempt (already matched the spec)
+`tab:a-variables` (†-marked −2/0, a-priori EDUCATION/MARRIAGE mapping, PAY_RATIO_MEAN definition), `tab:a-gradients` caption, `tab:a-tuning` (Rows / Settings / Rule columns, SVM 0.7635†), `tab:a-monotone` note (price −0.0019 CV AUC, 0/5; test −0.0016 as a check), `tab:a-testlog` after `tab:a-freeze`, `tab:a-nestedcv` (KNN frozen 24-setting grid row 0.7684 ± 0.0073; RUAN refit 7,065 / 0.17 / 5,141 moved into the note), `tab:a-allmodels` (SVM per-fold means 0.764† / 0.749†, 0.05-floor sentence, K = 4 / K = 5 wording), `tab:a-operating` (Precision, Flagged %), the `tab:a-costsens` training-OOF row, the appendix lead paragraph.
+Bugs left by that attempt and fixed: `SHORT_NAME` was used but never defined (NameError); the saving table's local `ci = lambda …` overwrote the module-level `ci()` helper (renamed `ci0`); `stack()` joined lines with `\\` so a line starting with `[` (every interval) was read as `\\[<skip>]` — now `\\ {}`.
+
+## New subsection A.2 `sec:a-postfreeze` — Post-freeze checks on the training rows (21 October 2026)
+Lead paragraph as specified (training five-fold CV on `cv_folds.csv`, seed 2607526; never test-scored; selects nothing; mean / NB interval / k/5 convention; source `POST_REVIEW_CHECKS.md`). Thirteen tables, in body order:
+- `tab:a-paycodes-rates` (A21) — codes −2…8 × Sep n / default % and Aug–Apr n; note with code-1 facts 2,540 / 1,173 (46.2 %) / 1,156 (45.5 %) / 353 (40.2 %) / 422 and backward shares 59.1 % / 85.9 % (share of September's code-2 / code-3 clients who were two months late in August; relabelled in round 5, was "roll-forward") (`pay_code_default_rates.csv`, `pay_coding_summary.json` pay1_code1).
+- `tab:a-paycoding` (A22) — 5 models × 3 codings; AUC ± SD (ddof 1), ΔAUC / ΔAP with NB and k/5, AP, Brier; models as group rows (width). Note: cross-model +0.0261 / +0.0179 / +0.0172 / −0.0016 (2/5); recoding closes 84 % of the KNN–logit gap and 31 % of the XGBoost–logit gap (computed 1 − 0.017856/0.026054); recoded-logit coefficients +0.84 / +0.61 / +0.59, PAY_2…PAY_6 −0.42 … −0.11, sign agreement 5/5 checked at build time.
+- `tab:a-foldstab` (A23) — two blocks: fold AUCs, mean ± SD, ranks; pooled AP (lift), Brier, cal. slope, XGBoost − model mean k/5, NB interval, Holm p. Note: rank blocks verified against the CSV at build time (generator stops if they fail); MLP − KNN +0.0062 [−0.0003, +0.0127] 5/5 and tree − KNN −0.0011 [−0.0072, +0.0050] 3/5 computed with `corrected_t_ci(diffs, 4, 1)`; SVM − logit +0.0033 [−0.0032, +0.0098] 5/5 from the stored `svm_selection_statistics.json`.
+- `tab:a-tuningchecks` (A24) — GBM full-set grid (0.7858; +0.0008 [−0.0003, +0.0019] 5/5; frozen ranks 3; Spearman 0.88; XGBoost − winner +0.0005 3/5), KNN nested CV frozen grid (0.7684 ± 0.0073; −0.0016 [−0.0050, +0.0018]; K = 101 in 3, 151 in 2, distance in 2), KNN in fewer dimensions (5 rows), XGBoost extension (0.78637, +0.00008 [−0.0006, +0.0008] 3/5), unprobed grid edges (selected from `grid_edge_check.csv` evidence; QDA reg_param 0.5 read from `results/qda.json` cv_grid because the edge file has no QDA row), SVM selection statistic (0.768 / 0.761 / 0.764, rank 7 under each).
+- `tab:a-ablation-depth` (A25) — rounds per fold printed under the re-tuned AUC (width); note +0.0261, +0.0225 [+0.0111, +0.0338], +0.0036 [+0.0022, +0.0050], +0.0107, +0.0053, DiD +0.0017 [−0.0014, +0.0048], engineered +0.0372 / +0.0044; "additive booster recovers 86 %" computed 0.02247/0.02605.
+- `tab:a-ablation-history` (A26) — H0/H1/H3/H6 × raw / six-month / window, XGBoost and logit; note +0.1389, +0.0108 [+0.0076, +0.0139], +0.0024 [−0.0004, +0.0052], −0.0003 [−0.0028, +0.0022], +0.0175 [+0.0128, +0.0221]; summary list read from `ablation_checks_summary.json`; code-1 caveat.
+- `tab:a-ablation-demo` (A27) — **transposed** (rows = quantities, columns = XGBoost / plain logit) because seven interval columns do not fit the text width; same content: AUC with / without, ΔAUC + bootstrap interval, ΔAP, ΔBrier, Δ cross-fitted cost per fold, Δ recall. Note confirms the no-demographics OOF vectors equal the fairness check's (`fairness_summary.json` ablation_file identical).
+- `tab:a-fairness` (A28) — "All" row + 13 groups, reference marked; XGBoost / logit / demographics-free XGBoost columns; note with cut-offs 0.15 / 0.15 / 0.14, ratios 1.18 vs 1.19, logit 1.36 (FPR 1.44), married 1.33, neutralised 1.08/1.00 and 1.09/0.99, demographics-free 1.10/0.99, under-30 1.11 → 1.17, proxies 0.60 / 0.65 / 0.56 / 0.69 with LIMIT_BAL leading (checked), density 5.1 % vs 3.5 %, max calibration gap 0.50 pp.
+- `tab:a-monotone-respec` (A29) — Part A six variants (coding as group rows), Part B sweep counts 576 → 573, 213, 3 → 0, 360 (all thin), respecified 199, cross-state 413 (0.062) / 0 / 538 (0.076) / 35 (0.024); other variants 56 (0.020), 64 (0.028) in the note; thin-cell rule (< 100 clients) from `sweep_definition`.
+- `tab:a-simplerules` (A30) — 4 rules, 2 blankets, 2 models; savings per 1,000 rounded to integers (width); recall at the same share in two columns; note: any-delay rule cheapest of four candidates (mild selection effect), XGBoost 7.7 % cheaper than it (computed 45.29/585.60).
+- `tab:a-ratio-pref` (A31) — two blocks (13 columns do not fit): cheapest (cut-off), flagged, recall, cost/1,000, runner-up (margin %), top-3 spread; cross-fitted cheapest (marks "differs" at 3:1), runner-up − cheapest [NB], k/5, logit and tree ranks (gap %), best blanket (saving %). No winner named.
+- `tab:a-topk` (A32) — 11 models, 3 rule scores, random list × 10/20/30 %; XGB − row at 10 % in pp with NB and k/5; note gives the boundary ties and the perfect-list ceiling (45.2 / 90.4 / 100.0 %).
+- `tab:a-rcheck` (A33) — 19 rows, d = diagnostic, c = contrast; notes shortened in the generator (`R_NOTE`, labels and settings only; full notes stay in the CSV); caption's "13 of 15 mirrors within 0.005" and "Spearman 0.99" are computed from the CSV at build time.
+
+## New figure section A.3 `sec:a-postfreeze-figs` and figure labels
+`FIGS` items take an optional third element (explicit label). New: `fig:a-foldstab` (fold_stability.png), `fig:a-ablation` (ablation_summary.png), `fig:a-fairness` (fairness_flag_rates.png), `fig:a-rocpr-oof` (roc_pr_oof.png), `fig:a-rcheck` (r_crosscheck.png); the first three at full text width (`WIDE_FIGS`). The section comes right after the post-freeze tables, so the older figures are now A6–A46 (all body pointers are `\ref`s). "Exploratory analysis" carries `sec:a-figs`; the appendix lead now points to A.2, A.3, `tab:a-testlog` and `sec:a-figs`.
+
+## Changes to existing generator tables, notes and captions
+- `tab:a-saving`: new columns "Flagged (logit, %)" (`share_flagged_logistic`) and "XGB saving vs best blanket" = min(flag nobody, flag everybody) − XGBoost tuned cost, with % (e.g. 5:1: 2,020, 28.9 %); intervals stacked under the means; caption says frozen configurations, reporting only.
+- `tab:a-costsens`: note explains the training-OOF row and the abbreviations ("---" at 8:1, a ratio the OOF file does not have).
+- `tab:a-importance`: note adds that SHAP (XGBoost) vs MDI / permutation (forest) Spearman values are cross-model.
+- `tab:a-operating`, `tab:a-tuning`, `tab:a-testlog`: two-line headers / narrower columns (they were 24.7, 13.9 and 2.1 pt overfull after the first attempt's new columns).
+- `$n = 20{,}975$` in math mode (was typeset "20, 975") in `tab:a-gradients` and `tab:a-paycodes-rates`.
+- Figure captions: `all_roc`, `all_pr` (+ "Test set, frozen configurations; reporting only"); `rf_importance` (+ MDI favours columns with many split points); `shap_beeswarm`, `shap_dependence_pay1` (+ TreeSHAP splits credit among PAY_1 / MAX_DELAY / N_MONTHS_DELAYED, read as a block); `pdp_main` (+ derived features held fixed; PAY_1's PDP rises far less than its raw default rate, Table A21); `pdp_interaction` (+ 25 % of PAY_1 × LIMIT_BAL cells empty, read from `pdp_summary.json`); `monotone_pay1` (+ as-frozen sweep, see Table A29); `logistic_coefficients` (+ per level / per SD, read blocks, almost no shrinkage, "others" education = coding artefact).
+
+## Not done here
+Body text (`sec_*.tex`), slides, `qa_bank.md`, README: other agents / out of scope. The red contribution percentages in `tab:a-workload` stay red (not confirmed by the group).
+
+# Round 4 (22 Oct): body rewrite
+
+Scope: `report/sec_front.tex` (abstract, introduction; contribution statement untouched, nine shares still `\textcolor{red}`), `sec_data.tex`, `sec_methods.tex`, `sec_results.tex`, `sec_interpretation.tex`, `sec_operating.tex`, `sec_conclusion.tex` (incl. the reference list), following `REPORT_SPEC_v3.md` §1–§3, §6, §8. The interrupted first attempt had drafted every section to the v3 outline but left the body at 9 pages (2 overfull lines, abstract 151 words); this round kept its structure and wording where it matched the spec and cut ≈ 1,050 words (4,250 → 3,500 body words) to fit. No file under `results/`, `figures/` or `code/` touched; `sec_appendix.tex` not edited; nothing scored on the test set; nothing committed.
+
+**Build** (`cd report && bash build_report_tex.sh`): 正文页数 7, 附录从第 8 页开始, 总页数 58, 出界的行 0; no LaTeX error; no `??` anywhere in the PDF; "Contribution statement" on page 1; page 7 ends at y = 701 pt of 722 (about two reference lines spare). Abstract 146 words (whitespace split, "[−18, 299]" = 2).
+
+## Writing pattern (every paragraph)
+Run-in heading = the claim; one sentence of claim → mechanism in plain words → at most two quoted numbers (interval and k/5 count as one) → what it means for a bank/regulator. Every post-freeze number carries "training CV", "training rows" or "training OOF" in its paragraph and a pointer to its appendix table (rule 7). Test-set numbers only for frozen configurations (Table 1, Table 2 right half, ¶6.1, ¶4.1's forest gap, ¶6.3/6.4, §7(1)).
+
+## sec_front.tex
+- Abstract: spec draft (§2 §0), tightened to 146 words ("used as cut-offs", "with a nearest-neighbour benchmark", "most of the rest one-variable shape"); "choosing everything by training CV" restored (the first attempt's "every setting and cut-off" pushed it to 151).
+- ¶1.1 crisis vintage: Taipei Times reference and its clause dropped (spec cut order (e)); the crisis is now cited to Yeh & Lien [19]; CBC September 2005 [4]; FSC NT$495.3 bn / −48.8 % [9]; "consistent with", forward pointer to §7(iii).
+- ¶1.2 explanations: EU AI Act Annex III 5(b) [8], MAS FEAT Principle 13 [15], BoE–FCA 32 % / 64 % "as worded" [1]; "present-day benchmarks … we claim no compliance".
+- ¶1.3 objectives: four numbered questions; "predict", not "drive" (POST_REVIEW 7.7).
+
+## sec_data.tex
+- ¶2.1: dataset reference with URL, DOI, CC BY 4.0 [18], described in [19] (9.1); undated snapshots and the LIMIT_BAL flattery caveat (2.4); dedup wording (2.5); repository sentence kept.
+- ¶2.2 (new core paragraph): codes are states; −2/0 readings undocumented (1.4); 13.7 / 16.9 / 12.9 %; code 1 = 2,540 vs 21; 46 % / 45.5 %.
+- ¶2.3 + ¶2.4 merged ("Where the risk gradients are"): 12.9 → 67.6 % with 33.9 % flagged as the mixture (1.4); limit 32.1 → 13.7 % as association (7.7); utilisation U 24.2 / 14.4 / 28.1 % with the left arm "a data pattern of uncertain meaning" (7.12); "sex about 4 points, age up to 8 points" (5.6).
+- ¶2.5: a-priori mapping wording (1.5); "others" education = coding artefact (1.6); ratio capped at 5 (2.1); 936 / 3.12 % / 37.0 vs 21.7 % in the training partition.
+
+## sec_methods.tex
+- ¶3.1: verifier's protocol wording condensed (4.1, 4.4, 4.11): round 1 scored 16–18 Sep before any freeze, registered 19 Oct; "frozen at its first scoring"; identical re-runs and RUAN's 30 Sep re-fits; linear-SVM loss swap; test-AUC presentation until 19 Oct; definition of **post-freeze checks** with pointer to Tables A21–A33. No "scored once/touched once/untouched".
+- ¶3.2 + ¶3.3 merged ("Tuning budgets, nested CV, and how to read the numbers"): GBM tuned on 10,487 rows, SVMs on 6,000, "only the monotone vector and bagging's leaf size were fixed a priori" (3.1, 3.11); core six (3.10); nested CV for KNN and the logistic family only, KNN over the same 24-setting grid 0.768 ± 0.007 (3.2, 3.4); weighting + Platt 0.43 % costlier; GBM full-grid check 0.0008; plain metric definitions, NB interval notation [16], R cross-check 13 of 15 (§10). RUAN's footnote stays moved to `tab:a-nestedcv`.
+
+## sec_results.tex
+- Table 1 kept as built by the first attempt (spec columns: CV AUC ± SD, fold ranks, tiers, SVM 0.764†, no "Cost at 0.5"); "Fold ranks" header → "Ranks" and "Random forest (500 trees)" → "Random forest, 500 trees" to remove the 14.9 pt overfull line; caption shortened (spec cut (g)) but keeps selection score, ddof 1, ranks among 11, point-estimate convention, B = 500, † note and the four pointers.
+- ¶4.1 tie at the top (5.1, 5.2, 5.4); ¶4.2 KNN and tree, PCA check 0.768 vs 0.770, "its higher test AUC ranks nothing" (3.9, 4.2); ¶4.3 coding first, shape second — 0.760 → 0.768, a third of the XGBoost gap, one-hot still −0.017 (1.1, 7.6); no "cannot bend", no OR per SD.
+- ¶4.4 + ¶4.5 merged ("Smooth, generative and re-weighted models"): MLP "suggestive, not decisive" (5.3); SVM easier-subsample sentence (3.5); LDA/NB calibration slopes 0.749 / 0.141 with Table A23 (training OOF); +1.24 intercept shift, Platt [17]; fixed untuned learners; "SMOTE costs the forest; weighting and under-sampling move it by under 0.001" (3.7, 5.5); leakage 0.914 vs 0.774. "35.8 %" removed.
+- ¶4.6 segmentation: silhouette 0.27, ARI 0.96 / min 0.58 (9.5), ΔAUC +0.0001 in repeated training CV, never test-scored, K = 4 pointer (4.9), "not economically distinct".
+
+## sec_interpretation.tex
+- ¶5.1 why status dominates (7.1): 85.9 % backward share (relabelled in round 5, was "roll-forward"), 0.63 → 0.77 "September month (status, bill, payment)"; no unsaved roll rates.
+- ¶5.2 shape then small interactions (7.2, 7.3, 7.5, 7.10): 0.0225 of 0.0261; +0.0036 as an upper estimate; raw columns agree; PDP caveat; H = 0.061 "little support … in the pairs tested".
+- ¶5.3 + ¶5.4 merged (spec cut (b)): MDI vs OOB ranks, cross-model Spearman 0.77 / 0.31 (7.8), refit sentence, delay trio as a block (7.11), Shapley definition, limit as association, reason codes [15]. Body Table 2 (importance) stays removed; all refs go to `tab:a-importance`.
+- ¶5.5 monotone (1.3, 4.10): price −0.0019 CV (0/5), test −0.0016 as a check; consistent sweep "0 of 600"; respecified model within 0.0005 of the free booster, +0.0014 [+0.0007, +0.0021] 5/5, training CV only, never test-scored. No "a client told …", "24 steps", "indefensible".
+- ¶5.6 + ¶5.7 merged ("Personal attributes: little ranking power, real fairness trade-offs") (8.1, 8.2): −0.0021, +62 per fold; Kleinberg/Chouldechova [13, 7]; flag ratio 1.18 vs base 1.19, FPR 45.7 vs 38.2 %, logit 1.36 → 1.08; proxies via the limit; EU AI Act [8] and FEAT [15] as present-day benchmarks only.
+
+## sec_operating.tex
+- ¶6.1 + ¶6.2 merged: what a flag means (6.7), 0.5 at 81.5 % / 32 %, 7,063 vs 7,001; 5:1 "illustrative scenario borrowed from the German credit data" [11], anchors 9.6:1–40.5:1 (6.4).
+- Table 2 (`tab:saving`) kept as the first attempt rebuilt it (training-OOF half + test half, all cells re-checked against `preferred_model_by_ratio_oof.csv` and `threshold_vs_model_saving.csv`); `\tabcolsep` 3 → 2.6 pt (2.0 pt overfull removed); caption shortened, keeps "selects nothing", blanket-rule definition, bootstrap B = 1,000, notes a/b and "none excludes zero".
+- ¶6.3 + ¶6.4 merged (cut order (d) logic): threshold vs model 1,937 vs 145 [−18, 299]; rotation among the ensembles 1:1–15:1, ≤ 0.7 %, cut-off 0.49 → 0.03 (6.2); slope 0.70, KNN 5,219 vs logit 5,126 (6.3); calibrated theory vs search, naive Bayes argued from OOF only (4.2); no cost winner; >15:1 graded action.
+- ¶6.5 + ¶6.6 merged: any-delay rule, 35.5 % missed, XGBoost 45.3 [24.5, 66.1] per 1,000 (7.7 %, 5/5), logit 5.1, mild selection effect (6.5); top-10 % 31.5 % vs September status 31.0 % "On training out-of-fold scores" (6.7, 6.8).
+
+## sec_conclusion.tex
+- Answers (1)–(4) with one number each; nested-CV sentence left to §3 and limitation (iv) to save space (3.2 wording stays in §3).
+- Five numbered limitations (9.3, 9.4): (i) retrospective test use with `TEST_SET_LOG.md` pointer and "report card, not a fresh holdout"; (ii) cost ratio (§6); (iii) vintage and drift with Fed 6.77 % / 1.53 % [2] and recalibration advice; (iv) design (ensembles not nested, forest min-leaf-20 edge, single seeds, SMOTE after one-hot); (v) attributes and causality. Future work folded into the same paragraph (spec cut (f)).
+- References: 19 entries (Taipei Times removed, Yeh dataset → [18], Yeh & Lien → [19]); every entry cited in the body, every body citation listed. Line-saving abbreviations: "Federal Reserve Board" for the Board of Governors, "Advances in NeurIPS", "Expert Syst. Appl.", ISLR without "2nd ed." (the 2021 year identifies the edition).
+
+## Checks run
+- Greps on the seven body files return nothing for: scored once, touched, untouched, CV winner, refutes, cannot bend, irreplaceable, drive default, drives, 1.33 per SD, a client told, calibration test passed, nearly all the signal, defend to a regulator, indefensible, most of its gap, the effects add, 17 units apart, 35.8. "fixed a priori" occurs once, in the allowed sentence.
+- US spellings: none in body prose (only the original titles "generalization error" [16] and "regularized likelihood" [17] in references).
+
+## Number audit (body number → file)
+- Real-world: Sep 2005, NT$495.3 bn, −48.8 % (`CONTEXT_SOURCES.md` §1; `data/external/fsc_taiwan_card_revolving_2004_2009.csv`); EU AI Act 5(b), FEAT P13, BoE–FCA 32 % / 64 % (§2); Fed 6.77 % / 1.53 % (§3, `data/external/frb_us_card_delinquency_1991_2026.csv`).
+- Data: 29,965, 35, 22.1 %, 20,975 / 8,990 (`split_meta.json`, `eda_data_quality.csv`); 13.7 / 16.9 / 12.9 / 33.9 / 67.6 %, 85.9 % (`pay_code_default_rates.csv`); 2,540, 21, 46 %, 45.5 % (`pay_coding_summary.json` pay1_code1); 32.1 / 13.7 %, 24.2 / 14.4 / 28.1 %, 4 / 8 points, 343 / 6.7 %, 0.686, 0.50–0.52 (`eda_summary.json`); 936, 3.12 %, 37.0 / 21.7 % (`eda_data_quality.csv`).
+- Methods: 46 entries (`frozen_manifest.json`); 10,487 / 6,000 (`tab:a-tuning` sources); 0.768 ± 0.007 vs 0.770 (`nested_cv_knn_frozen_grid.json`); 0.43 % (`logistic_nested_cv_v2.csv`); 0.0008 (`gbm_grid_fulltrain.csv`); 13 of 15, 0.026 (`r_crosscheck.csv`).
+- Results: Table 1 (`fold_stability.csv`, `model_comparison.csv`, `auc_bootstrap_ci.csv`, `<slug>.json`, `svm_selection_statistics.json`); +0.0013 / +0.0014 intervals and k/5 (`fold_stability.csv`); 0.0021 test (`auc_bootstrap_ci.csv`); 0.768 vs 0.770 PCA (`knn_dimensionality_cv.csv`); 0.769 / 3 of 5, +0.006 / 5 of 5, slopes 1.015 / 0.982 / 0.749 / 0.141 (`fold_stability.csv`); 0.760 → 0.768, +0.0082 [+0.0021, +0.0143], 0.026 → 0.018, 0.017 (`pay_coding_cv.csv`, `pay_coding_summary.json`); +1.24 (`imbalance_lr_coefficients.csv`); SMOTE / weighting / under-sampling CV moves (`imbalance_comparison.csv`); 0.914 vs 0.774 (`imbalance_leakage_demo.csv`); 0.27, 0.96, 0.58, +0.0001 [−0.0004, +0.0007] (`unsupervised_summary_v2.json`).
+- Interpretation: 0.63 → 0.77 (`ablation_history.csv`); 0.0225 of 0.0261, +0.0036 (`ablation_depth.csv`); 0.061 (`pdp_summary.json`); MDI/OOB ranks, 0.77 / 0.31, refit 0.001 (`random_forest.json`, `shap_summary.json`, `rf_refit_drop_column.csv`); −0.0019 / 0/5 / 0 of 600 / 0.0005 / +0.0014 (`monotone_respec_cv.json`); test −0.0016 (`monotone_summary.json`); −0.0021, +62 / 4,195 (`ablation_demographics.csv`); 1.18 / 1.19 / 45.7 / 38.2 / 1.36 / 1.08 (`fairness_summary.json`, `fairness_groups.csv`).
+- Operating: 81.5 %, 32 %, 7,063, 7,001 (`logistic.json` at_0_5, `aggregate_summary.json`); NT$19,868, 50–70 %, 1.5 %, 1–3 months, 9.6–40.5 (`cost_anchors.json`); Table 2 and 1,937 / 145 (`preferred_model_by_ratio_oof.csv`, `threshold_vs_model_saving.csv`); ≤ 0.7 % margin (`preferred_model_by_ratio_oof.csv` margin_pct, max 0.699); 0.70 = (1 − 0.221)/(5 × 0.221); 5,219 / 5,126 (Table 1); 0.25 for naive Bayes (`preferred_model_by_ratio_oof_long.csv`); 35.5 %, 45.3 [24.5, 66.1], 7.7 %, 5.1 [−3.8, +13.9] (`simple_rule_benchmark.csv`); 31.5 % / 31.0 % (`topk_capture_oof.csv`).
+- Conclusion: +0.0250 [+0.0183, +0.0314] (`auc_bootstrap_ci.csv`); 0.002 (`ablation_demographics.csv`).
+
+## Not done here
+Appendix generator (separate agent, see "Round 4 (22 Oct): appendix for post-review checks" above); slides, `qa_bank.md`, `slide_spec*.md`, README and `REPRODUCTION_2026-10-21.md` (out of scope for the report spec). Contribution shares stay red until RUAN and LU confirm. No body figure added (page 7 has about two lines spare, short of the ≥ 16 lines the spec requires for `fig:rocpr-body`).
+
+# Round 4 (22 Oct): integration build
+- `code/make_report_appendix.py` re-run: `sec_appendix.tex` regenerated byte-identical to the appendix agent's output (187 blocks, 46 figures).
+- `report.tex`: float pages in the appendix are now top-aligned and stacked (`\@fptop` 0 pt, `\@fpsep` 12 pt, `\@fpbot` 0 pt plus 1 fil, set after `\clearpage`/`\appendix`, so the body is untouched). Before, LaTeX centred single tables vertically and pushed paired figures to the top and bottom of the page (e.g. Figures A3/A4, A8/A9, A38/A39). No float changed page; every label keeps its number and page.
+- Tried and reverted: `\Urlmuskip` stretch for the UCI URL in §2 (it letter-spaced the URL) and ragged-right references (one extra reference line, cutting the page-7 margin to one line).
+- Build (`build_report_tex.sh`): body 7 pages, appendix from page 8, 58 pages in total, 0 overfull lines; separate full-log build: 0 LaTeX errors, 0 undefined or multiply defined references, 0 float warnings; 0 `??` in the PDF text; body text on pages 1–7 identical to the body writer's build; page 7 ends at 701 pt of about 722 pt.
+- Remaining cosmetic warnings, left as they are: a loose first line in §2 "Source, scope…" (the unbreakable UCI URL), loose reference lines [11] and [19], and mild vertical stretching on pages 2 and 6 (`\flushbottom` from the NeurIPS style).
+
+# Round 4 fixes (22 Oct): number audit, professor checklist and readability review
+Base: the integration build above plus the readability reviewer's scratch patch (`readability_rewrites.diff`), checked line by line before it was used; the factual fixes from the number audit and the professor checklist were applied on top. Contribution statement and its red shares unchanged (byte-identical). No result file, figure or script other than `make_report_appendix.py` was touched; nothing was run on the test set.
+
+## Fixed — body
+### sec_front.tex
+- Abstract rewritten (147 words): "Banks use default models as cut-offs…"; the tie is "0.025--0.026 above the logit" (XGBoost 0.0261, GBM and forest 0.0247: `fold_stability.csv`); all post-freeze numbers now sit inside one sentence that opens "Post-freeze training-CV checks show…" (0.63 → 0.77, a third of the gap, interactions small, "demographics add 0.002 CV AUC"); objective (3) added ("Resampling before the split fakes a 0.914 AUC"); the ambiguous "with a nearest-neighbour benchmark and a logistic baseline" dropped.
+- §1 ¶1: claim first ("the two errors cost different amounts…"); the 22.1 % rate "fits a stressed book or an undocumented, defaulter-heavy design" (alternative explanation added, cf. A22).
+### sec_data.tex
+- UCI URL kept (course guideline: dataset with direct link; the readability patch had removed it — not adopted). Limit caveat in plain words; de-duplication described as "35 rows that repeat another client's record exactly, label included".
+- Utilisation: "24.2 % in the lowest utilisation decile (mostly no positive balance)" instead of "at no positive balance" (decile, not the BILL_AMT1 ≤ 0 group).
+- Zero-bill fill: "936 of the 29,965 clients … the 633 such clients in the training partition default at 37.0 % against 21.7 %" (633: `POST_REVIEW_CHECKS.md` 2.2/7.12; recomputed read-only from `train.csv`).
+- Code-1 sentence reordered (claim first); "rolling back" → "recovering".
+### sec_methods.tex
+- Freeze sentence: "each configuration in the register (46 entries) was frozen at its first scoring, so no test read can steer it"; new sentence on the **eight diagnostic fits scored outside the register** (C = 1 logit, hinge-loss linear SVM, six drop-column forests; `TEST_SET_LOG.md` Summary) with the TEST_SET_LOG pointer; "until 19 October presentation ranked…" removed here (kept once, in Limitations (i)). OOF and freezing explained in plain words.
+- Pointer to the orphaned methods table: "each family's role, grid and software: Tables A5–A7" (`tab:a-methods`–`tab:a-software`).
+- Nested KNN: "0.768 ± 0.008" (ddof 1, as Table 1; `nested_cv_knn_frozen_grid.json` nested_cv_auc_sd_ddof1 0.0082), "outer folds choosing K = 101 in 3 of 5, 151 in 2"; 0.43 % weighting+Platt figure left to Table A11.
+- Definitions added: cross-fitted cost; Nadeau–Bengio interval "widened because the folds share training rows".
+### sec_results.tex
+- Table 1 moved after the first Results paragraph (it now floats inside Results, top of p. 4); caption "sample SD"; per-fold/variant pointers dropped from the caption (cited in the text).
+- "Three tiers": plain description of the forest and boosting [3, 6]; the three fold-paired intervals and the selective test gap replaced by "both within noise (Table A23)" — the issue's alternative fix (the test bootstrap prices only test-row noise; Table 1 keeps each model's test interval).
+- KNN: "32 columns (26 standardised, 6 one-hot)" (`common.py` NUM_COLS/CAT_COLS); PCA check "compressing them to 15 principal components (92 % of variance)" (`knn_dimensionality_cv.csv`); "its higher test AUC is reported, not used to rank".
+- Logit: one-hot quoted from the converged ridge fit, 0.769 (`pay_coding_cv.csv` logit_l2 onehot 0.7695), still 0.017 behind, 5/5 folds; "bills and utilisation move together…" (the patch's "six monthly utilisations" rejected: there are two utilisation ratios).
+- Split into "Smooth and generative models" and new "Class imbalance: weight the decision, not the data": RBF/Platt/SMOTE glossed; MLP early-stopping clause; calibration slopes labelled "training OOF … (post-freeze)"; SMOTE amount "costs the forest 0.0055 AUC (test: 0.0076)" with untuned learners (logit C = 1, forest leaf 5) (`imbalance_comparison.csv`); SMOTE-after-one-hot disclosure (fractional dummies and status codes, POST 2.6).
+- Segmentation: AP −0.0003 [−0.0016, +0.0010] added (`unsupervised_summary_v2.json`); "largely because"; "never test-scored (a round-1 K = 4 version was)".
+### sec_interpretation.tex
+- "Delinquency persists or deepens" replaces "moves one bucket deeper each month"; roll rates glossed.
+- Shape paragraph claim first; PDP sentence no longer attributes the remaining edge to the arrears steps (one-hot logit already frees each code; "which ones is untested"); Friedman's H glossed.
+- MDI mechanism corrected: credit goes to stand-ins for September status chosen when it is not a node's candidate (not "many split points"; `rf_importance.csv`); refit sentence "of six columns refitted … (0.0058, half its permutation drop), as the delay counters recover most of its signal" (`rf_refit_drop_column.csv`).
+- Monotone paragraph rewritten (frozen constraint vs §2; 0 of 600; respecified within 0.0005); the guarantee is limited to moves from revolving credit, with "35 of 17,600 moves from −2 or −1 into arrears still lower it slightly" (`monotone_respec_cv.json` cross_state_check, mono_respec).
+- Fairness: AP and Brier "within noise" (`ablation_demographics.csv`); impossibility result in plain words; logit gap mechanism "its scores crowd the cut-off (5.1 % against 3.5 % of clients per 0.01 of PD)" and under-30s mechanism "low limits, yet less default at a given limit" (`fairness_summary.json` mechanism_checks).
+### sec_operating.tex
+- Cost anchors in plain words (1.5 % monthly margin, "some defaulters later pay").
+- New: "At 10:1, nearer our anchors, both pay (7,121 and 420)"; **what the 5:1 flag means**: frozen XGBoost flags 48.8 % of test clients, catches 78 % of defaulters at 36 % precision, 1.8 false alarms per defaulter caught (`xgboost.json` at_tuned_cost; Table A13), precision–recall trade-off explained, "so broad a flag suits only a cheap action such as a reminder"; graded action spelled out. Intervals and the 0.49 → 0.03 cut-off path left to Table 2.
+- Naive Bayes: "the cheapest training-OOF cut-off is 0.25" (no longer reads as the cheapest model).
+- Top-10 %: claim first, XGBoost 31.5 % (precision 69.6 %), September status **30.9 %** (was 31.0 %; `topk_capture_oof.csv` 0.3095, matches Table A32); one-line rule units explicit, logit "within noise".
+- Table 2 caption trimmed (no content change).
+### sec_conclusion.tex
+- (1) "0.025–0.026 CV AUC above the logit"; (2) "from 2:1 to 10:1 …, whose interval includes zero at 5:1 (at 20:1 both approach flagging everyone)"; (3) "SMOTE costs the forest 0.0055 CV AUC"; (4) "demographics add 0.002 training-CV AUC".
+- Limitations: (i) no longer repeats §3; (ii) shortened to "Illustrative cost ratio (§6)"; (iv) grid edges point to Table A24, "CV was clearly still rising only at the forest's largest leaf-size setting, 20"; future work shortened.
+- Reference [2] restored to "Board of Governors of the Federal Reserve System (2026)" (alphabetical order Bank < Board < Breiman; no extra line).
+
+## Fixed — appendix generator (`code/make_report_appendix.py`, re-run; 187 blocks, 46 figures)
+- Table A2 rates rounded from the implied integer counts: NT$10k–50k 32.0 → **32.1 %** (1,740/5,429 = 32.05 %, matches the body) and "3 months late" 77.3 → **77.4 %** (181/234, now matches Table A21).
+- Table A11 note: the KNN rows' SD is ddof 0; the ddof-1 value (0.0082, read from the JSON) is quoted next to it.
+- Table A24: "32 columns: 26 standardised, 6 one-hot (frozen)".
+- `_methods_table_for_appendix.tex` (Table A5): logistic row no longer blames linearity ("how the inputs are coded and shaped (the status codes read as one evenly spaced number)"); MLP row "repayment-status codes with step-like effects".
+
+## Rejected or shortened, with reasons
+- Readability patch, removal of the UCI URL: rejected (guideline requires the direct link).
+- Readability patch, "six monthly utilisations", "32 standardised columns", MDI "many split points", "31.0 %", unqualified "a missed payment never lowers a risk score": each replaced by the corrected wording above.
+- Readability patch's OOF flag figures (49.8 % / 80.2 %): the frozen test figures from Table A13 are quoted instead, so the body gives one operating point.
+- Test bootstrap gaps of the ensembles: not quoted (alternative fix of the checklist issue); quoting both would cost a line and the ranking rests on CV.
+- Left to the appendix for the 7-page limit (each still in its table/file): naive Bayes costs 12,386 / 12,723; the 59.1 % persistence figure; the cluster label's AUC 0.648 against 0.724; the 16 September date of the K = 4 scoring (Table A10); 0.43 % weighting+Platt cost; monotone test −0.0016; the second EDA, R, monotone and per-fold figure pointers.
+- Abstract kept as one long semicolon sentence for the post-freeze results so the training-CV label covers every number (hard constraint), although the readability review asked for ≤ 30-word sentences.
+
+## Build
+`build_report_tex.sh`: 正文页数 7; 附录从第 8 页开始; 总页数 58; 出界的行 0. Page 7 ends at 702.6 pt (about two lines spare). Separate full-log build: 0 errors, 0 undefined or multiply defined references, 0 overfull boxes, 0 float warnings; 0 "??" in the PDF; the same six cosmetic underfull warnings as before (UCI URL line, references [11] and [19], vertical stretch on p. 2). Pages 1–8 rendered and checked. Greps on the body: no "touched", "scored once", "only because", "irreplaceable", "drive(s) default"; no US spellings.
+
+# Round 5 (22 Oct): fixer pass on `review/report_round2_issues.json` (numbers verifier + readability verifier)
+
+Base: the readability verifier's tested replacement set (`scratchpad/r5_apply5.py`, all 44 pairs applied, 0 misses), then the rewrites below. Goal: one claim, a plain-words mechanism, at most about three numbers, then the bank meaning; the rest by reference to the appendix tables.
+
+## Body (`sec_*.tex`)
+- **sec_front.tex**: abstract "one-variable curves" (149 words by `\`-stripped count); Intro ¶1 "Errors cost unequally: a missed defaulter's unsecured balance is lost, while a wrongly flagged good client risks a thin margin"; "defaulter-heavy sample … belongs to that vintage (§7, iii)".
+- **sec_data.tex**: ¶1 drops the `freeze.py --check` plumbing and the AP no-skill clause (AP now defined in §3 ¶2); ¶2 ends "A scorecard should weight these states separately (§4)"; **¶3 risk gradients rewritten** — claim (arrears and limit steep, bill none), mechanism (two months late = two payments already missed; the bank sets the limit, so a high limit is an association, and raising one would not make a client safer; utilisation U in words, no buffer near the limit, zero-balance arm of uncertain meaning). Numbers kept: 12.9 → 67.6 %, AUC 0.50–0.52, ≤ 8 points; limit quintiles and utilisation deciles left to Table A2 / `eda_summary.json`. ¶4 "The fill is not neutral: … so a bank must document it."
+- **sec_methods.tex**: **freeze paradox resolved** — "Round-1 configurations were scored on 16–18 September and entered in the freeze register on 19 October (46 entries in all, Table A9); from then on `common.evaluate()` refuses to re-score a registered configuration that has changed. Before then the dated record below is the guard: apart from identical re-runs and RUAN Hangjing's 30 September re-fits …, none was re-scored with a change, so each configuration counts as frozen at its first scoring." Diagnostic-fit list moved to Table A10 ("Eight diagnostic fits outside the register"); SVM defined at the loss-swap clause. ¶2: claim first (like-for-like only for a core six, because budgets differed); nested-CV K counts dropped (Table A11); "Re-scored in training CV on all training rows (post-freeze)"; "average precision (AP) is the mean precision down the ranked list"; "R refits on the same folds match 13 of 15".
+- **sec_results.tex**: heading **"Four tiers, and a tie at the top"**, first sentence "The four tiers of Table 1 hold in every fold" (matches Table 1's four groups); "reach the same ceiling: XGBoost leads … by 0.0013 … 0.0014 CV AUC, within noise". KNN ¶ without 92 % / 0.768; logit "(ridge; 0.769)"; smooth ¶ "early stopping only regularises", "1 = calibrated, lower = PDs too extreme", "such PDs must not price or provision"; SMOTE "invents impossible clients". **Segmentation rewritten**: five overlapping segments (silhouette 0.27) that shift across random starts (Table A17); mechanism "a segment label is a coarse summary of columns the logit already sees"; ΔAUC +0.0001 [−0.0004, +0.0007]; ARI and AP interval moved to Table A17 (see generator).
+- **sec_interpretation.tex**:
+  - ¶1: **older months corrected** — "older months add 0.013 more as raw months and 0.018 through six-month summaries such as months in arrears, which tell a new slip from a chronic one (5/5 folds each; training CV, post-freeze; Table A26)" (H6 − H1 raw +0.0131 [+0.0075, +0.0188] 5/5; six-month − September-window summaries at H1 +0.0175 [+0.0128, +0.0221] 5/5; `ablation_history.csv`). Backward share paired: "Delinquency persists or deepens: of September's clients two and three months late, 59.1 % and 85.9 % were two months late in August" (`pay_code_default_rates.csv`, Table A21). "the only liquidity signal the bank sees"; roll rates "may overstate them in calmer years".
+  - ¶2: "(trees re-tuned per depth)", "(selected on the same folds; training CV, post-freeze; …; raw columns agree)", "we did not measure which", H defined as "the share of a pair's effect beyond the two separate effects".
+  - ¶3 **importance rewritten**: MDI expanded (mean decrease in impurity); mechanism "as each split sees only a random subset of columns, correlated delay columns stand in when September status is not on offer and collect its credit"; numbers 4th/5th vs 22nd/24th, 0.001, 0.77 (0.31, 0.0058 and the permutation drop left to Tables A19/A20); code names replaced by plain names; Shapley value "splits a client's score into feature contributions summing to its log-odds minus the average".
+  - ¶4 **monotone rewritten**: plain definition "all else equal, the score may never fall when a client falls further behind"; frozen version "also forced the score up across −2, −1 and 0 and with utilisation and balance trend (Table A8)"; "stepping 200 training clients from revolving credit to one, two and three months late, with the delay counters updated, never lowers a score (0 of 600 steps)" (adjacent steps, `monotone_respec_cv.json`); "Keeping only the delay (+1) and limit (−1) constraints lands within 0.0005"; "35 of 17,600 jumps straight from −2 or −1".
+  - ¶5 **fairness rewritten**: claim → impossibility [7, 13] → 1.19 / 1.18 → mechanism for the logit in plain words ("one SEX coefficient shifts every man's log-odds alike and more of its scores sit near the cut-off") → unawareness trade-off. Dropped from the body (all in Tables A27/A28): −0.0021 (now "0.002"), 62 units per 4,195-client fold, 45.7 / 38.2 % false-alarm rates, 1.36, 5.1 / 3.5 % per 0.01.
+- **sec_operating.tex**:
+  - ¶1: 81.5 % and 7,063 / 7,001 left to Table A13; **cost-anchor bases named** ("50–70 % of the median defaulter's bill … one to three months of a 1.5 % monthly margin on the median good client's bill … 9.6:1 to 40.5:1, an upper bound, as some defaulters later pay (Table A14)"); NT$ amounts and the arithmetic moved to the Table A14 note.
+  - ¶2 split in two. **"The cut-off, not the ensemble, is the lever"**: iso-cost idea in one plain sentence instead of the slope formula — "At r:1 one caught defaulter is worth r false alarms, so the cheapest cut-off is where defaulters fall to one in r + 1 among the next clients the score would flag; for a calibrated model that is a PD of 1/(1+r), 0.167 at 5:1, close to the searched 0.15 …"; 1,937 vs 145; broad flag "about half the test clients, 1.8 false alarms per defaulter caught". **"The best ranker need not be the cheapest"**: AUC vs one cut-off, KNN 5,219 vs logit 5,126; cheapest ensemble rotates 1:1–15:1 (Table A31). Dropped: (1−π)/(rπ), π, 0.70, 7,063, 7,121 / 420, 78 % / 36 %, "0.7 % ahead".
+  - ¶3: "At 5:1 in training CV XGBoost costs 7.7 % less than the rule (5/5 folds), the logit almost nothing"; 45.3 / 5.1 and precision 69.6 % left to Tables A30/A32.
+- **sec_conclusion.tex**: (1) "(XGBoost on test: +0.0250 [+0.0183, +0.0314])" — the interval is XGBoost − logit only; (2) "(at 20:1 both approach flagging everyone)" dropped (Table 2); Limitations (i) "after a 6 October review had applied their maps to test scores …; test AUC set two presentation choices until 19 October", (iv) "largest leaf size, 20".
+
+## Appendix generator (`code/make_report_appendix.py`, re-run: 187 blocks, 46 figures)
+- Table A17 (`tab:a-kselect`) note: adds the random-start stability the body now rests on — "Across random starts (single-start refits with other seeds on the same rows, against the reference partition) the groups shift more: ARI mean 0.81, minimum 0.58" (`unsupervised_summary_v2.json` `seed_ari`); bootstrap ARI 0.957 [0.745, 0.990] labelled "under bootstrap resampling"; "quoted in the body" removed.
+- Table A26 (`tab:a-ablation-history`) note: adds "all older months together, H6 − H1 +0.0131 [+0.0075, +0.0188], 5/5".
+- Table A14 (`tab:a-costsens`) note: cost anchors with bases and arithmetic from `cost_anchors.json` (NT$19,868 defaulter median bill, NT$22,914.5 good-client median bill; 9.6 and 40.5).
+- Table A21 (`tab:a-paycodes-rates`) note: 59.1 % / 85.9 % labelled "a backward share: where September's clients came from, not how many August clients moved on" (code 2 = arrears that persisted, code 3 = deepened one step); the two earlier CHANGELOG mentions relabelled from "roll-forward" to "backward share".
+
+## Not changed, with reasons
+- Table 1 caption cost definition and "(the logit)" in §1: tried; "(the logit)" created a one-word line and cascaded the page breaks, so it was reverted; the cost definition is in §3 ¶2.
+- "Their" (LDA and naive Bayes) kept: the antecedent is the previous sentence and the explicit form cost a line.
+- Out of scope here: slides, `qa_bank`, README ("add little" wording there, if any, still to be checked against POST_REVIEW 7.4).
+
+## Build
+`build_report_tex.sh`: 正文页数 7; 附录从第 8 页开始; 总页数 59; 出界的行 0. Page 7 ends at 668.6 pt (about five reference lines spare). Separate full-log build: 0 undefined or multiply defined references, 5 cosmetic underfull warnings; 0 "??" in the PDF; "Contribution statement" on page 1; red shares byte-identical. Pages 1–8 rendered and inspected (Table 1 now sits at the top of page 3, §6 heading on page 5, Table 2 at the top of page 6). Greps: no banned phrase (only the allowed "fixed a priori" for bagging and the monotone vector), no US spelling in the body. Not committed.
+
+# Round 6 (22 Oct): final fixer pass (readability review + numbers verifier on the Round-5 body)
+
+Body only (`sec_*.tex`); `sec_appendix.tex` and the generator untouched. Every rewrite keeps the "training CV" / "post-freeze" labels, cites only files already cited, and adds no test number. Pre-edit copies: `scratchpad/r6_backup/`.
+
+## Body
+- **sec_front.tex**
+  - Abstract: "adding September's record to limit and demographics lifts XGBoost's AUC from 0.63 to 0.77", which now names the 0.63 baseline. "a third of the logit's gap is reading repayment codes …", "we judge ranking and operating point", "raise fairness issues". 147 words.
+  - Intro ¶1 now opens with its claim: "Every probability of default (PD) here belongs to a crisis vintage." The crisis facts follow, split into two sentences. "is consistent with a stressed book …" (spec wording, replacing "fits"). "Errors cost unequally" moved to the end.
+  - Design: "each other family is explained by how it learns"; "whether the importance measures agree".
+- **sec_data.tex**
+  - ¶1: "the limit would partly record the outcome" replaces LIMIT\_BAL.
+  - ¶3 risk gradients rewritten into short sentences:
+    - Claim: "Default rates change steeply with recent arrears and the limit, not with bill size."
+    - The limit as the bank's own judgement.
+    - Utilisation defined at first use ("bill over limit").
+    - The zero-balance arm is now said to be above average (24.2 % vs 22.1 %, `eda_summary.json` UTIL\_1 decile 1; the number is not quoted).
+    - Pointer extended to Figures A7–A9, so the sex/age and utilisation claims can be checked (labels `fig:eda-default-rate-by-groups`, `fig:eda-default-rate-util-delay`).
+  - ¶4: "Three fixed steps estimate nothing, so they precede the split"; the 936 count was dropped (still in Table A3), leaving "these 633 training clients".
+- **sec_methods.tex**
+  - ¶1 rewritten into sentences of 32 words or fewer:
+    - "the dated test log is the guard" replaces "the dated record below".
+    - RUAN's 30 Sep re-fits are labelled "(same settings)".
+    - The linear SVM "moved to squared-hinge loss after one such read, but training CV backs the move" (TEST\_SET\_LOG B2).
+  - ¶2:
+    - "Tuning is like-for-like only for a core six"; gradient boosting "on half the training rows" (10,487 of 20,975).
+    - "gradient boosting's grid" replaces the ambiguous "boosting grid".
+    - "Reading the numbers" split into sentences: AP no-skill "0.221, the default rate"; "so one unit is one false alarm" defines the cost unit used in §6 and the abstract.
+    - R check: "so the ranking is not a software artefact".
+- **sec_results.tex**
+  - "Four tiers": "XGBoost leads the other two by 0.0013–0.0014 training-CV AUC, both intervals including zero (Table A23)". The intervals [−0.0005, +0.0031] and [−0.0027, +0.0055] are in `fold_stability.csv`; this replaces "within noise".
+  - Table 1 caption: "point estimates, 95 % paired-bootstrap intervals (B = 500)", per the spec §0 convention. "in tiers that hold in every fold" was dropped to keep 4 lines; the group labels and the body still say it.
+  - KNN ¶: "The KNN benchmark and the pruned tree tie because both, in effect, group clients by their repayment codes" (KNN no longer "reaches the benchmark"). "(26 standardised, 6 one-hot)" left to Table A24.
+  - Logit ¶: "within noise of KNN"; "Recoding closes most of the gap to KNN but only a third of the gap to XGBoost: even a one-hot logit … still trails XGBoost by 0.017 (5/5 folds)". The share closed is 0.837 (`pay_coding_summary.json`); 0.026 → 0.018 and 0.769 are left to Table A22.
+  - Smooth ¶: "Smooth models add little ranking; wrong assumptions about the data distort the PDs"; "(one seed; CV AUC chose its grid)"; LDA "assumes bell-shaped amounts with one shared covariance, though bills are heavily skewed".
+  - Imbalance ¶: "Run inside the folds with fixed, untuned learners, SMOTE … costs the forest 0.0055 training-CV AUC". The test 0.0076 and the learner settings are left to Figure A33 / Table A16.
+  - Segmentation: "in training CV …. Not adopted, it was never test-scored (a round-1 K = 4 version was; …)".
+- **sec_interpretation.tex**
+  - Repayment ¶:
+    - The "respectively" construction is gone: "59.1 % of clients two months late in September, and 85.9 % of those three months late, were two months late in August".
+    - Older months: "0.013 as raw months, **or 0.017** through six-month summaries". These are alternative routes, not additive. 0.017 is `ablation_history.csv` "older history entering only through the summaries" +0.017472 [+0.0128, +0.0221], 5/5. The earlier 0.018 was double-rounded from 0.0175.
+    - "roll rates (how fast arrears deepen)" replaces "bucket".
+  - Ensembles' edge: "one-variable curves" (matches the abstract); "same split on raw columns"; "so the remaining shape likely sits in other columns" (was "must sit": an inference with no stored test).
+  - Importance ¶:
+    - Permutation is defined before the 22nd/24th ranks are quoted ("shuffling a column on rows a tree did not see (out of bag)").
+    - The MDI mechanism is now in two sentences; "the delay counters recover most of even that".
+    - MDI is now introduced as "impurity importance (MDI)": the expansion was dropped for space.
+  - Monotone ¶ (numbers-verifier major):
+    - Old claim: "there the free booster already obeys", which overstated the evidence.
+    - New: "Up to three months late the free booster already obeys: moving 200 training clients from revolving credit to one, two and three months late (counters updated) never lowers a score. Its wrong-way steps lie among non-delinquent codes or in the thin 4- and 5-month cells (57 and 16 clients), where observed default also falls."
+    - Sources: `monotone_respec_cv.json` sweep\_headline free\_numeric|random\_200|consistent|PAY\_1, by\_step 0→1→2→3 all 0, −2→−1 19, −1→0 194, 3→4 160, 4→5 200. `pay_code_default_rates.csv` gives 57 / 16 clients at 66.7 % / 56.3 % against 77.4 % at three months.
+    - "Constraining only delay (score up) and limit (score down) is within 0.0005". The (+1)/(−1) codes were removed, and the 35 of 17,600 count is left to Table A29.
+    - Frozen-constraint sentence split ("§2 contradicts both the order and the rise").
+  - Personal attributes: the two long sentences were split; the training-CV label now sits next to 0.002.
+- **sec_operating.tex**
+  - ¶1: "A cut-off of 0.5 is optimal only when both errors cost the same" (the repeat of §2 was dropped). The cost anchors are split into two sentences, introduced as "Our rough cost anchors".
+  - Table 2 caption:
+    - "$^a$GBM (gradient boosting) if cross-fitted" defines GBM and says what was cross-fitted.
+    - "Fold intervals of the cheapest's lead (all include zero), all ratios: Tables A15, A31". This was checked against Table A31's runner-up − cheapest column: every interval spans zero.
+    - "top-3 cost spread", "all for r ≥ 5", "XGBoost's further reduction" were trimmed to hold 6 lines.
+  - Lever ¶:
+    - "only one in r + 1 of the next clients flagged would default"; naive Bayes "needs a higher one" (0.25 left to Table 1).
+    - "1,937 cost units (false-alarm equivalents); switching to XGBoost saves a further 145, but its interval includes zero. At 10:1 … both savings are clearly positive" (7,121 [6,395, 7,791]; 420 [187, 646]).
+    - The "flag everybody" repeat of Table 2 was dropped.
+  - Best ranker: "above about 15:1 most are flagged, so …". 86.1 % are flagged at 15:1 and 96.0 % at 20:1 (Table A31).
+  - One-line rule: "gets most of the way to the models' cost"; the 10 % sentence was split; "A model's value over the one-line rule … lies further down the list".
+- **sec_conclusion.tex**
+  - Answers (2): "from 2:1 to 20:1 the threshold saving exceeds the model saving: the cut-off, not the model, is the lever". At 20:1 the figures are 20,335 against 150 (Table 2); the earlier "to 10:1" understated this.
+  - Limitations:
+    - (i) names the two presentation choices: "until 19 October test AUC chose the bootstrap's reference model and the four models in the figures" (TEST\_SET\_LOG A1). The repeated TEST\_SET\_LOG path was dropped (it is given in §3).
+    - (iii) "PDs re-based to the new default rate".
+    - (iv) "some grids end where CV might still rise (…; clearly so only at the forest's largest leaf size, 20)".
+
+## Page budget
+The first application ran to 8 pages. The growth came from Table 1's caption (+1 line), Four tiers (+1), importance (+1), monotone (+2), Table 2's caption (+1), Limitations (+1) and the abstract (+1). It was recovered by the trims listed above. Page 6 still loses one line to the widow rule at the Answers break.
+
+## Build
+- `build_report_tex.sh`: 正文页数 7; 附录从第 8 页开始; 总页数 59; 出界的行 0.
+- Page 7 ends at 702.6 pt, about 1.8 lines spare. Round 5 had about 4.9 lines spare.
+- Separate full-log build (scratch output directory): 0 errors, 0 undefined or multiply defined references, 0 overfull boxes. The same 5 cosmetic underfull warnings remain (UCI URL paragraph, references [11] and [19]).
+- 0 "??" in the PDF. "Contribution statement" is on page index 0. The 9 red shares and the contribution block are byte-identical.
+- Pages 1–8 rendered and inspected.
+- Greps:
+  - No US spelling in the body ("generalization" and "regularized" occur only in reference titles).
+  - No banned phrase; only the allowed "fixed a priori".
+  - 0.018 survives only inside "+0.0183".
+- Not committed.

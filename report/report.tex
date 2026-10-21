@@ -78,6 +78,13 @@
 \appendix
 \setcounter{table}{0}\renewcommand{\thetable}{A\arabic{table}}\renewcommand{\theHtable}{A\arabic{table}}
 \setcounter{figure}{0}\renewcommand{\thefigure}{A\arabic{figure}}\renewcommand{\theHfigure}{A\arabic{figure}}
+% Float pages in the appendix: stack the floats from the top of the page instead of
+% centring them vertically and spreading them apart (LaTeX's default fil glue).
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@fpsep}{12pt plus 2pt minus 2pt}
+\setlength{\@fpbot}{0pt plus 1fil}
+\makeatother
 \input{sec_appendix}
 
 \end{document}
