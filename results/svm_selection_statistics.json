@@ -1,0 +1,296 @@
+{
+ "svm_rbf": {
+  "subsample_cv_auc": {
+   "value": 0.7680709094668459,
+   "sd": 0.005522574112836951,
+   "rows": 6000,
+   "folds": "StratifiedKFold(5, shuffle, 2607526) on the subsample's own rows",
+   "is_max_over_grid": true,
+   "logistic_same_subsample": 0.7649876412931104
+  },
+  "pooled_oof_auc": 0.7606068187605077,
+  "per_fold_oof_auc": [
+   0.77703,
+   0.74626,
+   0.75813,
+   0.775,
+   0.76126
+  ],
+  "per_fold_mean_oof_auc": 0.7635360384346515,
+  "per_fold_sd_ddof0": 0.011370343637239518,
+  "per_fold_sd_ddof1": 0.012712430650199886,
+  "pooled_minus_mean": -0.0029292196741437238,
+  "per_fold_mean_predicted_probability": [
+   0.2213,
+   0.2202,
+   0.2171,
+   0.2285,
+   0.2184
+  ],
+  "per_fold_min_probability": [
+   0.07558,
+   0.07106,
+   0.07769,
+   0.07587,
+   0.07137
+  ],
+  "per_fold_share_within_0002_of_fold_min": [
+   0.0005,
+   0.0002,
+   0.0002,
+   0.0002,
+   0.0005
+  ],
+  "json_values": {
+   "cv_auc": 0.7680709094668459,
+   "oof_auc": 0.7606068187605077,
+   "oof_per_fold_mean": 0.7635360384346515
+  },
+  "used_in_tables": "pooled_oof_auc (aggregate.select_auc_of uses oof_auc for subsample-tuned scripts)"
+ },
+ "svm_linear": {
+  "subsample_cv_auc": {
+   "value": 0.7628560650838005,
+   "sd": 0.004913573812486248,
+   "rows": 6000,
+   "folds": "StratifiedKFold(5, shuffle, 2607526) on the subsample's own rows",
+   "is_max_over_grid": true,
+   "logistic_same_subsample": 0.7649876412931104
+  },
+  "pooled_oof_auc": 0.7167476667509078,
+  "per_fold_oof_auc": [
+   0.76446,
+   0.73015,
+   0.75332,
+   0.74867,
+   0.74688
+  ],
+  "per_fold_mean_oof_auc": 0.7486945465413293,
+  "per_fold_sd_ddof0": 0.01110805562653145,
+  "per_fold_sd_ddof1": 0.01241918373938667,
+  "pooled_minus_mean": -0.031946879790421434,
+  "per_fold_mean_predicted_probability": [
+   0.222,
+   0.2197,
+   0.2196,
+   0.2273,
+   0.2177
+  ],
+  "per_fold_min_probability": [
+   0.12664,
+   0.12273,
+   0.12482,
+   0.12624,
+   0.12556
+  ],
+  "per_fold_share_within_0002_of_fold_min": [
+   0.6656,
+   0.6689,
+   0.6706,
+   0.6484,
+   0.6679
+  ],
+  "json_values": {
+   "cv_auc": 0.7628560650838005,
+   "oof_auc": 0.7167476667509078,
+   "oof_per_fold_mean": 0.7486945465413293
+  },
+  "used_in_tables": "pooled_oof_auc (aggregate.select_auc_of uses oof_auc for subsample-tuned scripts)",
+  "floor_block": {
+   "share_of_rows": 0.6642669845053635,
+   "share_of_block_with_MAX_DELAY_0": 1.0,
+   "share_of_MAX_DELAY_0_rows_in_block": 1.0,
+   "share_MAX_DELAY_0": 0.6642669845053635,
+   "MAX_DELAY_alone_auc_pooled": 0.7139194112811037,
+   "MAX_DELAY_alone_auc_per_fold_mean": 0.713903082649947
+  }
+ },
+ "svm_rbf_rank_by_statistic": {
+  "subsample_cv_auc": {
+   "value": 0.7680709094668459,
+   "rank_among_11_headline": 7,
+   "next_above": "tree_pruned",
+   "next_below": "logistic"
+  },
+  "pooled_oof_auc": {
+   "value": 0.7606068187605077,
+   "rank_among_11_headline": 7,
+   "next_above": "tree_pruned",
+   "next_below": "logistic"
+  },
+  "per_fold_mean_oof_auc": {
+   "value": 0.7635360384346515,
+   "rank_among_11_headline": 7,
+   "next_above": "tree_pruned",
+   "next_below": "logistic"
+  }
+ },
+ "svm_rbf_paired_vs_neighbours": [
+  {
+   "comparison": "svm_rbf minus logistic",
+   "per_fold_a": [
+    0.77519,
+    0.74493,
+    0.75734,
+    0.76561,
+    0.75811
+   ],
+   "per_fold_b": [
+    0.77703,
+    0.74626,
+    0.75813,
+    0.775,
+    0.76126
+   ],
+   "per_fold_diff": [
+    0.00184,
+    0.00133,
+    0.00079,
+    0.00939,
+    0.00314
+   ],
+   "mean_diff": 0.003299626884235729,
+   "n_folds_positive": 5,
+   "n_folds_exactly_zero": 0,
+   "nb_corrected_se": 0.002357711959938643,
+   "nb_t": 1.3995038156915478,
+   "nb_ci95": [
+    -0.0032464309464022125,
+    0.009845684714873671
+   ],
+   "ci_includes_zero": true
+  },
+  {
+   "comparison": "svm_rbf minus tree_pruned",
+   "per_fold_a": [
+    0.78046,
+    0.7604,
+    0.76366,
+    0.77505,
+    0.76511
+   ],
+   "per_fold_b": [
+    0.77703,
+    0.74626,
+    0.75813,
+    0.775,
+    0.76126
+   ],
+   "per_fold_diff": [
+    -0.00343,
+    -0.01414,
+    -0.00554,
+    -5e-05,
+    -0.00386
+   ],
+   "mean_diff": -0.005401618041496059,
+   "n_folds_positive": 0,
+   "n_folds_exactly_zero": 0,
+   "nb_corrected_se": 0.003538680220455267,
+   "nb_t": -1.5264498923276872,
+   "nb_ci95": [
+    -0.015226569418439334,
+    0.004423333335447217
+   ],
+   "ci_includes_zero": true
+  },
+  {
+   "comparison": "svm_rbf minus knn",
+   "per_fold_a": [
+    0.78324,
+    0.75756,
+    0.76938,
+    0.77497,
+    0.76502
+   ],
+   "per_fold_b": [
+    0.77703,
+    0.74626,
+    0.75813,
+    0.775,
+    0.76126
+   ],
+   "per_fold_diff": [
+    -0.00621,
+    -0.0113,
+    -0.01125,
+    3e-05,
+    -0.00376
+   ],
+   "mean_diff": -0.006497327569168809,
+   "n_folds_positive": 1,
+   "n_folds_exactly_zero": 0,
+   "nb_corrected_se": 0.0032829425361984767,
+   "nb_t": -1.9791170565819494,
+   "nb_ci95": [
+    -0.015612237304442701,
+    0.002617582166105082
+   ],
+   "ci_includes_zero": true
+  }
+ ],
+ "other_headline_models_pooled_vs_mean": {
+  "knn": {
+   "cv_auc_json": 0.7700333660038201,
+   "per_fold_mean": 0.7700333660038201,
+   "pooled": 0.7698128200616695,
+   "pooled_minus_mean": -0.0002205459421505962
+  },
+  "logistic": {
+   "cv_auc_json": 0.7602364115504157,
+   "per_fold_mean": 0.7602364115504157,
+   "pooled": 0.7600749090172092,
+   "pooled_minus_mean": -0.00016150253320645902
+  },
+  "logistic_l1": {
+   "cv_auc_json": 0.7602358797403035,
+   "per_fold_mean": 0.7602358797403035,
+   "pooled": 0.760070806444664,
+   "pooled_minus_mean": -0.00016507329563952844
+  },
+  "lda": {
+   "cv_auc_json": 0.7572065962116409,
+   "per_fold_mean": 0.7572065962116409,
+   "pooled": 0.7570240593058389,
+   "pooled_minus_mean": -0.00018253690580194437
+  },
+  "naive_bayes": {
+   "cv_auc_json": 0.7356319710185613,
+   "per_fold_mean": 0.7356319710185613,
+   "pooled": 0.7351109859320809,
+   "pooled_minus_mean": -0.0005209850864803522
+  },
+  "tree_pruned": {
+   "cv_auc_json": 0.7689376564761475,
+   "per_fold_mean": 0.7689376564761475,
+   "pooled": 0.7689070683420253,
+   "pooled_minus_mean": -3.058813412226691e-05
+  },
+  "random_forest": {
+   "cv_auc_json": 0.7848992714376763,
+   "per_fold_mean": 0.7848992714376763,
+   "pooled": 0.784739759840416,
+   "pooled_minus_mean": -0.00015951159726035335
+  },
+  "gradient_boosting": {
+   "cv_auc_json": 0.7849715351823022,
+   "per_fold_mean": 0.7849715351823022,
+   "pooled": 0.784643019596815,
+   "pooled_minus_mean": -0.00032851558548718796
+  },
+  "xgboost": {
+   "cv_auc_json": 0.7862905873025212,
+   "per_fold_mean": 0.7862905873025212,
+   "pooled": 0.7860586841474777,
+   "pooled_minus_mean": -0.00023190315504351133
+  },
+  "mlp": {
+   "cv_auc_json": 0.7762095038407356,
+   "per_fold_mean": 0.7762095038407356,
+   "pooled": 0.7757722486004885,
+   "pooled_minus_mean": -0.00043725524024706974
+  }
+ },
+ "max_abs_pooled_minus_mean_other_headline": 0.0005209850864803522,
+ "reading": "The pooled OOF AUC ranks rows from five different Platt-scaled models together, so for the SVMs it falls below the mean of the five per-fold AUCs; for every other headline model the two agree to within 0.0005.  The linear SVM's large gap has a visible cause: in every fold 65%-67% of its OOF probabilities lie within 0.002 of a fold-specific floor (0.1227-0.1266), and pooling stacks these near-tied blocks on top of each other.  The 6,000-row figure is the maximum over 18 settings on the subsample's own folds and is not comparable with full-set CV AUCs.  RBF SVM rank among the 11 headline models (others by their per-fold mean CV AUC): subsample_cv_auc 7 (between tree_pruned and logistic); pooled_oof_auc 7 (between tree_pruned and logistic); per_fold_mean_oof_auc 7 (between tree_pruned and logistic)."
+}

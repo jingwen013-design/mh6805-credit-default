@@ -1,5 +1,5 @@
 check,finding,action
-Missing values,0 cells (all 24 columns complete),None needed — no imputation step in the pipeline
+Missing values,0 cells (all 24 columns complete),None needed for the 24 raw columns; the engineered PAY_RATIO_MEAN is undefined for the 936 cleaned rows whose six bills are all non-positive and is set to 0 (row: Zero bills in all six months)
 Exact duplicate rows,"35 of 30,000 (0.12%)","Dropped in common.clean() → 29,965 rows"
 Data types,"All 24 columns integer; no strings, no dates",None
 EDUCATION undocumented codes 0/5/6,"0: 14, 5: 280, 6: 51 (total 345, 1.15%)",Recoded to 4 = others/unknown
@@ -12,4 +12,4 @@ Bill above credit limit (UTIL_1 > 1),"2,115 rows (7.1%); max UTIL_1 = 6.46",Kept
 LIMIT_BAL range,"10,000 – 1,000,000 NT$ (median 140,000)","Plausible; heavy right tail → StandardScaler inside the pipeline, no trimming"
 AGE range,21 – 79 years (median 34),Plausible; no outlier removal
 Class imbalance,"6,630 defaults of 29,965 = 22.1%",Kept as is; addressed downstream by class_weight / threshold tuning; AUC & AP as metrics
-Train / test split,"20,975 / 8,990 rows, stratified 70/30, seed 2607526; default rate 22.13% / 22.12%",Fixed once in data/processed; test set untouched in this EDA
+Train / test split,"20,975 / 8,990 rows, stratified 70/30, seed 2607526; default rate 22.13% / 22.12%","Fixed once in data/processed. Scope of this table: counts are over the full download, test rows included (feature counts behind fixed rules; nothing is estimated from them); test labels enter only the class-imbalance row and this split check; the default rates by group are from the training partition only"

@@ -28,11 +28,19 @@ What it does
            tree's own out-of-bag rows and the drop in the forest's OOB AUC is measured, n_repeats=5.
      (c) is the column the report quotes; the Spearman correlations between the three rankings are printed and stored
      in results/random_forest.json under extra.spearman.
-  6. AUC as a function of the number of trees (first k trees of the fitted 500-tree forests, k = 10..500):
-     OOB AUC on the training rows (leakage-free, used to justify the 200-tree grid) and test AUC (purely descriptive,
-     nothing is chosen from it) -> results/rf_auc_vs_ntrees.csv, figures/rf_auc_vs_ntrees.png.
-Everything is fitted / tuned on the training rows only; the test set is touched only inside evaluate() and for the
-descriptive test-AUC-vs-trees curve.
+  6. OUT-OF-BAG AUC as a function of the number of trees (first k trees of the fitted 500-tree forests, k = 10..500),
+     on the training rows only (leakage-free, used to justify the 200-tree grid; N_TREES = 500 was fixed in advance)
+     -> results/rf_auc_vs_ntrees.csv, figures/rf_auc_vs_ntrees.png.
+Everything is fitted / tuned on the training rows only; the test set is touched only inside evaluate().
+
+Change of 21 Oct 2026 (record hygiene, see results/TEST_SET_LOG.md).  Until then step 6 also computed a TEST AUC against
+the number of trees for both forests, before evaluate() and therefore before the freeze guard in common.evaluate()
+could check anything.  Nothing was chosen from that curve (the tree count was fixed at 500 and the 200-tree grid is
+justified by the OOB curve), but it was a test read outside evaluate(), so it has been removed: the script now computes
+the OOB curve only, and the JSON extras no longer carry test_auc_vs_ntrees.  The script was NOT re-run for this change.
+The committed results/rf_auc_vs_ntrees.csv (written 18 Sep 2026) still holds the historical test_auc_rf /
+test_auc_bagging columns as a record; the figure is redrawn from its OOB columns only with
+`python3 model_rf.py --plot-ntrees-only`, which reads that CSV and nothing else (no data, no model, no test labels).
 """
 import json, os, sys, time
 import numpy as np
@@ -92,12 +100,6 @@ def per_tree_proba(pipe, X):
     """Matrix (n_trees, n_rows) of each tree's P(default) for the rows of X."""
     Xt = pipe.named_steps["pre"].transform(X)
     return np.stack([t.predict_proba(Xt)[:, 1] for t in pipe.named_steps["clf"].estimators_]).astype(np.float32)
-
-
-def auc_vs_ntrees(pipe, X_te, y_te, ks):
-    """Test AUC of the forest truncated to its first k trees (cumulative mean of per-tree probabilities). Descriptive only."""
-    csum = np.cumsum(per_tree_proba(pipe, X_te), axis=0, dtype=np.float64)
-    return [float(roc_auc_score(y_te, csum[k - 1] / k)) for k in ks]
 
 
 def oob_mask(pipe, n_rows):
@@ -209,30 +211,25 @@ def plot_importance(imp, best_mf, best_msl, n_top=15):
 
 def plot_auc_vs_ntrees(curve, best_mf):
     """
-    Two panels -> figures/rf_auc_vs_ntrees.png.
-    Left: OOB AUC on the training rows vs k (leakage-free evidence that the 200-tree grid forests rank settings like 500-tree ones).
-    Right: test AUC vs k (descriptive; nothing was chosen from it), with the logistic baseline.
+    One panel -> figures/rf_auc_vs_ntrees.png: OUT-OF-BAG AUC on the training rows vs k for the forest and for bagging
+    (leakage-free evidence that the 200-tree grid forests rank settings like 500-tree ones). Only the oob_auc_* columns of
+    `curve` are read; the historical test_auc_* columns of the 18 Sep CSV, if present, are ignored on purpose (21 Oct 2026).
     """
     mark = curve["n_trees"] % 50 == 0
-    fig, axes = plt.subplots(1, 2, figsize=(13, 4.8), sharex=True)
-    panels = [(axes[0], "oob_auc", "OOB AUC (training rows, first k trees)", "OOB AUC vs number of trees — training rows only (leakage-free)"),
-              (axes[1], "test_auc", "Test AUC (first k trees)", "Test AUC vs number of trees — descriptive only")]
-    for a, stem, ylab, title in panels:
-        for col, color, label in [(f"{stem}_rf", C_RF, f"Random forest (max_features={best_mf})"),
-                                  (f"{stem}_bagging", C_BAG, "Bagging (max_features=None)")]:
-            a.plot(curve["n_trees"], curve[col], color=color, lw=2, label=label)
-            a.plot(curve.loc[mark, "n_trees"], curve.loc[mark, col], "o", color=color, ms=6, mec="white", mew=1)
-            a.text(N_TREES + 8, curve[col].iloc[-1], f"{curve[col].iloc[-1]:.4f}", color=C_TXT2, va="center", fontsize=9)
-        a.axvline(N_TREES_GRID, color=C_TXT2, ls=":", lw=1.2)
-        a.text(N_TREES_GRID - 5, a.get_ylim()[0] + 0.55 * np.diff(a.get_ylim())[0], f"{N_TREES_GRID} trees (grid forests)",
-               color=C_TXT2, fontsize=8.5, va="center", ha="right", rotation=90)
-        a.set_xlabel("Number of trees"); a.set_ylabel(ylab); a.set_xlim(0, N_TREES + 45)
-        a.set_title(title, loc="left", fontsize=10.5)
-        a.grid(color=C_GRID, lw=0.8); a.set_axisbelow(True)
-    axes[1].axhline(0.764, color=C_TXT2, ls="--", lw=1.2, label="Logistic regression baseline (0.764)")
-    axes[1].text(12, 0.764 + 0.0004, "logistic regression 0.764", color=C_TXT2, fontsize=8.5, va="bottom")
-    axes[0].legend(loc="lower right", frameon=False); axes[1].legend(loc="center right", frameon=False)
-    fig.suptitle(f"AUC vs number of trees (first k of the fitted {N_TREES}-tree forests)", fontsize=12, x=0.01, ha="left")
+    fig, a = plt.subplots(figsize=(9.6, 4.6))
+    for col, color, label in [("oob_auc_rf", C_RF, f"Random forest (max_features={best_mf})"),
+                              ("oob_auc_bagging", C_BAG, "Bagging (max_features=None)")]:
+        a.plot(curve["n_trees"], curve[col], color=color, lw=2, label=label)
+        a.plot(curve.loc[mark, "n_trees"], curve.loc[mark, col], "o", color=color, ms=6, mec="white", mew=1)
+        a.text(N_TREES + 8, curve[col].iloc[-1], f"{curve[col].iloc[-1]:.4f}", color=C_TXT2, va="center", fontsize=9)
+    a.axvline(N_TREES_GRID, color=C_TXT2, ls=":", lw=1.2)
+    a.text(N_TREES_GRID - 5, a.get_ylim()[0] + 0.55 * np.diff(a.get_ylim())[0], f"{N_TREES_GRID} trees (grid forests)",
+           color=C_TXT2, fontsize=8.5, va="center", ha="right", rotation=90)
+    a.set_xlabel("Number of trees"); a.set_ylabel("OOB AUC (training rows, first k trees)"); a.set_xlim(0, N_TREES + 45)
+    a.set_title(f"Out-of-bag AUC vs number of trees, training rows only (first k of the fitted {N_TREES}-tree forests; "
+                f"{N_TREES} fixed in advance)", loc="left", fontsize=10.5)
+    a.grid(color=C_GRID, lw=0.8); a.set_axisbelow(True)
+    a.legend(loc="lower right", frameon=False)
     return save_extra_figure(fig, "rf_auc_vs_ntrees.png")
 
 
@@ -242,6 +239,14 @@ def plots_only():
     plot_importance(pd.read_csv(os.path.join(RESULTS, "rf_importance.csv")), bp["max_features"], bp["min_samples_leaf"])
     plot_auc_vs_ntrees(pd.read_csv(os.path.join(RESULTS, "rf_auc_vs_ntrees.csv")), bp["max_features"])
     print("figures redrawn from results/rf_importance.csv and results/rf_auc_vs_ntrees.csv")
+
+
+def plot_ntrees_only():
+    """Redraw ONLY figures/rf_auc_vs_ntrees.png from results/rf_auc_vs_ntrees.csv (OOB columns) — python3 model_rf.py
+    --plot-ntrees-only. Reads two result files (the CSV and random_forest.json for max_features); no data, no test labels."""
+    bp = json.load(open(os.path.join(RESULTS, "random_forest.json")))["best_params"]
+    path = plot_auc_vs_ntrees(pd.read_csv(os.path.join(RESULTS, "rf_auc_vs_ntrees.csv")), bp["max_features"])
+    print(f"redrew {path} from the oob_auc_* columns of results/rf_auc_vs_ntrees.csv")
 
 
 def main():
@@ -339,23 +344,20 @@ def main():
 
     plot_importance(imp, best_mf, best_msl)
 
-    # ------------------------------------------------------------------ 4. AUC vs number of trees: OOB (training, leakage-free) + test (descriptive)
+    # ------------------------------------------------------------------ 4. OOB AUC vs number of trees (training rows only, leakage-free)
+    # No test-set curve: the test set is read only inside evaluate() below, after the freeze guard (changed 21 Oct 2026).
     t0 = time.time()
     oob_rf, skip_rf = oob_auc_vs_ntrees(rf, X_train, y_train, KS)
     oob_bag, skip_bag = oob_auc_vs_ntrees(bag, X_train, y_train, KS)
     curve = pd.DataFrame({"n_trees": KS, "oob_auc_rf": oob_rf, "oob_auc_bagging": oob_bag,
-                          "n_train_rows_without_oob_rf": skip_rf, "n_train_rows_without_oob_bagging": skip_bag,
-                          "test_auc_rf": auc_vs_ntrees(rf, X_test, y_test, KS),
-                          "test_auc_bagging": auc_vs_ntrees(bag, X_test, y_test, KS)})
+                          "n_train_rows_without_oob_rf": skip_rf, "n_train_rows_without_oob_bagging": skip_bag})
     curve.to_csv(os.path.join(RESULTS, "rf_auc_vs_ntrees.csv"), index=False)
     timings["auc_vs_ntrees_curves"] = round(time.time() - t0, 1)
     plot_auc_vs_ntrees(curve, best_mf)
     steps = curve[curve["n_trees"] % 50 == 0]
     oob_at = {int(k): (round(r, 4), round(b, 4)) for k, r, b in zip(steps["n_trees"], steps["oob_auc_rf"], steps["oob_auc_bagging"])}
-    auc_at = {int(k): (round(r, 4), round(b, 4)) for k, r, b in zip(steps["n_trees"], steps["test_auc_rf"], steps["test_auc_bagging"])}
     assert abs(oob_rf[-1] - rf_oob["oob_auc"]) < 1e-6, "OOB-vs-k at k=500 must equal sklearn's OOB AUC"
     print(f"\nOOB AUC (rf, bagging) at 50-tree steps ({timings['auc_vs_ntrees_curves']:.0f}s):", oob_at)
-    print("Test AUC (rf, bagging) at 50-tree steps:", auc_at)
 
     # ------------------------------------------------------------------ 5. out-of-fold probabilities + evaluate() (once per model)
     t0 = time.time()
@@ -392,7 +394,7 @@ def main():
                                            f"Feature importance reported three ways ({N_REPEATS} permutation repeats each): MDI, permutation on the "
                                            "TRAINING set (in-sample, magnitudes optimistic — kept only as the contrast) and Breiman's OUT-OF-BAG "
                                            "permutation, which is the measure the report quotes; extra.spearman holds the rank correlations between "
-                                           "them. extra.test_auc_vs_ntrees is descriptive only (nothing chosen from it).",
+                                           "them.",
                       extra=dict(grid_cv_auc_200trees=float(gs.best_score_), grid_seconds=timings["grid_200trees"], grid=grid_records,
                                  grid_top2_cv_auc_500trees=top2_500, winner_ahead_of_runner_up_folds_500trees=n_folds_ahead,
                                  cv_fold_aucs=np.round(aucs_rf, 5).tolist(), **rf_oob,
@@ -409,7 +411,6 @@ def main():
                                  permutation_repeats=N_REPEATS, permutation_seconds=round(perm_seconds, 1),
                                  oob_permutation_seconds=round(oob_perm_seconds, 1),
                                  oob_auc_vs_ntrees={str(k): v[0] for k, v in oob_at.items()},
-                                 test_auc_vs_ntrees={str(k): v[0] for k, v in auc_at.items()},
                                  timings=timings, versions=versions))
     res_bag = evaluate("Bagging (RF, max_features=None)", bag, X_train, y_train, X_test, y_test, member=MEMBER, slug="bagging",
                        best_params=dict(max_features=None, min_samples_leaf=best_msl, n_estimators=N_TREES, criterion="gini",
@@ -418,8 +419,7 @@ def main():
                        notes=common_notes + "Not tuned separately: same min_samples_leaf as the tuned random forest, max_features=None "
                                             "(every split sees all 32 columns) — i.e. plain bagging of trees, to isolate the effect of feature subsampling.",
                        extra=dict(cv_fold_aucs=np.round(aucs_bag, 5).tolist(), **bag_oob,
-                                  oob_auc_vs_ntrees={str(k): v[1] for k, v in oob_at.items()},
-                                  test_auc_vs_ntrees={str(k): v[1] for k, v in auc_at.items()}, versions=versions))
+                                  oob_auc_vs_ntrees={str(k): v[1] for k, v in oob_at.items()}, versions=versions))
 
     for r in (res_rf, res_bag):
         print(f"\n{r['name']}: CV AUC {r['cv_auc']:.4f}±{r['cv_auc_std']:.4f} | OOF AUC {r['oof_auc']:.4f} | OOB AUC {r['extra']['oob_auc']:.4f} | "
@@ -435,4 +435,9 @@ def main():
 
 
 if __name__ == "__main__":
-    plots_only() if "--plots-only" in sys.argv else main()
+    if "--plot-ntrees-only" in sys.argv:
+        plot_ntrees_only()
+    elif "--plots-only" in sys.argv:
+        plots_only()
+    else:
+        main()

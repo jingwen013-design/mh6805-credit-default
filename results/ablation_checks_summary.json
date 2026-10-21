@@ -1,0 +1,2048 @@
+{
+ "script": "code/ablation_checks.py",
+ "training_only": true,
+ "n_rows": 20975,
+ "default_rate": 0.221263,
+ "folds": "common.CV = StratifiedKFold(5, shuffle=True, random_state=2607526); fold_k = cv_folds.csv fold k",
+ "nb_correction": "corrected_t_ci(diffs, n_train=4, n_test=1): variance factor 1/5 + 1/4, t with 4 df",
+ "frozen_xgboost": {
+  "objective": "binary:logistic",
+  "eval_metric": "auc",
+  "tree_method": "hist",
+  "n_jobs": 2,
+  "random_state": 2607526,
+  "subsample": 0.8,
+  "colsample_bytree": 0.8,
+  "learning_rate": 0.03,
+  "min_child_weight": 5,
+  "scale_pos_weight": 1.0,
+  "max_depth": 3,
+  "n_estimators": 300
+ },
+ "frozen_logit": {
+  "C": "inf",
+  "solver": "lbfgs",
+  "max_iter": 5000,
+  "tol": 1e-08
+ },
+ "sanity": {
+  "max_abs_diff_vs_frozen_xgboost_oof": 0.0,
+  "max_abs_diff_vs_frozen_logit_oof": 0.0,
+  "truncated_vs_short_fit_max_abs_diff": 0.0,
+  "logit_lbfgs_iterations": {
+   "full29": [
+    124,
+    134,
+    158,
+    154,
+    157
+   ],
+   "raw23": [
+    113,
+    102,
+    112,
+    103,
+    121
+   ],
+   "H0": [
+    31,
+    33,
+    39,
+    36,
+    39
+   ],
+   "H1": [
+    46,
+    54,
+    49,
+    56,
+    52
+   ],
+   "H3": [
+    81,
+    75,
+    82,
+    82,
+    83
+   ],
+   "H6": [
+    113,
+    102,
+    112,
+    103,
+    121
+   ],
+   "H0+S6": [
+    74,
+    76,
+    71,
+    82,
+    66
+   ],
+   "H1+S6": [
+    91,
+    78,
+    77,
+    87,
+    84
+   ],
+   "H3+S6": [
+    109,
+    107,
+    105,
+    112,
+    112
+   ],
+   "H6+S6": [
+    124,
+    134,
+    158,
+    154,
+    157
+   ],
+   "H1+W1": [
+    62,
+    60,
+    76,
+    66,
+    71
+   ],
+   "H3+W3": [
+    156,
+    179,
+    164,
+    161,
+    157
+   ],
+   "H6+W6": [
+    124,
+    134,
+    158,
+    154,
+    157
+   ],
+   "nodemo25": [
+    102,
+    99,
+    127,
+    108,
+    102
+   ]
+  }
+ },
+ "feature_sets": {
+  "full29": {
+   "numeric": [
+    "LIMIT_BAL",
+    "AGE",
+    "PAY_1",
+    "PAY_2",
+    "PAY_3",
+    "PAY_4",
+    "PAY_5",
+    "PAY_6",
+    "BILL_AMT1",
+    "BILL_AMT2",
+    "BILL_AMT3",
+    "BILL_AMT4",
+    "BILL_AMT5",
+    "BILL_AMT6",
+    "PAY_AMT1",
+    "PAY_AMT2",
+    "PAY_AMT3",
+    "PAY_AMT4",
+    "PAY_AMT5",
+    "PAY_AMT6",
+    "UTIL_1",
+    "UTIL_MEAN",
+    "PAY_RATIO_MEAN",
+    "N_MONTHS_DELAYED",
+    "MAX_DELAY",
+    "BILL_TREND"
+   ],
+   "categorical": [
+    "SEX",
+    "EDUCATION",
+    "MARRIAGE"
+   ],
+   "description": "frozen 29 predictors (23 raw + 6 engineered)",
+   "n_predictors": 29
+  },
+  "raw23": {
+   "numeric": [
+    "LIMIT_BAL",
+    "AGE",
+    "PAY_1",
+    "PAY_2",
+    "PAY_3",
+    "PAY_4",
+    "PAY_5",
+    "PAY_6",
+    "BILL_AMT1",
+    "BILL_AMT2",
+    "BILL_AMT3",
+    "BILL_AMT4",
+    "BILL_AMT5",
+    "BILL_AMT6",
+    "PAY_AMT1",
+    "PAY_AMT2",
+    "PAY_AMT3",
+    "PAY_AMT4",
+    "PAY_AMT5",
+    "PAY_AMT6"
+   ],
+   "categorical": [
+    "SEX",
+    "EDUCATION",
+    "MARRIAGE"
+   ],
+   "description": "23 raw predictors, no engineered features",
+   "n_predictors": 23
+  },
+  "nodemo25": {
+   "numeric": [
+    "LIMIT_BAL",
+    "PAY_1",
+    "PAY_2",
+    "PAY_3",
+    "PAY_4",
+    "PAY_5",
+    "PAY_6",
+    "BILL_AMT1",
+    "BILL_AMT2",
+    "BILL_AMT3",
+    "BILL_AMT4",
+    "BILL_AMT5",
+    "BILL_AMT6",
+    "PAY_AMT1",
+    "PAY_AMT2",
+    "PAY_AMT3",
+    "PAY_AMT4",
+    "PAY_AMT5",
+    "PAY_AMT6",
+    "UTIL_1",
+    "UTIL_MEAN",
+    "PAY_RATIO_MEAN",
+    "N_MONTHS_DELAYED",
+    "MAX_DELAY",
+    "BILL_TREND"
+   ],
+   "categorical": [],
+   "description": "frozen set minus SEX, EDUCATION, MARRIAGE, AGE",
+   "n_predictors": 25
+  },
+  "H0": {
+   "numeric": [
+    "LIMIT_BAL",
+    "AGE"
+   ],
+   "categorical": [
+    "SEX",
+    "EDUCATION",
+    "MARRIAGE"
+   ],
+   "description": "H0: LIMIT_BAL + demographics",
+   "n_predictors": 5
+  },
+  "H0+S6": {
+   "numeric": [
+    "LIMIT_BAL",
+    "AGE",
+    "UTIL_1",
+    "UTIL_MEAN",
+    "PAY_RATIO_MEAN",
+    "N_MONTHS_DELAYED",
+    "MAX_DELAY",
+    "BILL_TREND"
+   ],
+   "categorical": [
+    "SEX",
+    "EDUCATION",
+    "MARRIAGE"
+   ],
+   "description": "H0 + the six six-month summaries",
+   "n_predictors": 11
+  },
+  "H1": {
+   "numeric": [
+    "LIMIT_BAL",
+    "AGE",
+    "PAY_1",
+    "BILL_AMT1",
+    "PAY_AMT1"
+   ],
+   "categorical": [
+    "SEX",
+    "EDUCATION",
+    "MARRIAGE"
+   ],
+   "description": "H1: LIMIT_BAL + demographics + raw months 1-1",
+   "n_predictors": 8
+  },
+  "H1+S6": {
+   "numeric": [
+    "LIMIT_BAL",
+    "AGE",
+    "PAY_1",
+    "BILL_AMT1",
+    "PAY_AMT1",
+    "UTIL_1",
+    "UTIL_MEAN",
+    "PAY_RATIO_MEAN",
+    "N_MONTHS_DELAYED",
+    "MAX_DELAY",
+    "BILL_TREND"
+   ],
+   "categorical": [
+    "SEX",
+    "EDUCATION",
+    "MARRIAGE"
+   ],
+   "description": "H1 + the six six-month summaries",
+   "n_predictors": 14
+  },
+  "H3": {
+   "numeric": [
+    "LIMIT_BAL",
+    "AGE",
+    "PAY_1",
+    "PAY_2",
+    "PAY_3",
+    "BILL_AMT1",
+    "BILL_AMT2",
+    "BILL_AMT3",
+    "PAY_AMT1",
+    "PAY_AMT2",
+    "PAY_AMT3"
+   ],
+   "categorical": [
+    "SEX",
+    "EDUCATION",
+    "MARRIAGE"
+   ],
+   "description": "H3: LIMIT_BAL + demographics + raw months 1-3",
+   "n_predictors": 14
+  },
+  "H3+S6": {
+   "numeric": [
+    "LIMIT_BAL",
+    "AGE",
+    "PAY_1",
+    "PAY_2",
+    "PAY_3",
+    "BILL_AMT1",
+    "BILL_AMT2",
+    "BILL_AMT3",
+    "PAY_AMT1",
+    "PAY_AMT2",
+    "PAY_AMT3",
+    "UTIL_1",
+    "UTIL_MEAN",
+    "PAY_RATIO_MEAN",
+    "N_MONTHS_DELAYED",
+    "MAX_DELAY",
+    "BILL_TREND"
+   ],
+   "categorical": [
+    "SEX",
+    "EDUCATION",
+    "MARRIAGE"
+   ],
+   "description": "H3 + the six six-month summaries",
+   "n_predictors": 20
+  },
+  "H6": {
+   "numeric": [
+    "LIMIT_BAL",
+    "AGE",
+    "PAY_1",
+    "PAY_2",
+    "PAY_3",
+    "PAY_4",
+    "PAY_5",
+    "PAY_6",
+    "BILL_AMT1",
+    "BILL_AMT2",
+    "BILL_AMT3",
+    "BILL_AMT4",
+    "BILL_AMT5",
+    "BILL_AMT6",
+    "PAY_AMT1",
+    "PAY_AMT2",
+    "PAY_AMT3",
+    "PAY_AMT4",
+    "PAY_AMT5",
+    "PAY_AMT6"
+   ],
+   "categorical": [
+    "SEX",
+    "EDUCATION",
+    "MARRIAGE"
+   ],
+   "description": "H6: LIMIT_BAL + demographics + raw months 1-6",
+   "n_predictors": 23
+  },
+  "H6+S6": {
+   "numeric": [
+    "LIMIT_BAL",
+    "AGE",
+    "PAY_1",
+    "PAY_2",
+    "PAY_3",
+    "PAY_4",
+    "PAY_5",
+    "PAY_6",
+    "BILL_AMT1",
+    "BILL_AMT2",
+    "BILL_AMT3",
+    "BILL_AMT4",
+    "BILL_AMT5",
+    "BILL_AMT6",
+    "PAY_AMT1",
+    "PAY_AMT2",
+    "PAY_AMT3",
+    "PAY_AMT4",
+    "PAY_AMT5",
+    "PAY_AMT6",
+    "UTIL_1",
+    "UTIL_MEAN",
+    "PAY_RATIO_MEAN",
+    "N_MONTHS_DELAYED",
+    "MAX_DELAY",
+    "BILL_TREND"
+   ],
+   "categorical": [
+    "SEX",
+    "EDUCATION",
+    "MARRIAGE"
+   ],
+   "description": "H6 + the six six-month summaries",
+   "n_predictors": 29
+  },
+  "H1+W1": {
+   "numeric": [
+    "LIMIT_BAL",
+    "AGE",
+    "PAY_1",
+    "BILL_AMT1",
+    "PAY_AMT1",
+    "UTIL_1",
+    "PAY_RATIO_MEAN_W1",
+    "N_MONTHS_DELAYED_W1",
+    "MAX_DELAY_W1"
+   ],
+   "categorical": [
+    "SEX",
+    "EDUCATION",
+    "MARRIAGE"
+   ],
+   "description": "H1 + summaries recomputed over months 1-1",
+   "n_predictors": 12
+  },
+  "H3+W3": {
+   "numeric": [
+    "LIMIT_BAL",
+    "AGE",
+    "PAY_1",
+    "PAY_2",
+    "PAY_3",
+    "BILL_AMT1",
+    "BILL_AMT2",
+    "BILL_AMT3",
+    "PAY_AMT1",
+    "PAY_AMT2",
+    "PAY_AMT3",
+    "UTIL_1",
+    "UTIL_MEAN_W3",
+    "PAY_RATIO_MEAN_W3",
+    "N_MONTHS_DELAYED_W3",
+    "MAX_DELAY_W3",
+    "BILL_TREND_W3"
+   ],
+   "categorical": [
+    "SEX",
+    "EDUCATION",
+    "MARRIAGE"
+   ],
+   "description": "H3 + summaries recomputed over months 1-3",
+   "n_predictors": 20
+  },
+  "H6+W6": {
+   "numeric": [
+    "LIMIT_BAL",
+    "AGE",
+    "PAY_1",
+    "PAY_2",
+    "PAY_3",
+    "PAY_4",
+    "PAY_5",
+    "PAY_6",
+    "BILL_AMT1",
+    "BILL_AMT2",
+    "BILL_AMT3",
+    "BILL_AMT4",
+    "BILL_AMT5",
+    "BILL_AMT6",
+    "PAY_AMT1",
+    "PAY_AMT2",
+    "PAY_AMT3",
+    "PAY_AMT4",
+    "PAY_AMT5",
+    "PAY_AMT6",
+    "UTIL_1",
+    "UTIL_MEAN",
+    "PAY_RATIO_MEAN",
+    "N_MONTHS_DELAYED",
+    "MAX_DELAY",
+    "BILL_TREND"
+   ],
+   "categorical": [
+    "SEX",
+    "EDUCATION",
+    "MARRIAGE"
+   ],
+   "description": "H6 + summaries recomputed over months 1-6",
+   "n_predictors": 29
+  }
+ },
+ "a_depth": {
+  "cv_auc": {
+   "logit|full29": 0.760236,
+   "depth 1|full29": 0.775571,
+   "depth 2|full29": 0.784032,
+   "depth 3|full29": 0.786291,
+   "depth 4|full29": 0.785925,
+   "depth 1, rounds tuned|full29": 0.782707,
+   "depth 2, rounds tuned|full29": 0.785086,
+   "depth 3, rounds tuned|full29": 0.786291,
+   "depth 4, rounds tuned|full29": 0.785925,
+   "logit|raw23": 0.723049,
+   "depth 1|raw23": 0.770538,
+   "depth 2|raw23": 0.778699,
+   "depth 3|raw23": 0.781904,
+   "depth 4|raw23": 0.782838,
+   "depth 1, rounds tuned|raw23": 0.776621,
+   "depth 2, rounds tuned|raw23": 0.780588,
+   "depth 3, rounds tuned|raw23": 0.781904,
+   "depth 4, rounds tuned|raw23": 0.782838
+  },
+  "rounds_chosen": {
+   "depth 1|full29": [
+    1200,
+    1200,
+    2400,
+    1200,
+    1200
+   ],
+   "depth 2|full29": [
+    600,
+    600,
+    600,
+    600,
+    600
+   ],
+   "depth 3|full29": [
+    300,
+    300,
+    300,
+    300,
+    300
+   ],
+   "depth 4|full29": [
+    300,
+    300,
+    300,
+    300,
+    300
+   ],
+   "depth 1|raw23": [
+    1200,
+    1200,
+    2400,
+    2400,
+    1200
+   ],
+   "depth 2|raw23": [
+    600,
+    600,
+    600,
+    600,
+    600
+   ],
+   "depth 3|raw23": [
+    300,
+    300,
+    300,
+    300,
+    300
+   ],
+   "depth 4|raw23": [
+    300,
+    300,
+    300,
+    300,
+    300
+   ]
+  },
+  "inner_cv_auc_by_rounds": {
+   "depth 1|full29": {
+    "grid": [
+     300,
+     600,
+     1200,
+     2400
+    ],
+    "per_outer_fold": [
+     [
+      0.77233,
+      0.77763,
+      0.77936,
+      0.77871
+     ],
+     [
+      0.77972,
+      0.78361,
+      0.78448,
+      0.78353
+     ],
+     [
+      0.77664,
+      0.78187,
+      0.78431,
+      0.78474
+     ],
+     [
+      0.77235,
+      0.77789,
+      0.77999,
+      0.77991
+     ],
+     [
+      0.77542,
+      0.78062,
+      0.78274,
+      0.78207
+     ]
+    ]
+   },
+   "depth 2|full29": {
+    "grid": [
+     300,
+     600,
+     1200,
+     2400
+    ],
+    "per_outer_fold": [
+     [
+      0.78037,
+      0.78135,
+      0.779,
+      0.7741
+     ],
+     [
+      0.78623,
+      0.78721,
+      0.78523,
+      0.7804
+     ],
+     [
+      0.78491,
+      0.78724,
+      0.7872,
+      0.78267
+     ],
+     [
+      0.7813,
+      0.78307,
+      0.78133,
+      0.77707
+     ],
+     [
+      0.78351,
+      0.78493,
+      0.78415,
+      0.78028
+     ]
+    ]
+   },
+   "depth 3|full29": {
+    "grid": [
+     300,
+     600,
+     1200,
+     2400
+    ],
+    "per_outer_fold": [
+     [
+      0.78171,
+      0.78001,
+      0.77479,
+      0.76679
+     ],
+     [
+      0.78793,
+      0.78586,
+      0.78076,
+      0.77233
+     ],
+     [
+      0.78815,
+      0.78787,
+      0.78433,
+      0.77514
+     ],
+     [
+      0.78385,
+      0.78293,
+      0.77892,
+      0.77059
+     ],
+     [
+      0.78629,
+      0.78503,
+      0.7808,
+      0.77319
+     ]
+    ]
+   },
+   "depth 4|full29": {
+    "grid": [
+     300,
+     600,
+     1200,
+     2400
+    ],
+    "per_outer_fold": [
+     [
+      0.78154,
+      0.77733,
+      0.76988,
+      0.75951
+     ],
+     [
+      0.78726,
+      0.783,
+      0.77576,
+      0.76458
+     ],
+     [
+      0.7886,
+      0.78501,
+      0.77872,
+      0.76712
+     ],
+     [
+      0.78288,
+      0.77943,
+      0.7732,
+      0.76272
+     ],
+     [
+      0.7865,
+      0.78277,
+      0.77662,
+      0.76685
+     ]
+    ]
+   },
+   "depth 1|raw23": {
+    "grid": [
+     300,
+     600,
+     1200,
+     2400
+    ],
+    "per_outer_fold": [
+     [
+      0.76662,
+      0.77058,
+      0.77261,
+      0.77221
+     ],
+     [
+      0.77259,
+      0.77631,
+      0.77774,
+      0.77745
+     ],
+     [
+      0.7709,
+      0.77485,
+      0.77769,
+      0.77811
+     ],
+     [
+      0.76647,
+      0.7702,
+      0.77323,
+      0.77395
+     ],
+     [
+      0.77162,
+      0.77535,
+      0.77768,
+      0.77717
+     ]
+    ]
+   },
+   "depth 2|raw23": {
+    "grid": [
+     300,
+     600,
+     1200,
+     2400
+    ],
+    "per_outer_fold": [
+     [
+      0.77424,
+      0.77614,
+      0.77501,
+      0.77027
+     ],
+     [
+      0.78033,
+      0.78155,
+      0.7805,
+      0.77645
+     ],
+     [
+      0.77923,
+      0.78227,
+      0.78206,
+      0.7775
+     ],
+     [
+      0.77454,
+      0.77796,
+      0.77757,
+      0.77461
+     ],
+     [
+      0.77925,
+      0.78146,
+      0.78077,
+      0.77684
+     ]
+    ]
+   },
+   "depth 3|raw23": {
+    "grid": [
+     300,
+     600,
+     1200,
+     2400
+    ],
+    "per_outer_fold": [
+     [
+      0.77764,
+      0.7754,
+      0.77035,
+      0.76276
+     ],
+     [
+      0.78201,
+      0.78083,
+      0.77677,
+      0.76846
+     ],
+     [
+      0.78314,
+      0.78296,
+      0.77878,
+      0.77057
+     ],
+     [
+      0.77952,
+      0.77945,
+      0.77552,
+      0.76862
+     ],
+     [
+      0.78299,
+      0.78245,
+      0.77845,
+      0.77092
+     ]
+    ]
+   },
+   "depth 4|raw23": {
+    "grid": [
+     300,
+     600,
+     1200,
+     2400
+    ],
+    "per_outer_fold": [
+     [
+      0.77766,
+      0.77326,
+      0.76568,
+      0.75538
+     ],
+     [
+      0.78159,
+      0.77794,
+      0.77132,
+      0.76057
+     ],
+     [
+      0.78386,
+      0.78058,
+      0.77357,
+      0.76305
+     ],
+     [
+      0.77962,
+      0.77683,
+      0.77087,
+      0.76164
+     ],
+     [
+      0.78344,
+      0.78082,
+      0.77478,
+      0.76437
+     ]
+    ]
+   }
+  },
+  "auc_tuned_did_raw_minus_engineered": {
+   "mean": 0.001699,
+   "nb95": [
+    -0.001357,
+    0.004754
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.004323,
+    0.002241,
+    0.000246,
+    0.000794,
+    0.000888
+   ]
+  },
+  "auc_tuned_depth1_minus_logit_raw": {
+   "mean": 0.053572,
+   "nb95": [
+    0.044612,
+    0.062533
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.048827,
+    0.058441,
+    0.049362,
+    0.0588,
+    0.052431
+   ]
+  },
+  "auc_depth3_minus_logit_raw": {
+   "mean": 0.058855,
+   "nb95": [
+    0.050524,
+    0.067185
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.055773,
+    0.064398,
+    0.054105,
+    0.062702,
+    0.057295
+   ]
+  },
+  "auc_engineered_minus_raw_depth1": {
+   "mean": 0.005034,
+   "nb95": [
+    0.002305,
+    0.007762
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.005286,
+    0.003535,
+    0.006995,
+    0.003635,
+    0.005718
+   ]
+  },
+  "auc_engineered_minus_raw_depth3": {
+   "mean": 0.004387,
+   "nb95": [
+    0.00111,
+    0.007663
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.003881,
+    0.001763,
+    0.006054,
+    0.004283,
+    0.005953
+   ]
+  },
+  "auc_engineered_minus_raw_logit": {
+   "mean": 0.037187,
+   "nb95": [
+    0.030947,
+    0.043428
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.041841,
+    0.032499,
+    0.037939,
+    0.037303,
+    0.036355
+   ]
+  },
+  "auc_depth3_minus_depth1_engineered": {
+   "mean": 0.010719,
+   "nb95": [
+    0.007059,
+    0.01438
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.009339,
+    0.011519,
+    0.013811,
+    0.009774,
+    0.009153
+   ]
+  },
+  "auc_depth2_minus_depth1_engineered": {
+   "mean": 0.008461,
+   "nb95": [
+    0.0065,
+    0.010421
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.008208,
+    0.008151,
+    0.01006,
+    0.008709,
+    0.007175
+   ]
+  },
+  "auc_depth4_minus_depth1_engineered": {
+   "mean": 0.010353,
+   "nb95": [
+    0.005482,
+    0.015225
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.00979,
+    0.012529,
+    0.013325,
+    0.009282,
+    0.006841
+   ]
+  },
+  "auc_depth1_minus_logit_engineered": {
+   "mean": 0.015335,
+   "nb95": [
+    0.00326,
+    0.02741
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.008473,
+    0.022143,
+    0.008408,
+    0.019909,
+    0.01774
+   ]
+  },
+  "auc_depth3_minus_logit_engineered": {
+   "mean": 0.026054,
+   "nb95": [
+    0.014483,
+    0.037625
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.017812,
+    0.033663,
+    0.022219,
+    0.029683,
+    0.026893
+   ]
+  },
+  "auc_depth3_minus_depth1_raw": {
+   "mean": 0.011366,
+   "nb95": [
+    0.006566,
+    0.016166
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.010744,
+    0.013291,
+    0.014752,
+    0.009125,
+    0.008918
+   ]
+  },
+  "auc_depth1_minus_logit_raw": {
+   "mean": 0.047489,
+   "nb95": [
+    0.037152,
+    0.057825
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.045028,
+    0.051108,
+    0.039353,
+    0.053577,
+    0.048377
+   ]
+  },
+  "auc_did_raw_minus_engineered": {
+   "mean": 0.000647,
+   "nb95": [
+    -0.001302,
+    0.002596
+   ],
+   "folds_positive": 3,
+   "folds_better": 3,
+   "per_fold": [
+    0.001405,
+    0.001771,
+    0.000941,
+    -0.000649,
+    -0.000235
+   ]
+  },
+  "auc_tuned_depth3_minus_depth1_engineered": {
+   "mean": 0.003584,
+   "nb95": [
+    0.002217,
+    0.004951
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.002623,
+    0.003715,
+    0.004497,
+    0.003108,
+    0.003977
+   ]
+  },
+  "auc_tuned_depth3_minus_depth1_raw": {
+   "mean": 0.005282,
+   "nb95": [
+    0.00308,
+    0.007485
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.006946,
+    0.005957,
+    0.004743,
+    0.003902,
+    0.004865
+   ]
+  },
+  "auc_tuned_depth1_minus_logit_engineered": {
+   "mean": 0.02247,
+   "nb95": [
+    0.011122,
+    0.033818
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.01519,
+    0.029947,
+    0.017723,
+    0.026575,
+    0.022916
+   ]
+  },
+  "ap_depth3_minus_depth1_engineered": {
+   "mean": 0.023055,
+   "nb95": [
+    0.004648,
+    0.041462
+   ],
+   "folds_positive": 5,
+   "folds_better": 5,
+   "per_fold": [
+    0.020982,
+    0.03839,
+    0.019694,
+    0.024847,
+    0.011362
+   ]
+  },
+  "brier_depth3_minus_depth1_engineered": {
+   "mean": -0.002574,
+   "nb95": [
+    -0.003846,
+    -0.001302
+   ],
+   "folds_positive": 0,
+   "folds_better": 5,
+   "per_fold": [
+    -0.002558,
+    -0.003718,
+    -0.002386,
+    -0.002301,
+    -0.001906
+   ]
+  }
+ },
+ "b_history": {
+  "cv_auc": {
+   "XGBoost|H0 raw months only": 0.629851,
+   "XGBoost|H1 raw months only": 0.768763,
+   "XGBoost|H3 raw months only": 0.779518,
+   "XGBoost|H6 raw months only": 0.781904,
+   "XGBoost|H0 + six-month summaries": 0.774193,
+   "XGBoost|H1 + six-month summaries": 0.786585,
+   "XGBoost|H3 + six-month summaries": 0.786437,
+   "XGBoost|H6 + six-month summaries": 0.786291,
+   "XGBoost|H1 + window summaries (months 1-k)": 0.769113,
+   "XGBoost|H3 + window summaries (months 1-k)": 0.783972,
+   "XGBoost|H6 + window summaries (months 1-k)": 0.786291,
+   "logit|H0 raw months only": 0.62766,
+   "logit|H1 raw months only": 0.716536,
+   "logit|H3 raw months only": 0.724051,
+   "logit|H6 raw months only": 0.723049,
+   "logit|H0 + six-month summaries": 0.74924,
+   "logit|H1 + six-month summaries": 0.746273,
+   "logit|H3 + six-month summaries": 0.75575,
+   "logit|H6 + six-month summaries": 0.760236,
+   "logit|H1 + window summaries (months 1-k)": 0.747751,
+   "logit|H3 + window summaries (months 1-k)": 0.75512,
+   "logit|H6 + window summaries (months 1-k)": 0.760236
+  },
+  "increments_auc": {
+   "XGBoost|raw months only|H1-H0": {
+    "mean": 0.138912,
+    "nb95": [
+     0.108963,
+     0.168861
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.112029,
+     0.140863,
+     0.1395,
+     0.148724,
+     0.153443
+    ]
+   },
+   "XGBoost|raw months only|H3-H1": {
+    "mean": 0.010755,
+    "nb95": [
+     0.007633,
+     0.013877
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.012035,
+     0.008256,
+     0.010276,
+     0.012521,
+     0.010686
+    ]
+   },
+   "XGBoost|raw months only|H6-H3": {
+    "mean": 0.002386,
+    "nb95": [
+     -0.000441,
+     0.005214
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.002945,
+     0.00039,
+     0.00119,
+     0.003595,
+     0.003811
+    ]
+   },
+   "XGBoost|raw months only|H6-H1": {
+    "mean": 0.013141,
+    "nb95": [
+     0.00747,
+     0.018812
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.01498,
+     0.008646,
+     0.011467,
+     0.016116,
+     0.014497
+    ]
+   },
+   "XGBoost|+ six-month summaries|H1-H0": {
+    "mean": 0.012392,
+    "nb95": [
+     0.005453,
+     0.019331
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.006786,
+     0.01642,
+     0.014278,
+     0.0137,
+     0.010778
+    ]
+   },
+   "XGBoost|+ six-month summaries|H3-H1": {
+    "mean": -0.000147,
+    "nb95": [
+     -0.002638,
+     0.002343
+    ],
+    "folds_positive": 3,
+    "folds_better": 3,
+    "per_fold": [
+     -0.000139,
+     0.000911,
+     -0.00244,
+     0.000361,
+     0.00057
+    ]
+   },
+   "XGBoost|+ six-month summaries|H6-H3": {
+    "mean": -0.000147,
+    "nb95": [
+     -0.00226,
+     0.001966
+    ],
+    "folds_positive": 2,
+    "folds_better": 2,
+    "per_fold": [
+     -0.000215,
+     -0.001946,
+     0.00053,
+     -0.000158,
+     0.001056
+    ]
+   },
+   "XGBoost|+ six-month summaries|H6-H1": {
+    "mean": -0.000294,
+    "nb95": [
+     -0.002776,
+     0.002187
+    ],
+    "folds_positive": 2,
+    "folds_better": 2,
+    "per_fold": [
+     -0.000354,
+     -0.001035,
+     -0.001911,
+     0.000202,
+     0.001626
+    ]
+   },
+   "XGBoost|+ window summaries (months 1-k)|H3-H1": {
+    "mean": 0.014859,
+    "nb95": [
+     0.010821,
+     0.018896
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.014727,
+     0.011273,
+     0.015659,
+     0.017034,
+     0.015602
+    ]
+   },
+   "XGBoost|+ window summaries (months 1-k)|H6-H3": {
+    "mean": 0.002318,
+    "nb95": [
+     -0.002326,
+     0.006963
+    ],
+    "folds_positive": 4,
+    "folds_better": 4,
+    "per_fold": [
+     0.00406,
+     0.001622,
+     -0.001691,
+     0.003136,
+     0.004465
+    ]
+   },
+   "XGBoost|+ window summaries (months 1-k)|H6-H1": {
+    "mean": 0.017177,
+    "nb95": [
+     0.010689,
+     0.023665
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.018787,
+     0.012895,
+     0.013967,
+     0.02017,
+     0.020067
+    ]
+   },
+   "logit|raw months only|H1-H0": {
+    "mean": 0.088875,
+    "nb95": [
+     0.068471,
+     0.10928
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.07477,
+     0.080883,
+     0.090431,
+     0.097759,
+     0.100533
+    ]
+   },
+   "logit|raw months only|H3-H1": {
+    "mean": 0.007515,
+    "nb95": [
+     0.004031,
+     0.010999
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.008021,
+     0.006988,
+     0.007745,
+     0.009998,
+     0.004823
+    ]
+   },
+   "logit|raw months only|H6-H3": {
+    "mean": -0.001002,
+    "nb95": [
+     -0.002213,
+     0.000209
+    ],
+    "folds_positive": 0,
+    "folds_better": 0,
+    "per_fold": [
+     -0.000974,
+     -0.001271,
+     -0.001917,
+     -0.000658,
+     -0.000189
+    ]
+   },
+   "logit|raw months only|H6-H1": {
+    "mean": 0.006513,
+    "nb95": [
+     0.003167,
+     0.009859
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.007047,
+     0.005717,
+     0.005828,
+     0.00934,
+     0.004634
+    ]
+   },
+   "logit|+ six-month summaries|H1-H0": {
+    "mean": -0.002968,
+    "nb95": [
+     -0.007398,
+     0.001463
+    ],
+    "folds_positive": 0,
+    "folds_better": 0,
+    "per_fold": [
+     -0.00399,
+     -0.00405,
+     -0.000256,
+     -0.005809,
+     -0.000732
+    ]
+   },
+   "logit|+ six-month summaries|H3-H1": {
+    "mean": 0.009477,
+    "nb95": [
+     0.005736,
+     0.013218
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.008304,
+     0.009338,
+     0.011797,
+     0.011077,
+     0.006869
+    ]
+   },
+   "logit|+ six-month summaries|H6-H3": {
+    "mean": 0.004487,
+    "nb95": [
+     0.001703,
+     0.00727
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.003134,
+     0.004172,
+     0.006715,
+     0.003236,
+     0.005176
+    ]
+   },
+   "logit|+ six-month summaries|H6-H1": {
+    "mean": 0.013964,
+    "nb95": [
+     0.008772,
+     0.019155
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.011438,
+     0.01351,
+     0.018513,
+     0.014312,
+     0.012045
+    ]
+   },
+   "logit|+ window summaries (months 1-k)|H3-H1": {
+    "mean": 0.007368,
+    "nb95": [
+     -0.002558,
+     0.017294
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.01003,
+     0.001486,
+     0.015022,
+     0.006478,
+     0.003826
+    ]
+   },
+   "logit|+ window summaries (months 1-k)|H6-H3": {
+    "mean": 0.005117,
+    "nb95": [
+     -0.002066,
+     0.0123
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.011013,
+     0.006223,
+     0.0006,
+     0.003838,
+     0.003908
+    ]
+   },
+   "logit|+ window summaries (months 1-k)|H6-H1": {
+    "mean": 0.012485,
+    "nb95": [
+     0.001739,
+     0.023231
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.021043,
+     0.007709,
+     0.015622,
+     0.010316,
+     0.007735
+    ]
+   }
+  },
+  "summaries_value_auc": {
+   "XGBoost|H0": {
+    "mean": 0.144342,
+    "nb95": [
+     0.116727,
+     0.171956
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.124458,
+     0.135888,
+     0.144653,
+     0.15522,
+     0.16149
+    ]
+   },
+   "XGBoost|H1": {
+    "mean": 0.017822,
+    "nb95": [
+     0.011117,
+     0.024528
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.019215,
+     0.011444,
+     0.019431,
+     0.020197,
+     0.018824
+    ]
+   },
+   "XGBoost|H3": {
+    "mean": 0.00692,
+    "nb95": [
+     0.003633,
+     0.010207
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.00704,
+     0.004099,
+     0.006714,
+     0.008036,
+     0.008708
+    ]
+   },
+   "XGBoost|H6": {
+    "mean": 0.004387,
+    "nb95": [
+     0.00111,
+     0.007663
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.003881,
+     0.001763,
+     0.006054,
+     0.004283,
+     0.005953
+    ]
+   },
+   "logit|H0": {
+    "mean": 0.12158,
+    "nb95": [
+     0.10112,
+     0.142039
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.11621,
+     0.109639,
+     0.115942,
+     0.135898,
+     0.130209
+    ]
+   },
+   "logit|H1": {
+    "mean": 0.029737,
+    "nb95": [
+     0.019871,
+     0.039603
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.03745,
+     0.024706,
+     0.025255,
+     0.03233,
+     0.028944
+    ]
+   },
+   "logit|H3": {
+    "mean": 0.031699,
+    "nb95": [
+     0.02407,
+     0.039327
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.037732,
+     0.027056,
+     0.029307,
+     0.033409,
+     0.03099
+    ]
+   },
+   "logit|H6": {
+    "mean": 0.037187,
+    "nb95": [
+     0.030947,
+     0.043428
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.041841,
+     0.032499,
+     0.037939,
+     0.037303,
+     0.036355
+    ]
+   }
+  },
+  "six_month_vs_window_summaries_auc": {
+   "XGBoost|H1": {
+    "mean": 0.017472,
+    "nb95": [
+     0.012812,
+     0.022131
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.019141,
+     0.01393,
+     0.015878,
+     0.019967,
+     0.018441
+    ]
+   },
+   "XGBoost|H3": {
+    "mean": 0.002465,
+    "nb95": [
+     -0.002465,
+     0.007395
+    ],
+    "folds_positive": 4,
+    "folds_better": 4,
+    "per_fold": [
+     0.004275,
+     0.003568,
+     -0.002221,
+     0.003294,
+     0.003409
+    ]
+   },
+   "logit|H1": {
+    "mean": -0.001479,
+    "nb95": [
+     -0.01318,
+     0.010222
+    ],
+    "folds_positive": 1,
+    "folds_better": 1,
+    "per_fold": [
+     0.009605,
+     -0.005801,
+     -0.002891,
+     -0.003996,
+     -0.004311
+    ]
+   },
+   "logit|H3": {
+    "mean": 0.00063,
+    "nb95": [
+     -0.008852,
+     0.010112
+    ],
+    "folds_positive": 3,
+    "folds_better": 3,
+    "per_fold": [
+     0.007879,
+     0.002052,
+     -0.006116,
+     0.000603,
+     -0.001268
+    ]
+   }
+  }
+ },
+ "c_demographics": {
+  "XGBoost": {
+   "auc": {
+    "mean": 0.002121,
+    "nb95": [
+     0.000174,
+     0.004068
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.003233,
+     0.00324,
+     0.001045,
+     0.001375,
+     0.001713
+    ],
+    "pooled_oof_diff": 0.00211,
+    "bootstrap95": [
+     0.000886,
+     0.003368
+    ]
+   },
+   "ap": {
+    "mean": 0.001131,
+    "nb95": [
+     -0.005133,
+     0.007394
+    ],
+    "folds_positive": 2,
+    "folds_better": 2,
+    "per_fold": [
+     -0.000972,
+     0.006432,
+     -0.001449,
+     -0.000892,
+     0.002534
+    ],
+    "pooled_oof_diff": 0.001489,
+    "bootstrap95": [
+     -0.000855,
+     0.003734
+    ]
+   },
+   "brier": {
+    "mean": -0.000366,
+    "nb95": [
+     -0.000956,
+     0.000225
+    ],
+    "folds_positive": 1,
+    "folds_better": 4,
+    "per_fold": [
+     -0.000552,
+     -0.000766,
+     -0.000133,
+     2.3e-05,
+     -0.0004
+    ],
+    "pooled_oof_diff": -0.000366,
+    "bootstrap95": [
+     -0.000608,
+     -0.000121
+    ]
+   },
+   "log_loss": {
+    "mean": -0.001181,
+    "nb95": [
+     -0.002923,
+     0.000562
+    ],
+    "folds_positive": 0,
+    "folds_better": 5,
+    "per_fold": [
+     -0.001657,
+     -0.002476,
+     -0.000344,
+     -0.000234,
+     -0.001193
+    ],
+    "pooled_oof_diff": -0.001181,
+    "bootstrap95": [
+     -0.001897,
+     -0.000441
+    ]
+   },
+   "recall_5to1": {
+    "mean": 0.035757,
+    "nb95": [
+     -0.04354,
+     0.115054
+    ],
+    "folds_positive": 4,
+    "folds_better": 4,
+    "per_fold": [
+     0.045259,
+     -0.019397,
+     0.05819,
+     0.006466,
+     0.088267
+    ]
+   },
+   "cost_5to1": {
+    "mean": -62.2,
+    "nb95": [
+     -103.246809,
+     -21.153191
+    ],
+    "folds_positive": 0,
+    "folds_better": 5,
+    "per_fold": [
+     -78.0,
+     -49.0,
+     -43.0,
+     -48.0,
+     -93.0
+    ]
+   }
+  },
+  "logit": {
+   "auc": {
+    "mean": 0.003728,
+    "nb95": [
+     -0.000433,
+     0.00789
+    ],
+    "folds_positive": 5,
+    "folds_better": 5,
+    "per_fold": [
+     0.005969,
+     0.005481,
+     0.002755,
+     0.004004,
+     0.000434
+    ],
+    "pooled_oof_diff": 0.003751,
+    "bootstrap95": [
+     0.001589,
+     0.005961
+    ]
+   },
+   "ap": {
+    "mean": 0.002841,
+    "nb95": [
+     -0.002236,
+     0.007917
+    ],
+    "folds_positive": 4,
+    "folds_better": 4,
+    "per_fold": [
+     0.001468,
+     0.006931,
+     -0.00039,
+     0.002578,
+     0.003615
+    ],
+    "pooled_oof_diff": 0.002616,
+    "bootstrap95": [
+     0.000394,
+     0.004916
+    ]
+   },
+   "brier": {
+    "mean": -0.000493,
+    "nb95": [
+     -0.000992,
+     5e-06
+    ],
+    "folds_positive": 0,
+    "folds_better": 5,
+    "per_fold": [
+     -0.000487,
+     -0.000946,
+     -0.000249,
+     -0.000364,
+     -0.00042
+    ],
+    "pooled_oof_diff": -0.000493,
+    "bootstrap95": [
+     -0.000767,
+     -0.000222
+    ]
+   },
+   "log_loss": {
+    "mean": -0.001757,
+    "nb95": [
+     -0.003596,
+     8.1e-05
+    ],
+    "folds_positive": 0,
+    "folds_better": 5,
+    "per_fold": [
+     -0.002488,
+     -0.003125,
+     -0.000936,
+     -0.001141,
+     -0.001098
+    ],
+    "pooled_oof_diff": -0.001757,
+    "bootstrap95": [
+     -0.002629,
+     -0.000895
+    ]
+   },
+   "recall_5to1": {
+    "mean": -0.051072,
+    "nb95": [
+     -0.116587,
+     0.014444
+    ],
+    "folds_positive": 0,
+    "folds_better": 0,
+    "per_fold": [
+     -0.023707,
+     -0.085129,
+     -0.09375,
+     -0.025862,
+     -0.026911
+    ]
+   },
+   "cost_5to1": {
+    "mean": -9.8,
+    "nb95": [
+     -59.487121,
+     39.887121
+    ],
+    "folds_positive": 2,
+    "folds_better": 3,
+    "per_fold": [
+     -47.0,
+     2.0,
+     23.0,
+     -24.0,
+     -3.0
+    ]
+   }
+  }
+ },
+ "c_cv_auc": {
+  "XGBoost|with demographics (29)": 0.786291,
+  "XGBoost|without demographics (25)": 0.784169,
+  "logit|with demographics (29)": 0.760236,
+  "logit|without demographics (25)": 0.756508
+ },
+ "oof_files": {
+  "xgb_nodemo": "results/ablation_oof_xgb_nodemo.npy",
+  "logit_nodemo": "results/ablation_oof_logit_nodemo.npy",
+  "row_order": "train.csv order",
+  "full_set_equivalents": "results/xgboost_p_oof.npy, results/logistic_p_oof.npy"
+ },
+ "versions": {
+  "python": "3.13.5",
+  "sklearn": "1.9.0",
+  "xgboost": "3.4.1",
+  "numpy": "2.5.1",
+  "pandas": "3.0.5"
+ },
+ "run_seconds": 496.0
+}

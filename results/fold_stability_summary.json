@@ -1,0 +1,768 @@
+{
+ "script": "code/fold_stability.py",
+ "training_rows": 20975,
+ "defaulters": 4641,
+ "base_rate": 0.22126340882002385,
+ "folds": 5,
+ "fold_sizes": [
+  4195,
+  4195,
+  4195,
+  4195,
+  4195
+ ],
+ "nb_ratio_held_over_fit": 0.25,
+ "seed": 2607526,
+ "threshold_grid": "mine_v2_utils.THR_GRID = 0.01..0.95 step 0.01",
+ "headline": [
+  "xgboost",
+  "gradient_boosting",
+  "random_forest",
+  "mlp",
+  "knn",
+  "tree_pruned",
+  "svm_rbf",
+  "logistic",
+  "logistic_l1",
+  "lda",
+  "naive_bayes"
+ ],
+ "a_fold_stability": {
+  "note": "per-fold ROC-AUC/AP from the frozen OOF vectors on the common.CV folds; rank 1 = highest; XGBoost-minus-model paired differences with the Nadeau-Bengio interval (J=5, n_held/n_train=1/4); Holm over the ten XGBoost comparisons. svm_rbf's JSON cv_auc comes from a 6,000-row tuning subsample, so its auc_mean_minus_cv_auc_json is not a check.",
+  "ranking_by_fold": {
+   "1": [
+    "xgboost",
+    "random_forest",
+    "gradient_boosting",
+    "mlp",
+    "knn",
+    "tree_pruned",
+    "svm_rbf",
+    "logistic",
+    "logistic_l1",
+    "lda",
+    "naive_bayes"
+   ],
+   "2": [
+    "xgboost",
+    "gradient_boosting",
+    "random_forest",
+    "mlp",
+    "tree_pruned",
+    "knn",
+    "svm_rbf",
+    "logistic",
+    "logistic_l1",
+    "lda",
+    "naive_bayes"
+   ],
+   "3": [
+    "xgboost",
+    "gradient_boosting",
+    "random_forest",
+    "mlp",
+    "knn",
+    "tree_pruned",
+    "svm_rbf",
+    "logistic",
+    "logistic_l1",
+    "lda",
+    "naive_bayes"
+   ],
+   "4": [
+    "xgboost",
+    "gradient_boosting",
+    "random_forest",
+    "mlp",
+    "tree_pruned",
+    "svm_rbf",
+    "knn",
+    "logistic_l1",
+    "logistic",
+    "lda",
+    "naive_bayes"
+   ],
+   "5": [
+    "random_forest",
+    "xgboost",
+    "gradient_boosting",
+    "mlp",
+    "tree_pruned",
+    "knn",
+    "svm_rbf",
+    "logistic_l1",
+    "logistic",
+    "lda",
+    "naive_bayes"
+   ]
+  },
+  "per_model": {
+   "xgboost": {
+    "auc_folds": [
+     0.793,
+     0.7786,
+     0.7796,
+     0.7953,
+     0.785
+    ],
+    "auc_mean": 0.7862905873025212,
+    "auc_sd_ddof1": 0.0076225081949589015,
+    "ranks": [
+     1,
+     1,
+     1,
+     1,
+     2
+    ],
+    "ap_mean": 0.5540213235368003,
+    "cal_slope_oof": 1.0147133678799605,
+    "xgb_minus_auc": null
+   },
+   "gradient_boosting": {
+    "auc_folds": [
+     0.792,
+     0.7756,
+     0.7786,
+     0.7946,
+     0.7841
+    ],
+    "auc_mean": 0.7849715351823022,
+    "auc_sd_ddof1": 0.008249615202181017,
+    "ranks": [
+     3,
+     2,
+     2,
+     2,
+     3
+    ],
+    "ap_mean": 0.5525322934735624,
+    "cal_slope_oof": 1.0394409085345697,
+    "xgb_minus_auc": {
+     "mean": 0.0013190521202190997,
+     "wins": 5.0,
+     "nb_lo": -0.00047382749710519296,
+     "nb_hi": 0.0031119317375433923,
+     "holm_p": 0.22121287745478546
+    }
+   },
+   "random_forest": {
+    "auc_folds": [
+     0.7929,
+     0.774,
+     0.7785,
+     0.7929,
+     0.7862
+    ],
+    "auc_mean": 0.7848992714376763,
+    "auc_sd_ddof1": 0.008522107259996652,
+    "ranks": [
+     2,
+     3,
+     3,
+     3,
+     1
+    ],
+    "ap_mean": 0.5525817773064071,
+    "cal_slope_oof": 1.029597878845991,
+    "xgb_minus_auc": {
+     "mean": 0.0013913158648449996,
+     "wins": 4.0,
+     "nb_lo": -0.002719778137612932,
+     "nb_hi": 0.005502409867302931,
+     "holm_p": 0.40060700875257094
+    }
+   },
+   "mlp": {
+    "auc_folds": [
+     0.785,
+     0.7668,
+     0.7724,
+     0.7834,
+     0.7734
+    ],
+    "auc_mean": 0.7762095038407356,
+    "auc_sd_ddof1": 0.007742950751293691,
+    "ranks": [
+     4,
+     4,
+     4,
+     4,
+     4
+    ],
+    "ap_mean": 0.5351827993258484,
+    "cal_slope_oof": 0.9362604396339737,
+    "xgb_minus_auc": {
+     "mean": 0.010081083461785757,
+     "wins": 5.0,
+     "nb_lo": 0.005764238753586215,
+     "nb_hi": 0.014397928169985297,
+     "holm_p": 0.021526791331757666
+    }
+   },
+   "knn": {
+    "auc_folds": [
+     0.7832,
+     0.7576,
+     0.7694,
+     0.775,
+     0.765
+    ],
+    "auc_mean": 0.7700333660038201,
+    "auc_sd_ddof1": 0.009746402512122996,
+    "ranks": [
+     5,
+     6,
+     5,
+     7,
+     6
+    ],
+    "ap_mean": 0.5186854272051525,
+    "cal_slope_oof": 0.9894791625444164,
+    "xgb_minus_auc": {
+     "mean": 0.016257221298701174,
+     "wins": 5.0,
+     "nb_lo": 0.005546464444856722,
+     "nb_hi": 0.026967978152545626,
+     "holm_p": 0.04062128481943663
+    }
+   },
+   "tree_pruned": {
+    "auc_folds": [
+     0.7805,
+     0.7604,
+     0.7637,
+     0.775,
+     0.7651
+    ],
+    "auc_mean": 0.7689376564761475,
+    "auc_sd_ddof1": 0.008446697834751465,
+    "ranks": [
+     6,
+     5,
+     6,
+     5,
+     5
+    ],
+    "ap_mean": 0.5096530405833647,
+    "cal_slope_oof": 0.93461058773359,
+    "xgb_minus_auc": {
+     "mean": 0.017352930826373923,
+     "wins": 5.0,
+     "nb_lo": 0.011409888367028453,
+     "nb_hi": 0.023295973285719394,
+     "holm_p": 0.011328256189272832
+    }
+   },
+   "svm_rbf": {
+    "auc_folds": [
+     0.777,
+     0.7463,
+     0.7581,
+     0.775,
+     0.7613
+    ],
+    "auc_mean": 0.7635360384346515,
+    "auc_sd_ddof1": 0.012712430650199886,
+    "ranks": [
+     7,
+     7,
+     7,
+     6,
+     7
+    ],
+    "ap_mean": 0.488842249605398,
+    "cal_slope_oof": 0.9965425007620644,
+    "xgb_minus_auc": {
+     "mean": 0.022754548867869984,
+     "wins": 5.0,
+     "nb_lo": 0.011484155012402892,
+     "nb_hi": 0.03402494272333707,
+     "holm_p": 0.021526791331757666
+    }
+   },
+   "logistic": {
+    "auc_folds": [
+     0.7752,
+     0.7449,
+     0.7573,
+     0.7656,
+     0.7581
+    ],
+    "auc_mean": 0.7602364115504157,
+    "auc_sd_ddof1": 0.011178727723108685,
+    "ranks": [
+     8,
+     8,
+     8,
+     9,
+     9
+    ],
+    "ap_mean": 0.5066841786274924,
+    "cal_slope_oof": 0.9820349263402135,
+    "xgb_minus_auc": {
+     "mean": 0.026054175752105713,
+     "wins": 5.0,
+     "nb_lo": 0.01448296467643067,
+     "nb_hi": 0.03762538682778076,
+     "holm_p": 0.021526791331757666
+    }
+   },
+   "logistic_l1": {
+    "auc_folds": [
+     0.7752,
+     0.7449,
+     0.7573,
+     0.7656,
+     0.7581
+    ],
+    "auc_mean": 0.7602358797403035,
+    "auc_sd_ddof1": 0.01118388474075593,
+    "ranks": [
+     9,
+     9,
+     9,
+     8,
+     8
+    ],
+    "ap_mean": 0.5066837524016797,
+    "cal_slope_oof": 0.9822781106778764,
+    "xgb_minus_auc": {
+     "mean": 0.026054707562217883,
+     "wins": 5.0,
+     "nb_lo": 0.014486663629893815,
+     "nb_hi": 0.03762275149454195,
+     "holm_p": 0.021526791331757666
+    }
+   },
+   "lda": {
+    "auc_folds": [
+     0.7718,
+     0.7398,
+     0.7543,
+     0.7652,
+     0.7549
+    ],
+    "auc_mean": 0.7572065962116409,
+    "auc_sd_ddof1": 0.012161363230807201,
+    "ranks": [
+     10,
+     10,
+     10,
+     10,
+     10
+    ],
+    "ap_mean": 0.5065193808573321,
+    "cal_slope_oof": 0.7492404391824102,
+    "xgb_minus_auc": {
+     "mean": 0.029083991090880425,
+     "wins": 5.0,
+     "nb_lo": 0.016897347832590615,
+     "nb_hi": 0.041270634349170235,
+     "holm_p": 0.021526791331757666
+    }
+   },
+   "naive_bayes": {
+    "auc_folds": [
+     0.7549,
+     0.7282,
+     0.7267,
+     0.7408,
+     0.7276
+    ],
+    "auc_mean": 0.7356319710185613,
+    "auc_sd_ddof1": 0.012216082191715117,
+    "ranks": [
+     11,
+     11,
+     11,
+     11,
+     11
+    ],
+    "ap_mean": 0.48765468702833814,
+    "cal_slope_oof": 0.14082449566013108,
+    "xgb_minus_auc": {
+     "mean": 0.050658616283960047,
+     "wins": 5.0,
+     "nb_lo": 0.03678201343928922,
+     "nb_hi": 0.06453521912863087,
+     "holm_p": 0.00533389932440669
+    }
+   }
+  }
+ },
+ "b_simple_rules": {
+  "note": "training rows; the rules have no fitted parameter, so the 20,975 rows are an honest evaluation for them; cost = 5*FN + FP; models' per-fold costs use the cut-off chosen on the other four folds; saving_vs_rule = rule minus model, > 0 = model cheaper",
+  "best_blanket_cost_5to1": 16334.0,
+  "best_blanket_per_1000": 778.7365911799761,
+  "rows": [
+   {
+    "rule_or_model": "PAY_1 >= 1",
+    "threshold": 1.0,
+    "flag_rate": 0.22646007151370678,
+    "tpr_recall": 0.5115276879982762,
+    "fpr": 0.14546345047140932,
+    "precision": 0.4997894736842105,
+    "f1": 0.5055904589500585,
+    "cost_5to1": 13711.0,
+    "cost_5to1_per_1000": 653.6829558998808,
+    "cost_5to1_crossfitted_per_1000": 653.6829558998808,
+    "score_auc": 0.6858991639906944
+   },
+   {
+    "rule_or_model": "PAY_1 >= 2",
+    "threshold": 2.0,
+    "flag_rate": 0.10536352800953516,
+    "tpr_recall": 0.3257918552036199,
+    "fpr": 0.04273294967552345,
+    "precision": 0.6841628959276018,
+    "f1": 0.44139541672748506,
+    "cost_5to1": 16343.0,
+    "cost_5to1_per_1000": 779.1656734207389,
+    "cost_5to1_crossfitted_per_1000": 779.1656734207389,
+    "score_auc": 0.6858991639906944
+   },
+   {
+    "rule_or_model": "MAX_DELAY >= 2",
+    "threshold": 2.0,
+    "flag_rate": 0.2803337306317044,
+    "tpr_recall": 0.5834949364361129,
+    "fpr": 0.19419615525896902,
+    "precision": 0.4605442176870748,
+    "f1": 0.5147799638817603,
+    "cost_5to1": 12837.0,
+    "cost_5to1_per_1000": 612.0143027413587,
+    "cost_5to1_crossfitted_per_1000": 612.0143027413587,
+    "score_auc": 0.7139194112811037
+   },
+   {
+    "rule_or_model": "N_MONTHS_DELAYED >= 1",
+    "threshold": 1.0,
+    "flag_rate": 0.33573301549463647,
+    "tpr_recall": 0.6451195862960569,
+    "fpr": 0.24782661932166034,
+    "precision": 0.42516330587901163,
+    "f1": 0.5125395874347343,
+    "cost_5to1": 12283.0,
+    "cost_5to1_per_1000": 585.6019070321812,
+    "cost_5to1_crossfitted_per_1000": 585.6019070321812,
+    "score_auc": 0.7235338032322309
+   },
+   {
+    "rule_or_model": "flag everybody",
+    "threshold": NaN,
+    "flag_rate": 1.0,
+    "tpr_recall": 1.0,
+    "fpr": 1.0,
+    "precision": 0.22126340882002385,
+    "f1": 0.36235165521549034,
+    "cost_5to1": 16334.0,
+    "cost_5to1_per_1000": 778.7365911799761,
+    "cost_5to1_crossfitted_per_1000": 778.7365911799761,
+    "score_auc": NaN
+   },
+   {
+    "rule_or_model": "flag nobody",
+    "threshold": NaN,
+    "flag_rate": 0.0,
+    "tpr_recall": 0.0,
+    "fpr": 0.0,
+    "precision": NaN,
+    "f1": 0.0,
+    "cost_5to1": 23205.0,
+    "cost_5to1_per_1000": 1106.3170441001191,
+    "cost_5to1_crossfitted_per_1000": 1106.3170441001191,
+    "score_auc": NaN
+   },
+   {
+    "rule_or_model": "Logistic (plain) at OOF 5:1 cut-off",
+    "threshold": 0.15,
+    "flag_rate": 0.45182359952324197,
+    "tpr_recall": 0.7407886231415644,
+    "fpr": 0.3697196032814987,
+    "precision": 0.3627730294396961,
+    "f1": 0.48703782405439866,
+    "cost_5to1": 12054.0,
+    "cost_5to1_per_1000": 574.684147794994,
+    "cost_5to1_crossfitted_per_1000": 580.5482717520858,
+    "score_auc": 0.7600749090172092
+   },
+   {
+    "rule_or_model": "XGBoost at OOF 5:1 cut-off",
+    "threshold": 0.15,
+    "flag_rate": 0.4977830750893921,
+    "tpr_recall": 0.8024132730015083,
+    "fpr": 0.41122811313823926,
+    "precision": 0.35667081697155445,
+    "f1": 0.4938337090571542,
+    "cost_5to1": 11302.0,
+    "cost_5to1_per_1000": 538.8319427890345,
+    "cost_5to1_crossfitted_per_1000": 540.3098927294399,
+    "score_auc": 0.7860586841474777
+   }
+  ]
+ },
+ "c_preferred_by_ratio": {
+  "note": "cut-off and cost on pooled training OOF (THR_GRID); cross-fitted = cut-off chosen on the other four folds; paired folds use the cross-fitted per-fold costs of the OOF-preferred model and its OOF runner-up",
+  "preferred_oof": {
+   "1": "Gradient boosting",
+   "2": "Random forest",
+   "3": "XGBoost",
+   "5": "XGBoost",
+   "7": "XGBoost",
+   "10": "Random forest",
+   "15": "Random forest",
+   "20": "KNN (K=101)"
+  },
+  "preferred_crossfitted": {
+   "1": "Gradient boosting",
+   "2": "Random forest",
+   "3": "Gradient boosting",
+   "5": "XGBoost",
+   "7": "XGBoost",
+   "10": "Random forest",
+   "15": "Random forest",
+   "20": "KNN (K=101)"
+  },
+  "answer_changes_across_ratio": true,
+  "distinct_preferred": [
+   "Gradient boosting",
+   "KNN (K=101)",
+   "Random forest",
+   "XGBoost"
+  ],
+  "margin_pct": {
+   "1": 0.6641870350690748,
+   "2": 0.5991800693787352,
+   "3": 0.21574973031284195,
+   "5": 0.6989913289683347,
+   "7": 0.35000388893209333,
+   "10": 0.5539971949509059,
+   "15": 0.5832037325038897,
+   "20": 0.13189297826905477
+  },
+  "top3_spread_pct": {
+   "1": 0.6907545164718476,
+   "2": 0.9776095868811119,
+   "3": 0.8030684406088895,
+   "5": 1.026367014687657,
+   "7": 0.8711207902309948,
+   "10": 0.8976157082748903,
+   "15": 0.6156039398652169,
+   "20": 0.6406230373068755
+  }
+ },
+ "d_topk": {
+  "note": "pooled OOF scores; ties at the list boundary taken at their expected value under a random order; per-fold columns take the top share of each validation fold",
+  "rows": {
+   "10%": {
+    "xgboost": {
+     "recall": 0.3148028442146089,
+     "precision": 0.6963775023832222
+    },
+    "gradient_boosting": {
+     "recall": 0.3145873734109028,
+     "precision": 0.6959008579599618
+    },
+    "random_forest": {
+     "recall": 0.3102779573367809,
+     "precision": 0.6863679694947569
+    },
+    "mlp": {
+     "recall": 0.3076923076923077,
+     "precision": 0.680648236415634
+    },
+    "knn": {
+     "recall": 0.2923395276336453,
+     "precision": 0.6466862477348655
+    },
+    "tree_pruned": {
+     "recall": 0.31463689154591606,
+     "precision": 0.6960103973615808
+    },
+    "svm_rbf": {
+     "recall": 0.27364792070674426,
+     "precision": 0.6053384175405148
+    },
+    "logistic": {
+     "recall": 0.2867916397328162,
+     "precision": 0.63441372735939
+    },
+    "logistic_l1": {
+     "recall": 0.2867916397328162,
+     "precision": 0.63441372735939
+    },
+    "lda": {
+     "recall": 0.28786899375134667,
+     "precision": 0.6367969494756911
+    },
+    "naive_bayes": {
+     "recall": 0.28226675285498815,
+     "precision": 0.6244041944709247
+    },
+    "N_MONTHS_DELAYED": {
+     "recall": 0.2779077358285279,
+     "precision": 0.6147615834033355
+    },
+    "MAX_DELAY": {
+     "recall": 0.23143289450906432,
+     "precision": 0.5119542723625203
+    },
+    "PAY_1": {
+     "recall": 0.30947549845905553,
+     "precision": 0.6845928447800175
+    },
+    "random": {
+     "recall": 0.1000238379022646,
+     "precision": 0.22126340882002385
+    },
+    "perfect": {
+     "recall": 0.45205774617539324,
+     "precision": 1.0
+    }
+   },
+   "20%": {
+    "xgboost": {
+     "recall": 0.5072182719241543,
+     "precision": 0.5611442193087008
+    },
+    "gradient_boosting": {
+     "recall": 0.5082956259426847,
+     "precision": 0.5623361144219309
+    },
+    "random_forest": {
+     "recall": 0.5108812755871579,
+     "precision": 0.565196662693683
+    },
+    "mlp": {
+     "recall": 0.4968756733462616,
+     "precision": 0.5497020262216925
+    },
+    "knn": {
+     "recall": 0.49354252622226474,
+     "precision": 0.5460145087479215
+    },
+    "tree_pruned": {
+     "recall": 0.49707367354426174,
+     "precision": 0.5499210772154752
+    },
+    "svm_rbf": {
+     "recall": 0.4951519069166128,
+     "precision": 0.5477949940405245
+    },
+    "logistic": {
+     "recall": 0.49364361129067014,
+     "precision": 0.5461263408820024
+    },
+    "logistic_l1": {
+     "recall": 0.49364361129067014,
+     "precision": 0.5461263408820024
+    },
+    "lda": {
+     "recall": 0.4904115492350786,
+     "precision": 0.5425506555423123
+    },
+    "naive_bayes": {
+     "recall": 0.4720965309200603,
+     "precision": 0.5222884386174017
+    },
+    "N_MONTHS_DELAYED": {
+     "recall": 0.46273855209074866,
+     "precision": 0.5119355471402061
+    },
+    "MAX_DELAY": {
+     "recall": 0.4266402191841095,
+     "precision": 0.471999346181991
+    },
+    "PAY_1": {
+     "recall": 0.47094367728920766,
+     "precision": 0.5210130169962367
+    },
+    "random": {
+     "recall": 0.2,
+     "precision": 0.22126340882002385
+    },
+    "perfect": {
+     "recall": 0.9039000215470804,
+     "precision": 1.0
+    }
+   },
+   "30%": {
+    "xgboost": {
+     "recall": 0.6328377504848093,
+     "precision": 0.4667090417924678
+    },
+    "gradient_boosting": {
+     "recall": 0.6308985132514544,
+     "precision": 0.4652788812966788
+    },
+    "random_forest": {
+     "recall": 0.6326222796811032,
+     "precision": 0.46655013507071347
+    },
+    "mlp": {
+     "recall": 0.6209868562809739,
+     "precision": 0.45796917209597965
+    },
+    "knn": {
+     "recall": 0.619477501830443,
+     "precision": 0.45685604417528775
+    },
+    "tree_pruned": {
+     "recall": 0.613262994624528,
+     "precision": 0.4522729315195351
+    },
+    "svm_rbf": {
+     "recall": 0.6147382029734971,
+     "precision": 0.4533608771651041
+    },
+    "logistic": {
+     "recall": 0.616677440206852,
+     "precision": 0.45479103766089307
+    },
+    "logistic_l1": {
+     "recall": 0.616677440206852,
+     "precision": 0.45479103766089307
+    },
+    "lda": {
+     "recall": 0.614522732169791,
+     "precision": 0.45320197044334976
+    },
+    "naive_bayes": {
+     "recall": 0.6046110751993105,
+     "precision": 0.4458922612426506
+    },
+    "N_MONTHS_DELAYED": {
+     "recall": 0.5971380637741827,
+     "precision": 0.44038101922389666
+    },
+    "MAX_DELAY": {
+     "recall": 0.6053976734345267,
+     "precision": 0.44647236650399463
+    },
+    "PAY_1": {
+     "recall": 0.5544799244731241,
+     "precision": 0.4089212346225598
+    },
+    "random": {
+     "recall": 0.3000238379022646,
+     "precision": 0.22126340882002385
+    },
+    "perfect": {
+     "recall": 1.0,
+     "precision": 0.7374860956618465
+    }
+   }
+  }
+ },
+ "files": [
+  "results/fold_stability.csv",
+  "results/simple_rule_benchmark.csv",
+  "results/preferred_model_by_ratio_oof.csv",
+  "results/preferred_model_by_ratio_oof_long.csv",
+  "results/topk_capture_oof.csv",
+  "results/fold_stability_summary.json",
+  "figures/fold_stability.png",
+  "figures/roc_pr_oof.png"
+ ],
+ "run_seconds": 5.6
+}

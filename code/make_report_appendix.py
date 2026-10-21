@@ -177,7 +177,9 @@ if os.path.exists(dq_path):
             "finding. Reproduced verbatim from \\texttt{results/eda\\_data\\_quality.csv}; the three cleaning "
             "steps that precede the split (duplicate removal, the fixed recoding of undocumented codes, the "
             "row-wise engineered features) estimate nothing from the data, and everything else is left to "
-            "the in-fold pipeline.",
+            "the in-fold pipeline. The counts are over the full file (30,000 raw or 29,965 cleaned rows, test "
+            "partition included); labels are used only for the class balance, the split check and the "
+            "default rates marked as training-partition.",
             "tab:a-quality", "L{0.19\\linewidth}L{0.36\\linewidth}L{0.39\\linewidth}",
             ["Check", "Finding", "Action"], rows, tabcolsep="3pt", footnotesize=True))
     A("")
@@ -461,7 +463,8 @@ if fm.get("models"):
     rows = [
         ["1", when(groups_["r1"]), str(len(groups_["r1"])),
          "every model variant of Table~\\ref{tab:a-allmodels}: each configuration tuned on training CV, then scored on "
-         "the test set once and frozen (before the professor's 30 September comment); none re-scored since",
+         "the test set (before the professor's 30 September comment) and registered on 19 October; the forest and "
+         "bagging were scored twice with the same configuration (16 and 18 September); dates are result-file times",
          "5-fold CV AUC on the training partition; both thresholds on training out-of-fold probabilities"],
         ["2", when(groups_["ruan"]), str(len(groups_["ruan"])),
          "RUAN Hangjing's second pass under her freeze-before-test protocol (\\texttt{frozen\\_choices\\_ruan\\_v2.json}): "
@@ -469,17 +472,20 @@ if fm.get("models"):
          "unchanged; the headline tables keep the round-1 scoring (predictions differ by $\\le 10^{-2}$, test AUC by $5\\times10^{-5}$)",
          "nested CV with the pre-registered 1-SE and 1\\,\\% cost rules (Table~\\ref{tab:a-nestedcv}); training rows only"],
         ["3", when(groups_["platt"]), str(len(groups_["platt"])),
-         "Platt-recalibrated versions of the nine class-weighted or resampled models (Table~\\ref{tab:a-recal}), each scored once",
+         "Platt-recalibrated versions of the nine class-weighted or resampled models (Table~\\ref{tab:a-recal}), each "
+         "registered before its 19 October scoring (a 6 October review had already applied the same maps to the test scores)",
          "Platt map fitted on training out-of-fold scores; thresholds re-chosen on cross-fitted training scores"],
         ["---", when(groups_["neg"]), str(len(groups_["neg"])),
-         "negative control: SMOTE applied before the split (the leakage demonstration); its `test' rows are not the real "
-         "test set and it is not a model result",
+         "negative control: SMOTE applied before the split (the leakage demonstration); it pools the training and test "
+         "rows, so its re-split `test' rows are not the real test set, and it is not a model result",
          "none --- deliberately leaky"],
     ]
     A(table(f"Freeze timeline: the {len(fm['models'])} entries of \\texttt{{results/frozen\\_manifest.json}} "
             "grouped by round. A configuration is frozen the first time it is scored on the test set, and "
             "\\texttt{common.evaluate()} refuses to score a changed configuration under a frozen slug "
-            "(\\texttt{code/freeze.py -{}-check} verifies every stored prediction vector).",
+            "(\\texttt{code/freeze.py -{}-check} verifies every stored prediction vector). The manifest lists "
+            "configurations only; every read of the test set, including descriptive reads outside it, is dated in "
+            "\\texttt{results/TEST\\_SET\\_LOG.md}.",
             "tab:a-freeze", "cL{0.12\\linewidth}cL{0.40\\linewidth}L{0.26\\linewidth}",
             ["Round", "Scored", "$n$", "What", "Selection basis"], rows, tabcolsep="3pt"))
     A("")
@@ -638,10 +644,29 @@ if os.path.exists(cs_path):
     piv = cs.pivot_table(index="model", columns="ratio", values="test_cost", aggfunc="first")
     ratios = sorted(piv.columns)
     rows = [[esc(m)] + [num(piv.loc[m, r_]) for r_ in ratios] for m in piv.index]
-    A(table("Cost-ratio sensitivity: expected test cost of each model at its own cost-minimising "
-            "threshold, as the false-negative to false-positive ratio varies.",
+    # The CSV on disk (21 Oct 15:46) was made on a cut-off grid starting at 0.02; cost_sensitivity.py now uses the
+    # 0.01 grid of threshold_vs_model_saving.py but was not re-run (it reads the test set). Say so where the floor binds.
+    cs_note = []
+    sv_path_ = os.path.join(RESULTS, "threshold_vs_model_saving.csv")
+    if os.path.exists(sv_path_):
+        sv_ = pd.read_csv(sv_path_)
+        for r_ in sv_.itertuples():
+            row_ = cs[(cs.slug == "logistic") & (cs.ratio == r_.ratio)]
+            if len(row_) and abs(float(row_.threshold.iloc[0]) - float(r_.t_logistic)) > 1e-9:
+                cs_note.append(f"Logistic regression at {int(r_.ratio)}:1: computed on a cut-off grid starting at "
+                               f"{float(row_.threshold.iloc[0]):.2f}, whose floor binds; on the 0.01 grid of "
+                               f"Table~\\ref{{tab:a-saving}} the cut-off is {float(r_.t_logistic):.2f} and the test cost "
+                               f"{num(r_.cost_logistic_tuned)}.")
+    for r_ in cs.itertuples():
+        if abs(float(r_.flagged_share) - 1.0) < 1e-9:      # every test client flagged (cost = flag-everyone rule)
+            cs_note.append(f"{esc(r_.model)} at {int(r_.ratio)}:1: the cut-off flags every client, so its cost is the "
+                           f"flag-everyone rule ({num(r_.test_cost)}).")
+    A(table("Cost-ratio sensitivity: total test cost of each model at its own cut-off, chosen on training "
+            "out-of-fold probabilities, as the false-negative to false-positive ratio varies (reporting only; "
+            "nothing is selected on these numbers).",
             "tab:a-costsens", "L{0.24\\linewidth}" + "c" * len(ratios),
-            ["Model"] + [f"{int(r_)}:1" for r_ in ratios], rows, tabcolsep="4pt"))
+            ["Model"] + [f"{int(r_)}:1" for r_ in ratios], rows, tabcolsep="4pt",
+            note=" ".join(cs_note) or None))
     A("")
 
 # ------------------------------------------------------------------ A5a threshold saving vs model saving, nine ratios
@@ -697,7 +722,9 @@ if os.path.exists(rc_path):
             for r_ in rc.itertuples()]
     A(table("Platt recalibration of the nine class-weighted or resampled models. The Platt map is fitted on each "
             "model's training out-of-fold scores; the 5:1 cut-off is re-chosen on cross-fitted training scores; each "
-            "recalibrated version was then scored on the test set once (19 October) and frozen. Columns: mean predicted "
+            "recalibrated version was then registered, scored on the test set (19 October) and frozen; a 6 October "
+            "review had already applied the same maps to the test scores, but Platt was the method committed in the "
+            "30 September proposal. Columns: mean predicted "
             "probability on test (prevalence 0.221); test Brier score, with the unweighted twin in brackets; 5:1 cut-off; "
             "test cost at the closed-form threshold 1/6.",
             "tab:a-recal", "L{0.28\\linewidth}cccc",
@@ -855,7 +882,8 @@ FIGS = [
     ("Model selection diagnostics", [
         ("knn_cv_auc_vs_k.png", "KNN: cross-validated AUC against $K$."),
         ("tree_cv_auc_vs_alpha.png", "Cost-complexity pruning path."),
-        ("rf_auc_vs_ntrees.png", "Random forest: out-of-bag and test AUC against the number of trees."),
+        ("rf_auc_vs_ntrees.png", "Random forest and bagging: out-of-bag AUC on the training rows against the number "
+                                 "of trees (the tree count, 500, was fixed in advance)."),
         ("gbm_learning_curve.png", "Gradient boosting: cross-validated AUC against the number of rounds."),
         ("xgb_learning_curve.png", "XGBoost learning curves at two learning rates."),
         ("svm_rbf_cv_heatmap.png", "RBF support-vector machine: cross-validated AUC over $C$ and $\\gamma$."),

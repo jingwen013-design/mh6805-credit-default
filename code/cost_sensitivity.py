@@ -4,10 +4,18 @@ cost_sensitivity.py — how much does the 5:1 false-negative : false-positive co
 (2) For cost ratios r in {1, 2, 3, 5, 8, 10, 20}: pick each headline model's cost-minimising threshold on the TRAINING
     out-of-fold probabilities, then report test cost, recall and FPR (reporting only: nothing is ranked or chosen on test cost).
 Writes results/cost_sensitivity.csv, results/cost_anchors.json, figures/cost_sensitivity.png.
+
+Threshold grid (changed 21 Oct 2026, record hygiene): the cut-off is searched on mine_v2_utils.THR_GRID (0.01-0.95, step
+0.01), the grid threshold_vs_model_saving.py uses, so the two cost tables agree.  The previous grid started at 0.02.
+The script was re-run on 21 Oct 2026 (late evening) after this change. It re-reads only the frozen training-OOF and
+test probability vectors to recompute the reporting table; nothing is refitted or selected. Exactly one of the 56
+cells changed: the logistic regression at 20:1, whose training-OOF cut-off moves from 0.02 to 0.01 (test cost 6,976 ->
+6,993, as already recorded in results/threshold_vs_model_saving.csv). See results/TEST_SET_LOG.md.
 """
 import json, os, numpy as np, pandas as pd, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from common import load_split, RESULTS, FIGURES, TARGET
+from mine_v2_utils import THR_GRID          # 0.01-0.95: the same grid as threshold_vs_model_saving.py
 X_tr, X_te, y_tr, y_te, _ = load_split()
 # ---------------- (1) anchors
 d = X_tr.assign(y=y_tr.values)
@@ -29,7 +37,7 @@ print("anchors:", {k: (round(v) if isinstance(v, float) else v) for k, v in anch
 # ---------------- (2) sensitivity over the ratio
 models = [("Logistic regression", "logistic"), ("KNN", "knn"), ("Pruned tree", "tree_pruned"), ("Random forest", "random_forest"),
           ("Gradient boosting", "gradient_boosting"), ("XGBoost", "xgboost"), ("MLP", "mlp"), ("SVM (RBF)", "svm_rbf")]
-grid = np.round(np.arange(0.02, 0.96, 0.01), 2)
+grid = THR_GRID                             # was np.arange(0.02, 0.96, 0.01) until 21 Oct 2026 (see the docstring)
 def cost_curve(y, p, r):
     out = []
     for t in grid:

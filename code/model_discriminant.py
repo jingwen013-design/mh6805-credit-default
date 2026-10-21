@@ -85,13 +85,15 @@ pipe_ref = Pipeline([("pre", make_preprocessor()), ("clf", LogisticRegression(ma
 pipe_ref.fit(X_train, y_train)
 w_lda = lda.named_steps["clf"].coef_.ravel(); w_log = pipe_ref.named_steps["clf"].coef_.ravel()
 cos_sim = float(w_lda @ w_log / (np.linalg.norm(w_lda) * np.linalg.norm(w_log)))
-p_test_lda = lda.predict_proba(X_test)[:, 1]; p_test_ref = pipe_ref.predict_proba(X_test)[:, 1]
-rho = float(spearmanr(p_test_lda, p_test_ref).correlation)
-ref_auc = float(roc_auc_score(y_test, p_test_ref)); ref_ap = float(average_precision_score(y_test, p_test_ref))
+# 21 Oct 2026 (record hygiene, see results/TEST_SET_LOG.md B1): the reference used to be scored on the TEST set before
+# evaluate() ran the freeze guard. It is now compared on training out-of-fold scores only; the test set is not read here.
+p_oof_ref = oof_proba(pipe_ref, X_train, y_train)
+rho = float(spearmanr(p_oof_lda, p_oof_ref).correlation)
+ref_auc = float(roc_auc_score(y_train, p_oof_ref)); ref_ap = float(average_precision_score(y_train, p_oof_ref))
 names_out = feature_names_out(lda.named_steps["pre"])
 coef_tab = pd.DataFrame({"feature": names_out, "lda_coef": w_lda, "logit_coef": w_log})
 coef_tab["abs_lda"] = coef_tab["lda_coef"].abs(); coef_tab = coef_tab.sort_values("abs_lda", ascending=False).drop(columns="abs_lda")
-print(f"LDA vs logistic reference: cosine(coef) = {cos_sim:.3f}, Spearman(test scores) = {rho:.3f}, ref test AUC = {ref_auc:.4f}, AP = {ref_ap:.4f}")
+print(f"LDA vs logistic reference: cosine(coef) = {cos_sim:.3f}, Spearman(OOF scores) = {rho:.3f}, ref OOF AUC = {ref_auc:.4f}, AP = {ref_ap:.4f}")
 print(coef_tab.head(10).round(3).to_string(index=False))
 
 results["lda"] = evaluate(
@@ -105,8 +107,8 @@ results["lda"] = evaluate(
           "conditional likelihood. A plain logistic regression was fitted once as a diagnostic reference (cosine similarity of "
           "coefficient vectors and Spearman rank correlation of test scores are stored in extra); evaluate() was not called on it.",
     extra=dict(cv_grid=cv_table(gs_lda, "clf__shrinkage"), n_features_transformed=int(len(names_out)),
-               logistic_reference=dict(cosine_similarity_coef=round(cos_sim, 4), spearman_test_scores=round(rho, 4),
-                                       ref_test_auc=round(ref_auc, 4), ref_test_ap=round(ref_ap, 4)),
+               logistic_reference=dict(cosine_similarity_coef=round(cos_sim, 4), spearman_oof_scores=round(rho, 4),
+                                       ref_oof_auc=round(ref_auc, 4), ref_oof_ap=round(ref_ap, 4)),
                top10_coefficients=coef_tab.head(10).round(4).to_dict(orient="records")))
 
 # ============================================================================= 2. QDA
@@ -180,9 +182,8 @@ cols = {"lda": "C3", "qda": "C1", "naive_bayes": "C2", "naive_bayes_log": "C0"}
 for slug, r in results.items():
     ax[0].plot(r["roc"]["fpr"], r["roc"]["tpr"], color=cols[slug], lw=1.8, label=f"{slug}  AUC={r['test_auc']:.3f}")
     ax[1].plot(r["pr"]["recall"], r["pr"]["precision"], color=cols[slug], lw=1.8, label=f"{slug}  AP={r['test_ap']:.3f}")
-fpr_r, tpr_r, _ = roc_curve(y_test, p_test_ref); pr_r, rc_r, _ = precision_recall_curve(y_test, p_test_ref)
-ax[0].plot(fpr_r, tpr_r, "k--", lw=1, label=f"logistic ref  AUC={ref_auc:.3f}"); ax[0].plot([0, 1], [0, 1], color="grey", lw=0.6)
-ax[1].plot(rc_r, pr_r, "k--", lw=1, label=f"logistic ref  AP={ref_ap:.3f}"); ax[1].axhline(y_test.mean(), color="grey", lw=0.6, ls=":")
+ax[0].plot([0, 1], [0, 1], color="grey", lw=0.6)
+ax[1].axhline(y_test.mean(), color="grey", lw=0.6, ls=":")
 ax[0].set_xlabel("False positive rate"); ax[0].set_ylabel("True positive rate"); ax[0].set_title("ROC (test) — generative classifiers"); ax[0].legend(loc="lower right", fontsize=8)
 ax[1].set_xlabel("Recall"); ax[1].set_ylabel("Precision"); ax[1].set_title("Precision–recall (test)"); ax[1].legend(loc="upper right", fontsize=8)
 save_extra_figure(fig, "discriminant_roc_pr.png")
@@ -222,5 +223,5 @@ for slug, r in results.items():
                      prec_f1=round(r["at_tuned_f1"]["precision_1"], 4), f1=round(r["at_tuned_f1"]["f1_1"], 4),
                      fit_s=r["fit_seconds"], best=r["best_params"]))
 print(pd.DataFrame(rows).to_string(index=False))
-print(f"logistic reference (diagnostic only): test AUC {ref_auc:.4f}, AP {ref_ap:.4f}; README baseline 0.764 / 0.524")
+print(f"logistic reference (diagnostic only, training OOF): AUC {ref_auc:.4f}, AP {ref_ap:.4f}")
 print("done.")

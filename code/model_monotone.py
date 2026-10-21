@@ -36,8 +36,15 @@ What it does
 Honest reading of the sweeps: holding the other features at their median makes rows that need not exist in the data
 (UTIL_1 is not recomputed when BILL_AMT1 moves, etc.).  That is deliberate - the sweep probes the MODEL's response
 surface, which is exactly what the constraint is a claim about; it is not a statement about real clients.
-Nothing is fitted, tuned or selected on the test set; the test set is touched only inside evaluate() and for the
-bootstrap that attaches uncertainty to a difference which already exists.
+Nothing is fitted, tuned or selected on the test set; the test set is touched only inside evaluate() and, after it, for
+the bootstrap that attaches uncertainty to a difference which already exists.
+
+Change of 21 Oct 2026 (record hygiene, see results/TEST_SET_LOG.md).  Until then step 3 also printed the test AUC of the
+refitted unconstrained twin (roc_auc_score(y_test, ...)) and the start-up line printed the test default rate, i.e. two
+test-label reads BEFORE evaluate() and its freeze guard.  Both were descriptive (the twin's AUC equals the frozen
+results/xgboost.json value) and nothing was chosen from them, but they have been removed: the twin is still checked
+against results/xgboost_p_test.npy on its PREDICTIONS only, and the AUCs quoted afterwards are the frozen baseline's
+(results/xgboost.json) and the one evaluate() returns.  The script was NOT re-run for this change.
 """
 import json, os, sys, time
 import numpy as np
@@ -132,7 +139,7 @@ def print_result(r):
 
 def main():
     X_train, X_test, y_train, y_test, feature_names = load_split()
-    log(f"train {X_train.shape}, test {X_test.shape}, default rate train {y_train.mean():.4f} / test {y_test.mean():.4f}")
+    log(f"train {X_train.shape}, test {X_test.shape}, default rate train {y_train.mean():.4f}")   # no test label before evaluate()
     versions = dict(python=sys.version.split()[0], sklearn=sklearn.__version__, xgboost=xgboost.__version__,
                     numpy=np.__version__, pandas=pd.__version__)
 
@@ -196,11 +203,11 @@ def main():
     log(f"5-fold CV AUC of the constrained pipeline {aucs.mean():.4f} ± {aucs.std():.4f} ({time.time() - t0:.0f}s)")
 
     free_pipe = make_pipe(params).fit(X_train, y_train)      # unconstrained twin, refitted here for the sweeps
-    p_test_free_here = free_pipe.predict_proba(X_test)[:, 1]
+    p_test_free_here = free_pipe.predict_proba(X_test)[:, 1]  # predictions only: no test label is read before evaluate()
     p_test_free = np.load(os.path.join(RESULTS, f"{BASELINE_SLUG}_p_test.npy"))
     same = float(np.abs(p_test_free_here - p_test_free).max())
     log(f"unconstrained twin refitted for the sweeps reproduces results/{BASELINE_SLUG}_p_test.npy "
-        f"(max |Δp| = {same:.2e}, its test AUC {roc_auc_score(y_test, p_test_free_here):.4f})")
+        f"(max |Δp| = {same:.2e}; compared on predictions only)")
 
     # ================================================================== 4. evaluate() -> joins the comparison tables
     notes = (f"XGBoost with monotone_constraints and OTHERWISE IDENTICAL hyper-parameters to the tuned unconstrained model "
@@ -221,6 +228,8 @@ def main():
                               monotone_constraints=mono_str, constrained_plus=PLUS, constrained_minus=MINUS,
                               n_features_raw=len(feature_names), n_features_after_onehot=len(tnames), versions=versions))
     p_test_mono = np.load(os.path.join(RESULTS, "xgboost_monotone_p_test.npy"))
+    log(f"test AUC from evaluate(): constrained {res['test_auc']:.4f} vs the frozen unconstrained results/{BASELINE_SLUG}.json "
+        f"{base['test_auc']:.4f} (the refitted twin reproduces those predictions, max |Δp| = {same:.2e})")
 
     d_auc = res["test_auc"] - base["test_auc"]
     d_ap = res["test_ap"] - base["test_ap"]

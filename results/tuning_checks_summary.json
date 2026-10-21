@@ -1,0 +1,979 @@
+{
+ "generated_by": "code/tuning_checks.py",
+ "uses_heldout_rows": false,
+ "seed": 2607526,
+ "e_svm_selection_statistics": {
+  "svm_rbf": {
+   "pooled_oof_auc": 0.7606068187605077,
+   "per_fold_mean_oof_auc": 0.7635360384346515,
+   "pooled_minus_mean": -0.0029292196741437238,
+   "subsample_cv_auc": 0.7680709094668459
+  },
+  "svm_linear": {
+   "pooled_oof_auc": 0.7167476667509078,
+   "per_fold_mean_oof_auc": 0.7486945465413293,
+   "pooled_minus_mean": -0.031946879790421434,
+   "subsample_cv_auc": 0.7628560650838005
+  },
+  "rank_by_statistic": {
+   "subsample_cv_auc": {
+    "value": 0.7680709094668459,
+    "rank_among_11_headline": 7,
+    "next_above": "tree_pruned",
+    "next_below": "logistic"
+   },
+   "pooled_oof_auc": {
+    "value": 0.7606068187605077,
+    "rank_among_11_headline": 7,
+    "next_above": "tree_pruned",
+    "next_below": "logistic"
+   },
+   "per_fold_mean_oof_auc": {
+    "value": 0.7635360384346515,
+    "rank_among_11_headline": 7,
+    "next_above": "tree_pruned",
+    "next_below": "logistic"
+   }
+  },
+  "max_abs_pooled_minus_mean_other_headline": 0.0005209850864803522
+ },
+ "elapsed_seconds_of_last_run": {
+  "e_svm_selection_statistics": 0.4,
+  "c_knn_dimensionality": 16.9,
+  "b_nested_cv_knn_frozen_grid": 61.6,
+  "d_grid_edges": 92.3,
+  "a_gbm_grid_fulltrain": 523.1
+ },
+ "c_knn_dimensionality": {
+  "reproduction_max_abs_diff_vs_knn_p_oof": 0.0,
+  "table": [
+   {
+    "variant": "frozen_32_columns",
+    "n_dims": 32,
+    "K": 101,
+    "weights": "uniform",
+    "fold1_auc": 0.78324,
+    "fold2_auc": 0.75756,
+    "fold3_auc": 0.76938,
+    "fold4_auc": 0.77497,
+    "fold5_auc": 0.76502,
+    "cv_auc_mean": 0.77003,
+    "cv_auc_std": 0.00872,
+    "pooled_oof_auc": 0.76981,
+    "distinct_fitting_vectors_mean": 16774.2,
+    "pca_variance_share_mean": NaN,
+    "seconds": 1.3,
+    "mean_diff_vs_frozen": NaN,
+    "n_folds_positive": NaN,
+    "nb_se": NaN,
+    "nb_t": NaN,
+    "nb_ci95_lo": NaN,
+    "nb_ci95_hi": NaN,
+    "flag_gain_above_one_se": NaN
+   },
+   {
+    "variant": "pca_5",
+    "n_dims": 5,
+    "K": 101,
+    "weights": "uniform",
+    "fold1_auc": 0.77469,
+    "fold2_auc": 0.74619,
+    "fold3_auc": 0.75659,
+    "fold4_auc": 0.76795,
+    "fold5_auc": 0.75589,
+    "cv_auc_mean": 0.76026,
+    "cv_auc_std": 0.00998,
+    "pooled_oof_auc": 0.76004,
+    "distinct_fitting_vectors_mean": 16774.2,
+    "pca_variance_share_mean": 0.65227,
+    "seconds": 1.0,
+    "mean_diff_vs_frozen": -0.00977,
+    "n_folds_positive": 0.0,
+    "nb_se": 0.00154,
+    "nb_t": -6.33232,
+    "nb_ci95_lo": -0.01405,
+    "nb_ci95_hi": -0.00549,
+    "flag_gain_above_one_se": false
+   },
+   {
+    "variant": "pca_10",
+    "n_dims": 10,
+    "K": 101,
+    "weights": "uniform",
+    "fold1_auc": 0.77822,
+    "fold2_auc": 0.75356,
+    "fold3_auc": 0.75637,
+    "fold4_auc": 0.77414,
+    "fold5_auc": 0.75976,
+    "cv_auc_mean": 0.76441,
+    "cv_auc_std": 0.00989,
+    "pooled_oof_auc": 0.76421,
+    "distinct_fitting_vectors_mean": 16774.2,
+    "pca_variance_share_mean": 0.81863,
+    "seconds": 1.0,
+    "mean_diff_vs_frozen": -0.00562,
+    "n_folds_positive": 0.0,
+    "nb_se": 0.00301,
+    "nb_t": -1.86775,
+    "nb_ci95_lo": -0.01398,
+    "nb_ci95_hi": 0.00274,
+    "flag_gain_above_one_se": false
+   },
+   {
+    "variant": "pca_15",
+    "n_dims": 15,
+    "K": 101,
+    "weights": "uniform",
+    "fold1_auc": 0.78165,
+    "fold2_auc": 0.75745,
+    "fold3_auc": 0.76207,
+    "fold4_auc": 0.77615,
+    "fold5_auc": 0.76191,
+    "cv_auc_mean": 0.76784,
+    "cv_auc_std": 0.00934,
+    "pooled_oof_auc": 0.76764,
+    "distinct_fitting_vectors_mean": 16774.2,
+    "pca_variance_share_mean": 0.92163,
+    "seconds": 1.1,
+    "mean_diff_vs_frozen": -0.00219,
+    "n_folds_positive": 1.0,
+    "nb_se": 0.0022,
+    "nb_t": -0.99466,
+    "nb_ci95_lo": -0.0083,
+    "nb_ci95_hi": 0.00392,
+    "flag_gain_above_one_se": false
+   },
+   {
+    "variant": "mutual_info_top8",
+    "n_dims": 8,
+    "K": 101,
+    "weights": "uniform",
+    "fold1_auc": 0.74174,
+    "fold2_auc": 0.70573,
+    "fold3_auc": 0.72406,
+    "fold4_auc": 0.74248,
+    "fold5_auc": 0.73356,
+    "cv_auc_mean": 0.72951,
+    "cv_auc_std": 0.01364,
+    "pooled_oof_auc": 0.72889,
+    "distinct_fitting_vectors_mean": 887.8,
+    "pca_variance_share_mean": NaN,
+    "seconds": 4.7,
+    "mean_diff_vs_frozen": -0.04052,
+    "n_folds_positive": 0.0,
+    "nb_se": 0.0058,
+    "nb_t": -6.99055,
+    "nb_ci95_lo": -0.05661,
+    "nb_ci95_hi": -0.02443,
+    "flag_gain_above_one_se": false
+   },
+   {
+    "variant": "mutual_info_top8_all_continuous",
+    "n_dims": 8,
+    "K": 101,
+    "weights": "uniform",
+    "fold1_auc": 0.74174,
+    "fold2_auc": 0.70573,
+    "fold3_auc": 0.72406,
+    "fold4_auc": 0.7623,
+    "fold5_auc": 0.73356,
+    "cv_auc_mean": 0.73348,
+    "cv_auc_std": 0.01875,
+    "pooled_oof_auc": 0.73424,
+    "distinct_fitting_vectors_mean": 2553.4,
+    "pca_variance_share_mean": NaN,
+    "seconds": 7.3,
+    "mean_diff_vs_frozen": -0.03656,
+    "n_folds_positive": 0.0,
+    "nb_se": 0.01023,
+    "nb_t": -3.5719,
+    "nb_ci95_lo": -0.06497,
+    "nb_ci95_hi": -0.00814,
+    "flag_gain_above_one_se": false
+   }
+  ],
+  "mi_selection_frequency": {
+   "mutual_info_top8": {
+    "PAY_1": 5,
+    "N_MONTHS_DELAYED": 5,
+    "MAX_DELAY": 5,
+    "PAY_2": 5,
+    "PAY_3": 5,
+    "PAY_4": 5,
+    "PAY_5": 5,
+    "PAY_6": 5
+   },
+   "mutual_info_top8_all_continuous": {
+    "PAY_1": 5,
+    "N_MONTHS_DELAYED": 5,
+    "MAX_DELAY": 5,
+    "PAY_2": 5,
+    "PAY_3": 5,
+    "PAY_4": 5,
+    "PAY_5": 5,
+    "PAY_6": 4,
+    "PAY_AMT1": 1
+   }
+  },
+  "note": "K fixed at the frozen 101 (uniform) for every space; K was not re-tuned for the reduced spaces. PCA and the mutual-information selector are fitted on the fitting folds only.  distinct_fitting_vectors_mean counts the distinct points among the ~16,780 fitting rows in the space KNN measures distance in: the mutual-information columns are all repayment-status codes, so many clients coincide and the 101 neighbours are drawn from large ties.  Diagnostic only."
+ },
+ "b_nested_cv_knn_frozen_grid": {
+  "method": "nested CV: outer = project 5-fold (common.CV); inner = StratifiedKFold(5, shuffle, seed 2607527) on each outer training part; GridSearchCV over EXACTLY the frozen model_knn.py grid, scoring roc_auc, argmax rule, Pipeline(make_preprocessor(), KNeighborsClassifier(algorithm='brute')); training rows only",
+  "grid": {
+   "K": [
+    5,
+    7,
+    9,
+    11,
+    15,
+    21,
+    31,
+    41,
+    51,
+    71,
+    101,
+    151
+   ],
+   "weights": [
+    "uniform",
+    "distance"
+   ],
+   "n_settings": 24,
+   "source": "code/model_knn.py K_GRID / WEIGHTS = results/knn.json extra.grid"
+  },
+  "nested_cv_auc": 0.7684364058195955,
+  "nested_cv_auc_std": 0.007329969318160737,
+  "nested_cv_auc_sd_ddof1": 0.008195154834197596,
+  "nested_cv_auc_se": 0.0036649846590803684,
+  "nested_pooled_oof_auc": 0.7682163850837638,
+  "chosen_settings_count": {
+   "K=101, distance": 1,
+   "K=101, uniform": 2,
+   "K=151, distance": 1,
+   "K=151, uniform": 1
+  },
+  "frozen_choice": {
+   "n_neighbors": 101,
+   "weights": "uniform",
+   "plain_cv_auc": 0.7700333660038201,
+   "plain_cv_auc_std": 0.008717447421272694
+  },
+  "nested_minus_plain_frozen": {
+   "comparison": "nested CV, frozen 24-setting grid minus plain CV of the frozen K=101 (knn_p_oof)",
+   "per_fold_a": [
+    0.78324,
+    0.75756,
+    0.76938,
+    0.77497,
+    0.76502
+   ],
+   "per_fold_b": [
+    0.77927,
+    0.75756,
+    0.76938,
+    0.77197,
+    0.764
+   ],
+   "per_fold_diff": [
+    -0.00397,
+    0.0,
+    0.0,
+    -0.003,
+    -0.00101
+   ],
+   "mean_diff": -0.0015969601842246606,
+   "n_folds_positive": 0,
+   "n_folds_exactly_zero": 2,
+   "nb_corrected_se": 0.0012115060413185723,
+   "nb_t": -1.3181611397385768,
+   "nb_ci95": [
+    -0.004960640202561166,
+    0.0017667198341118448
+   ],
+   "ci_includes_zero": true
+  },
+  "earlier_nested_16_settings": {
+   "source": "results/nested_cv_knn_repro.json (nested_cv_check.py)",
+   "grid": {
+    "K": [
+     5,
+     11,
+     21,
+     31,
+     51,
+     75,
+     101,
+     151
+    ],
+    "weights": [
+     "uniform",
+     "distance"
+    ]
+   },
+   "nested_cv_auc": 0.7684364738716817,
+   "outer_auc": [
+    0.7792701373716265,
+    0.7575538232376007,
+    0.7693942428464372,
+    0.771975733035686,
+    0.7639884328670576
+   ],
+   "outer_choices": [
+    {
+     "clf__n_neighbors": 101,
+     "clf__weights": "distance"
+    },
+    {
+     "clf__n_neighbors": 101,
+     "clf__weights": "uniform"
+    },
+    {
+     "clf__n_neighbors": 101,
+     "clf__weights": "uniform"
+    },
+    {
+     "clf__n_neighbors": 151,
+     "clf__weights": "distance"
+    },
+    {
+     "clf__n_neighbors": 151,
+     "clf__weights": "uniform"
+    }
+   ]
+  },
+  "frozen_grid_minus_earlier_grid": {
+   "comparison": "nested CV (frozen 24-setting grid) minus earlier nested CV (16-setting grid)",
+   "per_fold_a": [
+    0.77927,
+    0.75755,
+    0.76939,
+    0.77198,
+    0.76399
+   ],
+   "per_fold_b": [
+    0.77927,
+    0.75756,
+    0.76938,
+    0.77197,
+    0.764
+   ],
+   "per_fold_diff": [
+    -0.0,
+    1e-05,
+    -2e-05,
+    -0.0,
+    1e-05
+   ],
+   "mean_diff": -6.805208609961256e-08,
+   "n_folds_positive": 2,
+   "n_folds_exactly_zero": 0,
+   "nb_corrected_se": 8.069812327687823e-06,
+   "nb_t": -0.008432920535973724,
+   "nb_ci95": [
+    -2.247344302317328e-05,
+    2.2337338850974054e-05
+   ],
+   "ci_includes_zero": true
+  },
+  "note": "Diagnostic only. The frozen KNN (K = 101, uniform) is unchanged and nothing is re-scored.",
+  "choices": [
+   "K=101, distance",
+   "K=101, uniform",
+   "K=101, uniform",
+   "K=151, distance",
+   "K=151, uniform"
+  ],
+  "outer_auc": [
+   0.77927,
+   0.75756,
+   0.76938,
+   0.77197,
+   0.764
+  ]
+ },
+ "d_grid_edges": {
+  "edge_summary": [
+   {
+    "model": "knn",
+    "parameter": "n_neighbors",
+    "chosen": "101",
+    "position": "interior"
+   },
+   {
+    "model": "knn",
+    "parameter": "weights",
+    "chosen": "uniform",
+    "position": "categorical"
+   },
+   {
+    "model": "logistic",
+    "parameter": "(none)",
+    "chosen": "C = inf",
+    "position": "not tuned"
+   },
+   {
+    "model": "logistic_l1",
+    "parameter": "C",
+    "chosen": "100.0",
+    "position": "upper edge"
+   },
+   {
+    "model": "lda",
+    "parameter": "shrinkage",
+    "chosen": "None (= 0)",
+    "position": "lower edge (natural limit 0)"
+   },
+   {
+    "model": "naive_bayes",
+    "parameter": "var_smoothing",
+    "chosen": "0.01",
+    "position": "interior"
+   },
+   {
+    "model": "tree_pruned",
+    "parameter": "ccp_alpha",
+    "chosen": "0.0006631",
+    "position": "interior (index 14 of 21)"
+   },
+   {
+    "model": "tree_pruned",
+    "parameter": "max_depth",
+    "chosen": "6",
+    "position": "interior"
+   },
+   {
+    "model": "random_forest",
+    "parameter": "max_features",
+    "chosen": "sqrt",
+    "position": "lower edge"
+   },
+   {
+    "model": "random_forest",
+    "parameter": "min_samples_leaf",
+    "chosen": "20",
+    "position": "upper edge"
+   },
+   {
+    "model": "random_forest",
+    "parameter": "n_estimators",
+    "chosen": "500",
+    "position": "not tuned"
+   },
+   {
+    "model": "gradient_boosting",
+    "parameter": "learning_rate",
+    "chosen": "0.03",
+    "position": "lower edge"
+   },
+   {
+    "model": "gradient_boosting",
+    "parameter": "max_depth",
+    "chosen": "3",
+    "position": "interior"
+   },
+   {
+    "model": "gradient_boosting",
+    "parameter": "n_estimators",
+    "chosen": "200",
+    "position": "lower edge (bracketed by staged curve)"
+   },
+   {
+    "model": "xgboost",
+    "parameter": "max_depth",
+    "chosen": "3",
+    "position": "lower edge"
+   },
+   {
+    "model": "xgboost",
+    "parameter": "learning_rate",
+    "chosen": "0.03",
+    "position": "lower edge"
+   },
+   {
+    "model": "xgboost",
+    "parameter": "n_estimators",
+    "chosen": "300",
+    "position": "lower edge (bracketed by learning curve)"
+   },
+   {
+    "model": "xgboost",
+    "parameter": "min_child_weight",
+    "chosen": "5",
+    "position": "upper edge"
+   },
+   {
+    "model": "svm_rbf",
+    "parameter": "C",
+    "chosen": "1.0",
+    "position": "interior"
+   },
+   {
+    "model": "svm_rbf",
+    "parameter": "gamma",
+    "chosen": "0.01",
+    "position": "lower edge (probed)"
+   },
+   {
+    "model": "svm_rbf",
+    "parameter": "class_weight",
+    "chosen": "balanced",
+    "position": "categorical"
+   },
+   {
+    "model": "mlp",
+    "parameter": "hidden_layer_sizes",
+    "chosen": "64x32",
+    "position": "interior"
+   },
+   {
+    "model": "mlp",
+    "parameter": "alpha",
+    "chosen": "0.001",
+    "position": "interior"
+   },
+   {
+    "model": "mlp",
+    "parameter": "learning_rate_init",
+    "chosen": "0.001",
+    "position": "lower edge"
+   }
+  ],
+  "xgb_extension": {
+   "grid": "max_depth {2, 3} x learning_rate {0.01, 0.02, 0.03} x n_estimators 150-600 step 50; min_child_weight 5, subsample 0.8, colsample_bytree 0.8 frozen; one fit per fold and (depth, lr) (600 rounds; 1,200 for lr < 0.03), AUC read with iteration_range",
+   "n_settings": 60,
+   "frozen_cv_auc": 0.7862905873025212,
+   "frozen_cv_auc_std_ddof0": 0.006817778593190929,
+   "frozen_fold_se": 0.00304900327798356,
+   "reproduction": {
+    "frozen_setting_cv_auc_here": 0.7862905873025212,
+    "max_abs_diff_p_oof_vs_frozen": 0.0,
+    "setting_600_cv_auc_here": 0.785014034095734
+   },
+   "best_setting": {
+    "max_depth": 3,
+    "learning_rate": 0.03,
+    "n_estimators": 350,
+    "cv_auc": 0.7863707084728105,
+    "diff_vs_frozen": 8.012117028932675e-05
+   },
+   "best_vs_frozen": {
+    "comparison": "best extension setting (3, 0.03, 350, mcw 5) minus frozen XGBoost (3, 0.03, 300, mcw 5)",
+    "per_fold_a": [
+     0.79301,
+     0.77859,
+     0.77956,
+     0.79529,
+     0.78501
+    ],
+    "per_fold_b": [
+     0.79354,
+     0.77893,
+     0.77943,
+     0.7954,
+     0.78456
+    ],
+    "per_fold_diff": [
+     0.00054,
+     0.00034,
+     -0.00013,
+     0.0001,
+     -0.00045
+    ],
+    "mean_diff": 8.01211702891269e-05,
+    "n_folds_positive": 3,
+    "n_folds_exactly_zero": 0,
+    "nb_corrected_se": 0.0002593447282999871,
+    "nb_t": 0.3089369535842263,
+    "nb_ci95": [
+     -0.000639935231158224,
+     0.0008001775717364778
+    ],
+    "ci_includes_zero": true
+   },
+   "best_per_depth_lr": [
+    {
+     "max_depth": 2,
+     "learning_rate": 0.01,
+     "n_estimators": 600,
+     "cv_auc": 0.78197
+    },
+    {
+     "max_depth": 2,
+     "learning_rate": 0.02,
+     "n_estimators": 600,
+     "cv_auc": 0.78498
+    },
+    {
+     "max_depth": 2,
+     "learning_rate": 0.03,
+     "n_estimators": 550,
+     "cv_auc": 0.78526
+    },
+    {
+     "max_depth": 3,
+     "learning_rate": 0.01,
+     "n_estimators": 600,
+     "cv_auc": 0.78583
+    },
+    {
+     "max_depth": 3,
+     "learning_rate": 0.02,
+     "n_estimators": 550,
+     "cv_auc": 0.78629
+    },
+    {
+     "max_depth": 3,
+     "learning_rate": 0.03,
+     "n_estimators": 350,
+     "cv_auc": 0.78637
+    }
+   ],
+   "any_beats_by_more_than_one_fold_sd": false,
+   "any_beats_by_more_than_one_fold_se": false,
+   "beyond_requested_range": {
+    "rounds": "650-1200 step 50, learning_rate 0.01 and 0.02 only (diagnostic: their curves were still rising at 600)",
+    "best_per_depth_lr": [
+     {
+      "max_depth": 2,
+      "learning_rate": 0.01,
+      "n_estimators": 1200,
+      "cv_auc": 0.78496
+     },
+     {
+      "max_depth": 2,
+      "learning_rate": 0.02,
+      "n_estimators": 1100,
+      "cv_auc": 0.78543
+     },
+     {
+      "max_depth": 3,
+      "learning_rate": 0.01,
+      "n_estimators": 1100,
+      "cv_auc": 0.78657
+     },
+     {
+      "max_depth": 3,
+      "learning_rate": 0.02,
+      "n_estimators": 650,
+      "cv_auc": 0.78604
+     }
+    ],
+    "best": {
+     "max_depth": 3,
+     "learning_rate": 0.01,
+     "n_estimators": 1100,
+     "cv_auc": 0.7865695350388993,
+     "diff_vs_frozen": 0.0002789477363780435
+    },
+    "best_vs_frozen": {
+     "comparison": "best beyond-range setting (3, 0.01, 1100, mcw 5) minus frozen XGBoost (3, 0.03, 300, mcw 5)",
+     "per_fold_a": [
+      0.79301,
+      0.77859,
+      0.77956,
+      0.79529,
+      0.78501
+     ],
+     "per_fold_b": [
+      0.79253,
+      0.77884,
+      0.78056,
+      0.79636,
+      0.78456
+     ],
+     "per_fold_diff": [
+      -0.00048,
+      0.00025,
+      0.001,
+      0.00107,
+      -0.00044
+     ],
+     "mean_diff": 0.00027894773637788807,
+     "n_folds_positive": 3,
+     "n_folds_exactly_zero": 0,
+     "nb_corrected_se": 0.00050241336455181,
+     "nb_t": 0.555215597472671,
+     "nb_ci95": [
+      -0.0011159753904179395,
+      0.0016738708631737155
+     ],
+     "ci_includes_zero": true
+    },
+    "any_beats_by_more_than_one_fold_sd": false,
+    "any_beats_by_more_than_one_fold_se": false
+   },
+   "note": "Diagnostic only; the frozen XGBoost is kept and nothing is re-scored."
+  }
+ },
+ "a_gbm_grid_fulltrain": {
+  "grid": "n_estimators {200, 500} x learning_rate {0.03, 0.1} x max_depth {2, 3, 4}, subsample 0.8, random_state 2607526",
+  "tuning_rows": 20975,
+  "folds": "project folds (common.CV)",
+  "winner_fulltrain": {
+   "learning_rate": 0.03,
+   "max_depth": 4,
+   "n_estimators": 200,
+   "cv_auc": 0.7857911112415276,
+   "cv_auc_std": 0.007241021469946069
+  },
+  "winner_subsample": {
+   "learning_rate": 0.03,
+   "max_depth": 3,
+   "n_estimators": 200,
+   "cv_auc_subsample": 0.7861516615769812
+  },
+  "same_setting_wins": false,
+  "frozen_setting_fulltrain": {
+   "cv_auc": 0.7849715351823022,
+   "cv_auc_std": 0.00737868015211697,
+   "rank_fulltrain": 3,
+   "frozen_json_cv_auc": 0.7849715351823022
+  },
+  "reproduction": {
+   "max_abs_diff_p_oof_vs_frozen": 0.0,
+   "frozen_fold_aucs_from_p_oof": [
+    0.79202,
+    0.77556,
+    0.7786,
+    0.79459,
+    0.78409
+   ]
+  },
+  "winner_vs_frozen": {
+   "comparison": "full-set winner (200, 0.03, 4) minus frozen GBM setting (200, 0.03, 3)",
+   "per_fold_a": [
+    0.79202,
+    0.77556,
+    0.7786,
+    0.79459,
+    0.78409
+   ],
+   "per_fold_b": [
+    0.79246,
+    0.77648,
+    0.78021,
+    0.79565,
+    0.78415
+   ],
+   "per_fold_diff": [
+    0.00044,
+    0.00092,
+    0.00161,
+    0.00106,
+    6e-05
+   ],
+   "mean_diff": 0.0008195760592252688,
+   "n_folds_positive": 5,
+   "n_folds_exactly_zero": 0,
+   "nb_corrected_se": 0.000398749594445933,
+   "nb_t": 2.055365248368663,
+   "nb_ci95": [
+    -0.00028753030047374705,
+    0.0019266824189242847
+   ],
+   "ci_includes_zero": true
+  },
+  "xgboost_comparison": {
+   "xgb_minus_frozen_gbm": {
+    "comparison": "frozen XGBoost minus frozen GBM (200, 0.03, 3)",
+    "per_fold_a": [
+     0.79202,
+     0.77556,
+     0.7786,
+     0.79459,
+     0.78409
+    ],
+    "per_fold_b": [
+     0.79301,
+     0.77859,
+     0.77956,
+     0.79529,
+     0.78501
+    ],
+    "per_fold_diff": [
+     0.00099,
+     0.00303,
+     0.00096,
+     0.0007,
+     0.00092
+    ],
+    "mean_diff": 0.0013190521202190997,
+    "n_folds_positive": 5,
+    "n_folds_exactly_zero": 0,
+    "nb_corrected_se": 0.0006457464669363842,
+    "nb_t": 2.042678028850983,
+    "nb_ci95": [
+     -0.00047382749710519296,
+     0.0031119317375433923
+    ],
+    "ci_includes_zero": true
+   },
+   "xgb_minus_fulltrain_gbm_winner": {
+    "comparison": "frozen XGBoost minus full-set GBM winner (200, 0.03, 4)",
+    "per_fold_a": [
+     0.79246,
+     0.77648,
+     0.78021,
+     0.79565,
+     0.78415
+    ],
+    "per_fold_b": [
+     0.79301,
+     0.77859,
+     0.77956,
+     0.79529,
+     0.78501
+    ],
+    "per_fold_diff": [
+     0.00054,
+     0.00211,
+     -0.00065,
+     -0.00036,
+     0.00086
+    ],
+    "mean_diff": 0.0004994760609938309,
+    "n_folds_positive": 3,
+    "n_folds_exactly_zero": 0,
+    "nb_corrected_se": 0.0007328309885900974,
+    "nb_t": 0.6815706060066852,
+    "nb_ci95": [
+     -0.001535188950214405,
+     0.0025341410722020665
+    ],
+    "ci_includes_zero": true
+   },
+   "note": "With the GBM grid also scored on the project folds, both boosters' CV AUCs are maxima over their own grids on the same folds, so this is the like-for-like comparison of the two tuning procedures."
+  },
+  "decision": "frozen GBM (200 trees, lr 0.03, depth 3) kept by the rule fixed beforehand; the full-set winner is reported with its CV only",
+  "spearman_fulltrain_vs_subsample_cv": 0.8811188811188813,
+  "staged_optimum_fulltrain": {
+   "learning_rate": 0.03,
+   "max_depth": 4,
+   "n_estimators": 210,
+   "cv_auc": 0.7858600877251637
+  },
+  "all_12": [
+   {
+    "learning_rate": 0.03,
+    "max_depth": 4,
+    "n_estimators": 200,
+    "cv_auc_fulltrain": 0.78579,
+    "cv_auc_std_fulltrain": 0.00724,
+    "rank_fulltrain": 1,
+    "cv_auc_subsample": 0.78483,
+    "rank_subsample": 4
+   },
+   {
+    "learning_rate": 0.03,
+    "max_depth": 3,
+    "n_estimators": 500,
+    "cv_auc_fulltrain": 0.78497,
+    "cv_auc_std_fulltrain": 0.00667,
+    "rank_fulltrain": 2,
+    "cv_auc_subsample": 0.78501,
+    "rank_subsample": 3
+   },
+   {
+    "learning_rate": 0.03,
+    "max_depth": 3,
+    "n_estimators": 200,
+    "cv_auc_fulltrain": 0.78497,
+    "cv_auc_std_fulltrain": 0.00738,
+    "rank_fulltrain": 3,
+    "cv_auc_subsample": 0.78615,
+    "rank_subsample": 1
+   },
+   {
+    "learning_rate": 0.03,
+    "max_depth": 2,
+    "n_estimators": 500,
+    "cv_auc_fulltrain": 0.78448,
+    "cv_auc_std_fulltrain": 0.00768,
+    "rank_fulltrain": 4,
+    "cv_auc_subsample": 0.78566,
+    "rank_subsample": 2
+   },
+   {
+    "learning_rate": 0.03,
+    "max_depth": 4,
+    "n_estimators": 500,
+    "cv_auc_fulltrain": 0.78399,
+    "cv_auc_std_fulltrain": 0.00662,
+    "rank_fulltrain": 5,
+    "cv_auc_subsample": 0.78104,
+    "rank_subsample": 8
+   },
+   {
+    "learning_rate": 0.1,
+    "max_depth": 2,
+    "n_estimators": 200,
+    "cv_auc_fulltrain": 0.78351,
+    "cv_auc_std_fulltrain": 0.00769,
+    "rank_fulltrain": 6,
+    "cv_auc_subsample": 0.7848,
+    "rank_subsample": 5
+   },
+   {
+    "learning_rate": 0.03,
+    "max_depth": 2,
+    "n_estimators": 200,
+    "cv_auc_fulltrain": 0.78201,
+    "cv_auc_std_fulltrain": 0.00866,
+    "rank_fulltrain": 7,
+    "cv_auc_subsample": 0.78433,
+    "rank_subsample": 6
+   },
+   {
+    "learning_rate": 0.1,
+    "max_depth": 3,
+    "n_estimators": 200,
+    "cv_auc_fulltrain": 0.7819,
+    "cv_auc_std_fulltrain": 0.00795,
+    "rank_fulltrain": 8,
+    "cv_auc_subsample": 0.77992,
+    "rank_subsample": 9
+   },
+   {
+    "learning_rate": 0.1,
+    "max_depth": 2,
+    "n_estimators": 500,
+    "cv_auc_fulltrain": 0.78113,
+    "cv_auc_std_fulltrain": 0.00758,
+    "rank_fulltrain": 9,
+    "cv_auc_subsample": 0.78152,
+    "rank_subsample": 7
+   },
+   {
+    "learning_rate": 0.1,
+    "max_depth": 4,
+    "n_estimators": 200,
+    "cv_auc_fulltrain": 0.77896,
+    "cv_auc_std_fulltrain": 0.00773,
+    "rank_fulltrain": 10,
+    "cv_auc_subsample": 0.77375,
+    "rank_subsample": 10
+   },
+   {
+    "learning_rate": 0.1,
+    "max_depth": 3,
+    "n_estimators": 500,
+    "cv_auc_fulltrain": 0.77516,
+    "cv_auc_std_fulltrain": 0.00805,
+    "rank_fulltrain": 11,
+    "cv_auc_subsample": 0.76886,
+    "rank_subsample": 11
+   },
+   {
+    "learning_rate": 0.1,
+    "max_depth": 4,
+    "n_estimators": 500,
+    "cv_auc_fulltrain": 0.76936,
+    "cv_auc_std_fulltrain": 0.00668,
+    "rank_fulltrain": 12,
+    "cv_auc_subsample": 0.76346,
+    "rank_subsample": 12
+   }
+  ],
+  "note": "Diagnostic only: the frozen GBM is kept and nothing is re-scored.  A full-set re-grid on the project folds gives the GBM the same max-over-grid optimism as XGBoost's reported CV AUC."
+ }
+}

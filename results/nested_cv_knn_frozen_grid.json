@@ -1,0 +1,287 @@
+{
+ "method": "nested CV: outer = project 5-fold (common.CV); inner = StratifiedKFold(5, shuffle, seed 2607527) on each outer training part; GridSearchCV over EXACTLY the frozen model_knn.py grid, scoring roc_auc, argmax rule, Pipeline(make_preprocessor(), KNeighborsClassifier(algorithm='brute')); training rows only",
+ "grid": {
+  "K": [
+   5,
+   7,
+   9,
+   11,
+   15,
+   21,
+   31,
+   41,
+   51,
+   71,
+   101,
+   151
+  ],
+  "weights": [
+   "uniform",
+   "distance"
+  ],
+  "n_settings": 24,
+  "source": "code/model_knn.py K_GRID / WEIGHTS = results/knn.json extra.grid"
+ },
+ "outer_folds": [
+  {
+   "outer_fold": 1,
+   "chosen_K": 101,
+   "chosen_weights": "distance",
+   "inner_cv_auc_chosen": 0.7656578340558432,
+   "inner_cv_auc_K101_uniform": 0.7652822615850792,
+   "inner_top3": [
+    {
+     "K": 101,
+     "weights": "distance",
+     "inner_cv_auc": 0.76566
+    },
+    {
+     "K": 151,
+     "weights": "distance",
+     "inner_cv_auc": 0.76542
+    },
+    {
+     "K": 101,
+     "weights": "uniform",
+     "inner_cv_auc": 0.76528
+    }
+   ],
+   "outer_auc": 0.7792681583335973
+  },
+  {
+   "outer_fold": 2,
+   "chosen_K": 101,
+   "chosen_weights": "uniform",
+   "inner_cv_auc_chosen": 0.772127965709376,
+   "inner_cv_auc_K101_uniform": 0.772127965709376,
+   "inner_top3": [
+    {
+     "K": 101,
+     "weights": "uniform",
+     "inner_cv_auc": 0.77213
+    },
+    {
+     "K": 151,
+     "weights": "uniform",
+     "inner_cv_auc": 0.77088
+    },
+    {
+     "K": 101,
+     "weights": "distance",
+     "inner_cv_auc": 0.77082
+    }
+   ],
+   "outer_auc": 0.7575619043095532
+  },
+  {
+   "outer_fold": 3,
+   "chosen_K": 101,
+   "chosen_weights": "uniform",
+   "inner_cv_auc_chosen": 0.7694518662786759,
+   "inner_cv_auc_K101_uniform": 0.7694518662786759,
+   "inner_top3": [
+    {
+     "K": 101,
+     "weights": "uniform",
+     "inner_cv_auc": 0.76945
+    },
+    {
+     "K": 101,
+     "weights": "distance",
+     "inner_cv_auc": 0.76934
+    },
+    {
+     "K": 151,
+     "weights": "distance",
+     "inner_cv_auc": 0.76904
+    }
+   ],
+   "outer_auc": 0.7693762665843387
+  },
+  {
+   "outer_fold": 4,
+   "chosen_K": 151,
+   "chosen_weights": "distance",
+   "inner_cv_auc_chosen": 0.7662750458724852,
+   "inner_cv_auc_K101_uniform": 0.7656139877149607,
+   "inner_top3": [
+    {
+     "K": 151,
+     "weights": "distance",
+     "inner_cv_auc": 0.76628
+    },
+    {
+     "K": 151,
+     "weights": "uniform",
+     "inner_cv_auc": 0.76589
+    },
+    {
+     "K": 101,
+     "weights": "distance",
+     "inner_cv_auc": 0.76569
+    }
+   ],
+   "outer_auc": 0.7719737539976569
+  },
+  {
+   "outer_fold": 5,
+   "chosen_K": 151,
+   "chosen_weights": "uniform",
+   "inner_cv_auc_chosen": 0.7705504753917124,
+   "inner_cv_auc_K101_uniform": 0.7697126220631663,
+   "inner_top3": [
+    {
+     "K": 151,
+     "weights": "uniform",
+     "inner_cv_auc": 0.77055
+    },
+    {
+     "K": 151,
+     "weights": "distance",
+     "inner_cv_auc": 0.76974
+    },
+    {
+     "K": 101,
+     "weights": "uniform",
+     "inner_cv_auc": 0.76971
+    }
+   ],
+   "outer_auc": 0.7640019458728315
+  }
+ ],
+ "nested_cv_auc": 0.7684364058195955,
+ "nested_cv_auc_std": 0.007329969318160737,
+ "nested_cv_auc_sd_ddof1": 0.008195154834197596,
+ "nested_cv_auc_se": 0.0036649846590803684,
+ "nested_pooled_oof_auc": 0.7682163850837638,
+ "chosen_settings_count": {
+  "K=101, distance": 1,
+  "K=101, uniform": 2,
+  "K=151, distance": 1,
+  "K=151, uniform": 1
+ },
+ "frozen_choice": {
+  "n_neighbors": 101,
+  "weights": "uniform",
+  "plain_cv_auc": 0.7700333660038201,
+  "plain_cv_auc_std": 0.008717447421272694
+ },
+ "nested_minus_plain_frozen": {
+  "comparison": "nested CV, frozen 24-setting grid minus plain CV of the frozen K=101 (knn_p_oof)",
+  "per_fold_a": [
+   0.78324,
+   0.75756,
+   0.76938,
+   0.77497,
+   0.76502
+  ],
+  "per_fold_b": [
+   0.77927,
+   0.75756,
+   0.76938,
+   0.77197,
+   0.764
+  ],
+  "per_fold_diff": [
+   -0.00397,
+   0.0,
+   0.0,
+   -0.003,
+   -0.00101
+  ],
+  "mean_diff": -0.0015969601842246606,
+  "n_folds_positive": 0,
+  "n_folds_exactly_zero": 2,
+  "nb_corrected_se": 0.0012115060413185723,
+  "nb_t": -1.3181611397385768,
+  "nb_ci95": [
+   -0.004960640202561166,
+   0.0017667198341118448
+  ],
+  "ci_includes_zero": true
+ },
+ "earlier_nested_16_settings": {
+  "source": "results/nested_cv_knn_repro.json (nested_cv_check.py)",
+  "grid": {
+   "K": [
+    5,
+    11,
+    21,
+    31,
+    51,
+    75,
+    101,
+    151
+   ],
+   "weights": [
+    "uniform",
+    "distance"
+   ]
+  },
+  "nested_cv_auc": 0.7684364738716817,
+  "outer_auc": [
+   0.7792701373716265,
+   0.7575538232376007,
+   0.7693942428464372,
+   0.771975733035686,
+   0.7639884328670576
+  ],
+  "outer_choices": [
+   {
+    "clf__n_neighbors": 101,
+    "clf__weights": "distance"
+   },
+   {
+    "clf__n_neighbors": 101,
+    "clf__weights": "uniform"
+   },
+   {
+    "clf__n_neighbors": 101,
+    "clf__weights": "uniform"
+   },
+   {
+    "clf__n_neighbors": 151,
+    "clf__weights": "distance"
+   },
+   {
+    "clf__n_neighbors": 151,
+    "clf__weights": "uniform"
+   }
+  ]
+ },
+ "frozen_grid_minus_earlier_grid": {
+  "comparison": "nested CV (frozen 24-setting grid) minus earlier nested CV (16-setting grid)",
+  "per_fold_a": [
+   0.77927,
+   0.75755,
+   0.76939,
+   0.77198,
+   0.76399
+  ],
+  "per_fold_b": [
+   0.77927,
+   0.75756,
+   0.76938,
+   0.77197,
+   0.764
+  ],
+  "per_fold_diff": [
+   -0.0,
+   1e-05,
+   -2e-05,
+   -0.0,
+   1e-05
+  ],
+  "mean_diff": -6.805208609961256e-08,
+  "n_folds_positive": 2,
+  "n_folds_exactly_zero": 0,
+  "nb_corrected_se": 8.069812327687823e-06,
+  "nb_t": -0.008432920535973724,
+  "nb_ci95": [
+   -2.247344302317328e-05,
+   2.2337338850974054e-05
+  ],
+  "ci_includes_zero": true
+ },
+ "note": "Diagnostic only. The frozen KNN (K = 101, uniform) is unchanged and nothing is re-scored."
+}

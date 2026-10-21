@@ -4,8 +4,10 @@ Owner: shared (written 2026-10-19 by LI Jingwen).
 
 Why.  The professor's feedback on the proposal (30 Sep) and the lecture of 7 Oct: the test set may only REPORT the
 performance of models whose choices were fixed on training data; using it to compare versions of a model is "kind of
-cheating".  Every model in this project was tuned on training CV and scored on the test set once, by 18 September
-2026 (result files dated 16-18 September), before that feedback.  This script turns that history into an enforceable record:
+cheating".  Every round-1 model in this project was tuned on training CV and scored on the test set by 18 September
+2026 (result files dated 16-18 September), before that feedback; the forest and bagging were scored twice with the same
+configuration (16 and 18 Sep), which the ROUND_1 label below, kept identical to the frozen entries, does not say
+(see results/TEST_SET_LOG.md).  This script turns that history into an enforceable record:
 
   results/frozen_manifest.json   one entry per scored configuration: name, member, hyper-parameters and their sha256,
                                  the two thresholds chosen on training out-of-fold probabilities, the CV / OOF / test
@@ -17,13 +19,18 @@ changed configuration under a frozen slug is refused before any test label is re
 MH6805_ALLOW_RESCORE="<reason>", which is logged); a new slug is frozen at its first scoring.
 
 Usage (from Project/code):
-  python3 freeze.py            create the manifest if it does not exist, otherwise verify it (exit 1 on drift)
+  python3 freeze.py            create the manifest if it does not exist, otherwise verify it (exit 1 on drift); when the
+                               verification is clean it also recomputes the summary block and the reporting-only list
+                               (refresh_summary) and, if they changed, rewrites the file atomically with a logged
+                               history event — no frozen entry is ever touched by this path, and nothing is written on drift
   python3 freeze.py --check    verify only; never writes
   python3 freeze.py --adopt    add results that were scored ELSEWHERE and copied in with their original file times
                                (e.g. RUAN's v2 results of 30 Sep: copy results/*_v2.* with `cp -p`, then --adopt);
                                the file time is recorded as the scoring time, so copy with timestamps preserved
 
-This script hashes files; it never loads the test labels.
+This script hashes files; it never loads the test labels.  The manifest records the configurations scored through
+evaluate() or registered by recalibrate.py; the complete dated list of every test-set read, including exploratory and
+descriptive reads that are not configurations, is results/TEST_SET_LOG.md.
 """
 import datetime
 import glob
@@ -34,7 +41,8 @@ import sys
 
 import numpy as np
 
-from common import (FROZEN_DIR, FROZEN_MANIFEST, FROZEN_TOL, RESULTS, config_fingerprint, p_test_fingerprint)
+from common import (FROZEN_DIR, FROZEN_MANIFEST, FROZEN_TOL, RESULTS, _write_manifest, config_fingerprint,
+                    p_test_fingerprint)
 
 ROUND_1 = ("round 1 — tuned on training CV and scored on the test set once, by 18 September 2026 (result files dated "
            "16–18 September), before the professor's 30 September feedback; not re-scored since")
@@ -44,12 +52,23 @@ SPECIAL = {
     "imb_leaky_smote_demo": "NEGATIVE CONTROL — the deliberate leakage demonstration (SMOTE before the split); its 'test' "
                             "rows are not the real test set and it is not a model result",
 }
-REPORTING_ONLY = [
+TEST_SET_LOG = "results/TEST_SET_LOG.md"     # the complete, dated record of every test-set read (written 21 Oct 2026)
+REPORTING_ONLY = [                            # current code (21 Oct 2026); history, including removed reads, in TEST_SET_LOG
     "aggregate.py — paired bootstrap of test-set AUC / AP differences, ROC / PR curves, threshold / cost / calibration "
-    "curves on the test rows (the reference model and the top-4 are chosen on CV AUC, not on these)",
-    "cost_sensitivity.py — test cost of every model at its own training-OOF threshold for each cost ratio",
-    "model_monotone.py — test AUC and paired bootstrap of the constrained vs unconstrained XGBoost",
-    "model_rf.py — test AUC against the number of trees, descriptive only (N_TREES = 500 fixed in advance)",
+    "curves on the test rows (the reference model and the top-4 are chosen on CV AUC, not on these; until 19 Oct 2026 "
+    "they were ranked by test AUC)",
+    "cost_sensitivity.py — test cost of every headline model at its own training-OOF threshold for each cost ratio",
+    "threshold_vs_model_saving.py — test cost of the logistic model and XGBoost at their training-OOF cut-offs, 1:1-20:1, "
+    "with a paired bootstrap",
+    "model_monotone.py — after evaluate(): paired bootstrap of the constrained vs unconstrained XGBoost",
+    "model_mlp.py — after evaluate(): paired bootstrap of the MLP against other saved test vectors",
+    "model_svm.py — after evaluate(): test AUC of the 3-dp rounded linear-SVM scores and of MAX_DELAY alone",
+    "model_discriminant.py — a plain logistic reference refitted and scored on test beside LDA (diagnostic, not an entry)",
+    "model_imbalance.py — test agreement / recall statistics between strategies; the negative control re-splits all rows",
+    "model_unsupervised.py — test default rate per K = 4 cluster (descriptive)",
+    "make_slide_figures.py — ROC / PR and cost curves on the test rows for the slides",
+    "eda.py — class balance of the test partition (split check) and the target-distribution figure",
+    "model_rf.py — until 21 Oct 2026 also test AUC against the number of trees (removed; N_TREES = 500 was fixed in advance)",
 ]
 TRAINING_ONLY = [
     "every hyper-parameter (GridSearchCV on 5 stratified folds of the training set)",
@@ -97,30 +116,53 @@ def build():
             else "scored after round 1", note=SPECIAL.get(s, ""),
             source_json=os.path.relpath(f, RESULTS), frozen_p_test=rel, p_test_sha256=p_test_fingerprint(p),
             role="negative_control" if s.startswith("imb_leaky") else "model")
-    dates = sorted(m["first_scored"] for m in models.values())
     man = dict(
         created=datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), created_by="code/freeze.py", seed=2607526,
         rule=("The test set only reports frozen models. A configuration is frozen when it is first scored on the test "
               "set; common.evaluate() refuses to score a different configuration under a frozen slug."),
-        summary=dict(n_frozen=len(models), n_models=sum(m["role"] == "model" for m in models.values()),
-                     first_scored_range=[dates[0], dates[-1]],
-                     all_round_1=all(m["round"] == ROUND_1 for m in models.values())),
-        selection_uses_training_data_only=TRAINING_ONLY,
+        summary={}, selection_uses_training_data_only=TRAINING_ONLY,
         test_set_read_for_reporting_only=REPORTING_ONLY,
         models=dict(sorted(models.items())), history=[])
-    json.dump(man, open(FROZEN_MANIFEST, "w"), indent=1)
+    refresh_summary(man)
+    _write_manifest(man)
     return man
 
 
 def refresh_summary(man):
-    """Recompute the summary block from the entries (it went stale once evaluate() and --adopt started adding entries)."""
+    """Recompute the summary block from the entries (it went stale once evaluate() and --adopt started adding entries)
+    and set the reporting-only list to the current one. Reads and changes nothing under man["models"]."""
     ms = man["models"]; roles = [m.get("role", "model") for m in ms.values()]
     dates = sorted(m["first_scored"] for m in ms.values())
+    by_round = {}
+    for m in ms.values():
+        key = str(m.get("round", ""))[:60]
+        by_round[key] = by_round.get(key, 0) + 1
     man["summary"] = dict(n_frozen=len(ms), n_models=roles.count("model"), n_recalibrated_variants=roles.count("recalibrated_variant"),
                           n_negative_controls=roles.count("negative_control"), first_scored_range=[dates[0], dates[-1]],
-                          rounds=sorted({str(m.get("round", ""))[:60] for m in ms.values()}),
-                          all_round_1=all(m.get("round") == ROUND_1 for m in ms.values()))
+                          first_scored_is=("the modification time of the entry's result file: the scoring happened at or "
+                                           "before it, so it is not a scoring timestamp (see " + TEST_SET_LOG + ")"),
+                          rounds=sorted(by_round), n_by_round=dict(sorted(by_round.items())),
+                          all_round_1=all(m.get("round") == ROUND_1 for m in ms.values()),
+                          complete_test_set_log=TEST_SET_LOG)
+    man["test_set_read_for_reporting_only"] = REPORTING_ONLY
     return man
+
+
+def write_refreshed_summary(man):
+    """Refresh the summary block and the reporting-only list, prove that no frozen entry changed, and write the manifest
+    atomically with a history event — only if something actually changed. Returns True when the file was rewritten."""
+    models_before = json.dumps(man["models"], sort_keys=True)
+    old_summary = json.loads(json.dumps(man.get("summary", {})))
+    old_reporting = list(man.get("test_set_read_for_reporting_only", []))
+    refresh_summary(man)
+    assert json.dumps(man["models"], sort_keys=True) == models_before, "refresh_summary must not touch a frozen entry"
+    if man["summary"] == old_summary and man["test_set_read_for_reporting_only"] == old_reporting:
+        return False
+    man.setdefault("history", []).append(dict(
+        event="refresh_summary", at=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), previous_summary=old_summary,
+        note="summary block and reporting-only list recomputed by freeze.py after a clean check; no frozen entry changed"))
+    _write_manifest(man)
+    return True
 
 
 def check(man):
@@ -176,7 +218,7 @@ def adopt(man):
     if added:
         man.setdefault("history", []).append(dict(event="adopt", slugs=added,
                                                   at=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-        json.dump(man, open(FROZEN_MANIFEST, "w"), indent=1)
+        _write_manifest(man)
     return added
 
 
@@ -200,7 +242,13 @@ if __name__ == "__main__":
               f"first scored {sm['first_scored_range'][0]} – {sm['first_scored_range'][1]}, all in round 1: {sm['all_round_1']}")
     drift, unfrozen = check(man)
     if not check_only:
-        json.dump(refresh_summary(man), open(FROZEN_MANIFEST, "w"), indent=1)
+        if drift or unfrozen:
+            print("summary NOT refreshed: the manifest does not match the files (see below); nothing written")
+        elif write_refreshed_summary(man):
+            print(f"summary refreshed: {json.dumps(man['summary']['n_by_round'], ensure_ascii=False)} "
+                  f"(history event 'refresh_summary' added; no frozen entry changed)")
+        else:
+            print("summary already up to date; nothing written")
     for d in drift:
         print("DRIFT:", d)
     for s in unfrozen:

@@ -8,8 +8,15 @@ Data-hygiene convention used throughout this script
   file (29,965 rows) — these are facts about the dataset, not about any model.
 * Every bivariate / relationship analysis (default rate by group, distributions by class, correlations,
   univariate discriminative power) is computed on the TRAINING partition only (20,975 rows from
-  common.load_split()). The held-out test set is never looked at, so nothing learnt here (e.g. which
-  bands to use, which features look strong) can leak into model evaluation.
+  common.load_split()). No relationship is looked at on the held-out test rows, so nothing learnt here
+  (e.g. which bands to use, which features look strong) can leak into model evaluation.
+* What does touch the test partition, stated plainly (21 Oct 2026, see results/TEST_SET_LOG.md): the data-quality
+  counts are FEATURE counts over the full download (30,000 raw / 29,965 cleaned rows, test rows included) and only
+  describe the fixed cleaning rules; the class-balance row, the split row, figure (1) and the class_balance / split
+  blocks of results/eda_summary.json count the test LABELS (class sizes only).  No default rate by group and no figure other than (1) uses a test row.
+  The two action texts changed on 21 Oct 2026 (missing values / PAY_RATIO_MEAN imputation, and the scope of the
+  table in the split row) were patched into results/eda_data_quality.csv directly; eda.py was NOT re-run for it,
+  because a re-run calls load_split() (opens the test file) and rewrites every EDA figure.
 
 Outputs (all names start with eda_):
   figures/eda_target_distribution.png        (1) class balance: full / train / test, counts + %
@@ -115,7 +122,9 @@ nonpos_bill_all_clean = int((df[BILL_COLS] <= 0).all(axis=1).sum())
 pay_undoc = {c: {"-2": int((raw[c] == -2).sum()), "0": int((raw[c] == 0).sum())} for c in PAY_COLS}
 over_limit = int((df["UTIL_1"] > 1).sum())
 dq_rows = [
-    ("Missing values", "0 cells (all 24 columns complete)", "None needed — no imputation step in the pipeline"),
+    ("Missing values", "0 cells (all 24 columns complete)",
+     f"None needed for the 24 raw columns; the engineered PAY_RATIO_MEAN is undefined for the {nonpos_bill_all_clean:,} "
+     "cleaned rows whose six bills are all non-positive and is set to 0 (row: Zero bills in all six months)"),
     ("Exact duplicate rows", f"{n_dup} of 30,000 (0.12%)", "Dropped in common.clean() → 29,965 rows"),
     ("Data types", "All 24 columns integer; no strings, no dates", "None"),
     ("EDUCATION undocumented codes 0/5/6", f"0: {edu_codes.get(0,0)}, 5: {edu_codes.get(5,0)}, 6: {edu_codes.get(6,0)} (total {sum(edu_codes.get(k,0) for k in (0,5,6))}, 1.15%)", "Recoded to 4 = others/unknown"),
@@ -135,7 +144,9 @@ dq_rows = [
     ("LIMIT_BAL range", f"{int(raw['LIMIT_BAL'].min()):,} – {int(raw['LIMIT_BAL'].max()):,} NT$ (median {int(raw['LIMIT_BAL'].median()):,})", "Plausible; heavy right tail → StandardScaler inside the pipeline, no trimming"),
     ("AGE range", f"{int(raw['AGE'].min())} – {int(raw['AGE'].max())} years (median {int(raw['AGE'].median())})", "Plausible; no outlier removal"),
     ("Class imbalance", f"{int(df[TARGET].sum()):,} defaults of {len(df):,} = {df[TARGET].mean():.1%}", "Kept as is; addressed downstream by class_weight / threshold tuning; AUC & AP as metrics"),
-    ("Train / test split", f"{len(X_tr):,} / {len(X_te):,} rows, stratified 70/30, seed {SEED}; default rate {y_tr.mean():.2%} / {y_te.mean():.2%}", "Fixed once in data/processed; test set untouched in this EDA"),
+    ("Train / test split", f"{len(X_tr):,} / {len(X_te):,} rows, stratified 70/30, seed {SEED}; default rate {y_tr.mean():.2%} / {y_te.mean():.2%}", "Fixed once in data/processed. Scope of this table: counts are over the full download, test rows included "
+     "(feature counts behind fixed rules; nothing is estimated from them); test labels enter only the class-imbalance "
+     "row and this split check; the default rates by group are from the training partition only"),
 ]
 dq = pd.DataFrame(dq_rows, columns=["check", "finding", "action"])
 dq.to_csv(os.path.join(RESULTS, "eda_data_quality.csv"), index=False)

@@ -4,13 +4,27 @@
  "seed": 2607526,
  "rule": "The test set only reports frozen models. A configuration is frozen when it is first scored on the test set; common.evaluate() refuses to score a different configuration under a frozen slug.",
  "summary": {
-  "n_frozen": 35,
-  "n_models": 34,
+  "n_frozen": 46,
+  "n_models": 36,
+  "n_recalibrated_variants": 9,
+  "n_negative_controls": 1,
   "first_scored_range": [
    "2026-09-16 18:54",
-   "2026-09-18 18:54"
+   "2026-10-19 16:25"
   ],
-  "all_round_1": true
+  "first_scored_is": "the modification time of the entry's result file: the scoring happened at or before it, so it is not a scoring timestamp (see results/TEST_SET_LOG.md)",
+  "rounds": [
+   "19 October 2026 \u2014 Platt map fitted on training out-of-fold s",
+   "adopted 2026-10-21: RUAN's 30 Sep run (time from her frozen_",
+   "round 1 \u2014 tuned on training CV and scored on the test set on"
+  ],
+  "n_by_round": {
+   "19 October 2026 \u2014 Platt map fitted on training out-of-fold s": 9,
+   "adopted 2026-10-21: RUAN's 30 Sep run (time from her frozen_": 2,
+   "round 1 \u2014 tuned on training CV and scored on the test set on": 35
+  },
+  "all_round_1": false,
+  "complete_test_set_log": "results/TEST_SET_LOG.md"
  },
  "selection_uses_training_data_only": [
   "every hyper-parameter (GridSearchCV on 5 stratified folds of the training set)",
@@ -21,10 +35,18 @@
   "partial dependence / ICE (training rows)"
  ],
  "test_set_read_for_reporting_only": [
-  "aggregate.py \u2014 paired bootstrap of test-set AUC / AP differences, ROC / PR curves, threshold / cost / calibration curves on the test rows (the reference model and the top-4 are chosen on CV AUC, not on these)",
-  "cost_sensitivity.py \u2014 test cost of every model at its own training-OOF threshold for each cost ratio",
-  "model_monotone.py \u2014 test AUC and paired bootstrap of the constrained vs unconstrained XGBoost",
-  "model_rf.py \u2014 test AUC against the number of trees, descriptive only (N_TREES = 500 fixed in advance)"
+  "aggregate.py \u2014 paired bootstrap of test-set AUC / AP differences, ROC / PR curves, threshold / cost / calibration curves on the test rows (the reference model and the top-4 are chosen on CV AUC, not on these; until 19 Oct 2026 they were ranked by test AUC)",
+  "cost_sensitivity.py \u2014 test cost of every headline model at its own training-OOF threshold for each cost ratio",
+  "threshold_vs_model_saving.py \u2014 test cost of the logistic model and XGBoost at their training-OOF cut-offs, 1:1-20:1, with a paired bootstrap",
+  "model_monotone.py \u2014 after evaluate(): paired bootstrap of the constrained vs unconstrained XGBoost",
+  "model_mlp.py \u2014 after evaluate(): paired bootstrap of the MLP against other saved test vectors",
+  "model_svm.py \u2014 after evaluate(): test AUC of the 3-dp rounded linear-SVM scores and of MAX_DELAY alone",
+  "model_discriminant.py \u2014 a plain logistic reference refitted and scored on test beside LDA (diagnostic, not an entry)",
+  "model_imbalance.py \u2014 test agreement / recall statistics between strategies; the negative control re-splits all rows",
+  "model_unsupervised.py \u2014 test default rate per K = 4 cluster (descriptive)",
+  "make_slide_figures.py \u2014 ROC / PR and cost curves on the test rows for the slides",
+  "eda.py \u2014 class balance of the test partition (split check) and the target-distribution figure",
+  "model_rf.py \u2014 until 21 Oct 2026 also test AUC against the number of trees (removed; N_TREES = 500 was fixed in advance)"
  ],
  "models": {
   "bagging": {
@@ -1275,6 +1297,20 @@
     "logistic_plain_v2"
    ],
    "at": "2026-10-21 14:59:58"
+  },
+  {
+   "event": "refresh_summary",
+   "at": "2026-10-21 22:38:00",
+   "previous_summary": {
+    "n_frozen": 35,
+    "n_models": 34,
+    "first_scored_range": [
+     "2026-09-16 18:54",
+     "2026-09-18 18:54"
+    ],
+    "all_round_1": true
+   },
+   "note": "summary block and reporting-only list recomputed by freeze.py after a clean check; no frozen entry changed"
   }
  ]
 }
