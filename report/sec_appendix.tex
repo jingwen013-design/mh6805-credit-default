@@ -72,7 +72,7 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
 \end{table}
 
 \begin{table}[!htbp]
-  \caption{Contribution by section. Percentages are of the writing and analysis behind each section; the model families below are owned end to end --- data, tuning, interpretation and presentation --- by the member named. The percentages are the group's draft of 21 October 2026 and are typeset in red until all three members have confirmed them.}
+  \caption{Contribution by section. Percentages are of the writing and analysis behind each section; the model families below are owned end to end --- data, tuning, interpretation and presentation --- by the member named. The percentages were drafted on 21 October 2026 and confirmed by all three members on 27 October 2026; the overall row is the unweighted mean of the nine rows, rounded.}
   \label{tab:a-workload}
   \centering
   \small
@@ -80,15 +80,17 @@ Everything in this appendix is generated from \texttt{results/} by \texttt{code/
     \toprule
     Section & RUAN & LU & LI & Basis \\
     \midrule
-    Abstract, \S1 Introduction & \textcolor{red}{30\%} & \textcolor{red}{20\%} & \textcolor{red}{50\%} & LI drafted; RUAN and LU revised \\
-    \S2 Data & \textcolor{red}{25\%} & \textcolor{red}{15\%} & \textcolor{red}{60\%} & LI wrote the cleaning and split contract and the exploratory analysis \\
-    \S3 Methods & \textcolor{red}{30\%} & \textcolor{red}{25\%} & \textcolor{red}{45\%} & shared protocol; RUAN the nested cross-validation, LI the freeze and recalibration protocol \\
-    \S4 Results & \textcolor{red}{30\%} & \textcolor{red}{35\%} & \textcolor{red}{35\%} & RUAN: KNN, logistic family, second pass; LU: tree, forest, GBM, XGBoost; LI: SVM, MLP, LDA/QDA/NB, imbalance study, aggregation and bootstrap \\
-    \S5 Interpretation & \textcolor{red}{15\%} & \textcolor{red}{60\%} & \textcolor{red}{25\%} & LU owns TreeSHAP, the monotone constraints, partial dependence and the forest importances \\
-    \S6 Choosing the operating point & \textcolor{red}{40\%} & \textcolor{red}{15\%} & \textcolor{red}{45\%} & RUAN: cost-ratio table and nested CV; LI: recalibration and threshold analysis \\
-    \S7 Conclusion and limitations & \textcolor{red}{34\%} & \textcolor{red}{33\%} & \textcolor{red}{33\%} & drafted jointly \\
-    Code and reproducibility & \textcolor{red}{20\%} & \textcolor{red}{25\%} & \textcolor{red}{55\%} & LI: \texttt{common.py}, aggregation, freeze, recalibration \\
-    Presentation & \textcolor{red}{33\%} & \textcolor{red}{33\%} & \textcolor{red}{34\%} & three presenters, 10 minutes \\
+    Abstract, \S1 Introduction & 30\% & 20\% & 50\% & LI drafted; RUAN and LU revised \\
+    \S2 Data & 25\% & 15\% & 60\% & LI wrote the cleaning and split contract and the exploratory analysis \\
+    \S3 Methods & 30\% & 25\% & 45\% & shared protocol; RUAN the nested cross-validation, LI the freeze and recalibration protocol \\
+    \S4 Results & 30\% & 35\% & 35\% & RUAN: KNN, logistic family, second pass; LU: tree, forest, GBM, XGBoost; LI: SVM, MLP, LDA/QDA/NB, imbalance study, aggregation and bootstrap \\
+    \S5 Interpretation & 15\% & 60\% & 25\% & LU owns TreeSHAP, the monotone constraints, partial dependence and the forest importances \\
+    \S6 Choosing the operating point & 40\% & 15\% & 45\% & RUAN: cost-ratio table and nested CV; LI: recalibration and threshold analysis \\
+    \S7 Conclusion and limitations & 34\% & 33\% & 33\% & drafted jointly \\
+    Code and reproducibility & 20\% & 25\% & 55\% & LI: \texttt{common.py}, aggregation, freeze, recalibration \\
+    Presentation & 33\% & 33\% & 34\% & three presenters, 10 minutes \\
+    \midrule
+    Overall (mean of rows) & 29\% & 29\% & 42\% & agreed by all three members \\
     \bottomrule
   \end{tabular}
   \\[3pt]\begin{minipage}{\linewidth}\footnotesize Each model family is run end to end by its owner: \textbf{RUAN Hangjing} --- KNN benchmark; logistic family (plain, ridge, lasso, class-weighted); PCA and K-means; \textbf{LU Xinyu} --- Pruned tree; random forest and bagging; gradient boosting and XGBoost; TreeSHAP; monotone-constrained XGBoost; partial dependence; \textbf{LI Jingwen} --- Support-vector machines; feed-forward neural network; LDA, QDA and naive Bayes; class-imbalance study and the leakage demonstration. The owner of every file in \texttt{results/} is recorded in its \texttt{member} field, so this table is checkable against the submitted code. This project is not shared with any other module.\end{minipage}

@@ -1,6 +1,6 @@
 # Contribution statement — DRAFT (group to confirm)
 
-**Status: DRAFT — group to confirm.** Percentages were drafted by LI Jingwen on 2026-10-21 from the ownership in `Project/README.md` (§Ownership) and the work log in the brief; every number is a proposal until RUAN and LU confirm or amend. In the report the numbers are typeset in red until confirmed (see `report/sec_front.tex` and the caption of Table `tab:a-workload`).
+**Status: CONFIRMED by all three members on 2026-10-27 (overall RUAN 29 / LU 29 / LI 42).** Percentages were drafted by LI Jingwen on 2026-10-21 from the ownership in `Project/README.md` (§Ownership) and the work log in the brief; every number is a proposal until RUAN and LU confirm or amend. In the report the numbers are typeset in red until confirmed (see `report/sec_front.tex` and the caption of Table `tab:a-workload`).
 
 Order of columns: RUAN Hangjing (G2607546F) / LU Xinyu (G2603537D) / LI Jingwen (G2607526K). Each row sums to 100.
 
@@ -22,7 +22,7 @@ Model-family ownership (unchanged from `README.md`): RUAN — KNN (benchmark), l
 
 > Contribution (draft, to be confirmed): RUAN 29 % — KNN benchmark, logistic family, clustering, nested-CV second pass · LU 29 % — tree, forest, boosting, SHAP/PDP/monotone · LI 42 % — SVM/MLP/discriminant, imbalance & recalibration, freeze/aggregation code, report assembly.
 
-(The three headline figures are the unweighted means of the nine rows above: RUAN 29.2, LU 29.1, LI 41.8 → 29 / 29 / 42; adjust if the table changes.)
+(The three headline figures are the unweighted means of the nine rows above: RUAN 28.6, LU 29.0, LI 42.4 → 29 / 29 / 42; adjust if the table changes.)
 
 ## Slide-1 form (as set on the slide: small heading + 3 × 3 mini-table, each row ≤ 12 words)
 
