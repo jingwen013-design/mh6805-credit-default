@@ -10,25 +10,19 @@
   XGBoost's AUC from 0.63 to 0.77; a third of the logit's gap is reading
   repayment codes as evenly spaced numbers, most of the rest one-variable curves;
   interactions are small; demographics add 0.002 CV AUC but raise fairness
-  issues. Resampling before the split fakes a 0.914 AUC. At 5:1, moving the
+  issues. Resampling before the split fakes a 0.914 AUC. At an illustrative 5:1, moving the
   logit's cut-off saves 1,937 test cost units; switching to XGBoost saves 145
   more [$-$18, 299].
 \end{abstract}
 
 \paragraph{Contribution statement.}
-Group B19. Model families are owned end to end (code, tuning, interpretation,
-presentation): RUAN Hangjing the KNN benchmark, the logistic family, nested
-cross-validation and PCA/K-means; LU Xinyu the pruned tree, random forest and
-bagging, gradient boosting and XGBoost, TreeSHAP, monotone constraints and
-partial dependence; LI Jingwen the support-vector machines, the neural network,
-LDA/QDA/naive Bayes, the class-imbalance study and leakage demonstration, Platt
-recalibration, and the freeze and aggregation code. Shares per section (RUAN/LU/LI, \%):
+Group B19. Each model family is owned end to end (code, tuning, interpretation, presentation): RUAN Hangjing the KNN benchmark, logistic family, nested CV and PCA/K-means; LU Xinyu the tree, forest, bagging, GBM/XGBoost, TreeSHAP, monotone constraints and PDPs; LI Jingwen the SVMs, MLP, LDA/QDA/naive Bayes, imbalance and leakage studies, Platt recalibration and the freeze/aggregation code. Shares per section (RUAN/LU/LI, \%):
 \S1~30/20/50; \S2~25/15/60;
 \S3~30/25/45; \S4~30/35/35;
 \S5~15/60/25; \S6~40/15/45;
 \S7~34/33/33; code and reproducibility
 20/25/55; presentation 33/33/34
-(Table~\ref{tab:a-workload}). Overall, the unweighted mean of these nine shares rounded: RUAN 29\%, LU 29\%, LI 42\%, agreed by all three members. Not shared with any other module.
+(Table~\ref{tab:a-workload}); their mean is RUAN 29\%, LU 29\%, LI 42\%, agreed by all three. Not submitted to any other module.
 
 \section{Introduction}
 
@@ -36,7 +30,7 @@ recalibration, and the freeze and aggregation code. Shares per section (RUAN/LU/
 Every probability of default (PD) here belongs to a crisis vintage. The data come from Taiwan's 2005--06 card-debt crisis [19]: the central bank dates the first repayment problems to September 2005, our last feature month [4]. Revolving balances peaked at NT\$495.3 bn in November 2005 and fell 48.8\% by December 2008 [9]. Our 22.1\% default rate is consistent with a stressed book or an undocumented, defaulter-heavy sample (\S7, iii). Errors cost unequally: a missed defaulter's balance is lost; a wrongly flagged good client risks a thin margin.
 
 \paragraph{Why explanations matter.}
-Lenders are now expected to explain a credit score, so we pair accuracy with Shapley additive explanations (SHAP), monotone constraints and a logistic scorecard. The EU AI Act classes creditworthiness scoring of individuals as high-risk (Annex~III, 5(b)) [8]. Singapore's FEAT principles ask that customers can learn which data were used and how they affected a decision (Principle~13) [15]; these are present-day benchmarks, and we claim no compliance. In the 2024 Bank of England--FCA survey, gradient boosting was the most common model type (32\% of use cases) and SHAP (64\%) among the most popular explainability methods [1].
+Regulators expect a lender to explain a credit score, so we pair accuracy with Shapley additive explanations (SHAP), monotone constraints and a logistic scorecard. The EU AI Act classes creditworthiness scoring as high-risk (Annex~III, 5(b)) [8]; Singapore's FEAT Principle~13 asks that customers can learn which data were used and how [15]; we claim no compliance with either. In the 2024 Bank of England--FCA survey, gradient boosting was the most common model type (32\% of use cases) and SHAP (64\%) among the most used explanations [1].
 
 \paragraph{Design and objectives.}
-The study is comparative [12]: a $K$-nearest-neighbour (KNN) benchmark and a logistic scorecard are the references, each other family is explained by how it learns, and TreeSHAP [14], monotone XGBoost [6] and partial dependence [10] go beyond the syllabus. We ask (1)~\emph{complexity}: what flexible models add beyond noise; (2)~\emph{operating point}: whether the cut-off matters more than the model; (3)~\emph{imbalance}: what weighting and resampling do inside the folds and before the split; (4)~\emph{inference}: which characteristics predict default, in which direction, what personal attributes add at what fairness cost, and whether the importance measures agree.
+The study is comparative [12]: a $K$-nearest-neighbour (KNN) benchmark and a logistic scorecard are the references, each other family is explained by how it learns; TreeSHAP [14], monotone XGBoost [6] and partial dependence [10] go beyond the syllabus. We ask (1)~\emph{complexity}: what flexible models add beyond noise; (2)~\emph{operating point}: whether the cut-off matters more than the model; (3)~\emph{imbalance}: what weighting and resampling do inside the folds and before the split; (4)~\emph{inference}: which characteristics predict default, in which direction, what personal attributes add at what fairness cost, and whether the importance measures agree.
